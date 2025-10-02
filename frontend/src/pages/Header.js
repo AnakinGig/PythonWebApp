@@ -13,7 +13,7 @@ function Header() {
         await httpClient.post("//localhost:5000/logout");
         window.location.href = "/";
     }
-
+/*
     const getUserInfo = async () => {
         try{
           const resp = await httpClient.post("//localhost:5000/@me")
@@ -22,18 +22,24 @@ function Header() {
         catch (e){
           console.log(e)
         } 
-      }
+      }*/
     
     useEffect( () => {
-        getUserInfo()
-    },[])
+        httpClient.post("//localhost:5000/@me")
+            .then(res => {
+                setUser(res.data);
+            })
+            .catch(err => {
+                console.error(err);
+            });
+    },[]);
 
   return (
     <div>
         <nav className="navbar navbar-expand-lg bg-body-tertiary">
             <div className="d-flex flex-row justify-content-between mx-4 w-100">
                 <div>
-                    <a className="navbar-brand me-2" href="./">
+                    <a className="navbar-brand me-2" href="/">
                         <img src={logo} height="32" alt="Logo"/>
                     </a>
 
@@ -47,7 +53,7 @@ function Header() {
                         <li className="nav-item">
                             {user != null && user.role === 'Administrateur' ? (
                                 <div>
-                                    <a className="nav-link" href="/admin/dashboard">{currentPage === 'admin/dashboard' ? (<u>dashboard</u>) : ('Admin')}</a>
+                                    <a className="nav-link" href="/admin/dashboard">{currentPage === 'dashboard' ? (<u>Admin</u>) : ('Admin')}</a>
                                 </div>
                             ) : (
                                 <div>

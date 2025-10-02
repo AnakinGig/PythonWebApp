@@ -75,6 +75,39 @@ def get_current_user():
         "email": user.email,
         "role": user.role
     })
+    
+# Modify user route
+@app.route("/modify-user/<user_id>", methods=['POST'])
+def modify_user(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    data = request.json
+    
+    new_email = data.get("email", user.email)
+    new_first_name = data.get("first_name", user.first_name)
+    new_last_name = data.get("last_name", user.last_name)
+    new_password = data.get("password")
+    new_role = data.get("role", user.role)
+    
+    if new_email != user.email: 
+        email_already_exists = User.query.filter_by(email=new_email).first() is not None
+        if email_already_exists:
+            return jsonify({"error": "Email already exists"})
+    
+    user.email = new_email
+    user.first_name = new_first_name
+    user.last_name = new_last_name
+    user.role = new_role
+    
+    if new_password:
+        new_hashed_password = bcrypt.generate_password_hash(new_password)
+    
+    return jsonify({
+        "id": user.id
+    })
+    
 
 # Signup route
 @app.route("/register", methods=["POST"])
@@ -85,9 +118,9 @@ def register():
     password = request.json["password"]
     
     # Vérification si le nom d'utilisateur existe déjà.
-    user_exists = User.query.filter_by(email=email).first() is not None
+    user_already_exists = User.query.filter_by(email=email).first() is not None
 
-    if user_exists:
+    if user_already_exists:
         return jsonify({"error": "User already exists"})
     
     # Création du nouvel utilisateur du mot de passe.
@@ -99,8 +132,7 @@ def register():
     session["user_id"] = new_user.id
     
     return jsonify({
-        "id": new_user.id,
-        "email": new_user.email
+        "id": new_user.id
     })
 
 # Login route
