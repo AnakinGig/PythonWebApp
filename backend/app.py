@@ -6,6 +6,7 @@ from flask_marshmallow import Marshmallow
 from config import ApplicationConfig
 from models import db, ma, User, UserSchema
 from dotenv import load_dotenv
+from functools import wraps
 import os
 
 # Constantes
@@ -33,11 +34,6 @@ with app.app_context():
         admin_user = User(first_name='Admin',last_name='Admin',email=ADMIN_MAIL,password=hashed_admin_password,role='Administrateur')
         db.session.add(admin_user)
         db.session.commit()           
-            
-# Home route
-@app.route("/")
-def home():
-    return {}
 
 # Get user info route
 @app.route('/user-info/<user_id>', methods=['POST'])
@@ -52,7 +48,7 @@ def get_user_info(user_id):
     })
 
 # Get all users info route
-@app.route("/@all", methods=['POST'])
+@app.route("/@all", methods=['GET'])
 def get_all_users():
     users = User.query.all()
     user_schema = UserSchema(many=True)
@@ -60,12 +56,12 @@ def get_all_users():
     return jsonify(data=user_data)
 
 # Get current user info
-@app.route("/@me", methods=['POST'])
+@app.route("/@me", methods=['GET'])
 def get_current_user():
     user_id = session.get("user_id")
     
     if not user_id:
-        return jsonify({"error": "Unauthorized"}), 401
+        return jsonify({"error": "Not connected"})
     
     user = User.query.filter_by(id=user_id).first()
     return jsonify({
@@ -147,7 +143,11 @@ def delete_user(user_id):
     return jsonify({
         "200": "User successfully deleted."
     })
-    
+
+# Home route
+@app.route("/")
+def home():
+    return {}    
 
 # Signup route
 @app.route("/register", methods=["POST"])

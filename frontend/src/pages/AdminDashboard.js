@@ -1,5 +1,3 @@
-
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../httpClient";
@@ -16,7 +14,7 @@ function AdminDashboard() {
     const navigate = useNavigate();
 
     const getAllUsersInfo = async () => {
-        httpClient.post("//localhost:5000/@all")
+        httpClient.get("//localhost:5000/@all")
         .then(resp => {
             setUsers(resp.data)
         })

@@ -3,16 +3,20 @@ import httpClient from "../httpClient";
 
 function Home() {
 
-    const [user, setUser] = useState()
+    const [user, setUser] = useState(null)
 
     const getUserInfo = async () => {
-        try{
-            const resp = await httpClient.post("//localhost:5000/@me")
-            setUser(resp.data)
-        } 
-        catch (e){
-            console.log(e)
-        } 
+        try {
+            const resp = await httpClient.get("//localhost:5000/@me");
+            if (resp.data.error) {
+                setUser(null);
+            } else {
+                setUser(resp.data);
+            }
+        } catch (error) {
+            console.log("Erreur lors de la récupération de l'utilisateur :", error);
+            setUser(null);
+        }
     }
 
     useEffect( () => {
@@ -22,7 +26,7 @@ function Home() {
     return (
         <div>
         <h1>Application test - React Flask</h1><br/>
-        {user == null ? (
+        {user === null ? (
             <div>
                 <p>Vous n'êtes pas connecter.</p>
             </div>

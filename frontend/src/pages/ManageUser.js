@@ -15,7 +15,6 @@ function ManageUser() {
 
     const [MODIFY, setMODIFY] = useState(false)
     const [DELETE, setDELETE] = useState(false)
-    const [NEW_USER, setNEW_USER] = useState(false)
 
     const modify_account = async () => {
         const payload = {
@@ -104,15 +103,10 @@ function ManageUser() {
                     </div>
 
                     <div className="text-center text-lg-start mt-4 pt-2">
-                        {user_id !== null ? 
-                        (
                         <div className="d-flex justify-content-between">
                             <button type="button" onClick={(e) => setMODIFY(true)} data-bs-toggle="modal" data-bs-target="#popup" className="btn btn-primary btn-lg">Modifier le compte</button>
                             <button type="button" onClick={(e) => setDELETE(true)} data-bs-toggle="modal" data-bs-target="#popup" className="btn btn-danger btn-lg">Supprimer le compte</button>
                         </div>
-                        ) : 
-                        (<button type="button" onClick={(e) => setNEW_USER(true)} data-bs-toggle="modal" data-bs-target="#popup" className="btn btn-danger btn-lg">Supprimer le compte</button>) 
-                        }
                         <div className="modal fade" id="popup" tabIndex="-1" aria-labelledby="popup" aria-hidden="true">
                             <div className="modal-dialog">
                                 <div className="modal-content">
