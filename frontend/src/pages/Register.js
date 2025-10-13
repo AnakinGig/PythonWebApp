@@ -22,14 +22,14 @@ function Register() {
                 last_name: last_name,
                 password: password
             })
-            .then(function (response){
-                console.log(response);
-                window.location.href = "/";
+            .then(resp =>{
+                console.log(resp)
+                window.location.href = "/"
             })
-            .catch(function (error){
+            .catch(error => {
                 console.log(error, 'error');
                 if (error.response.status === 401){
-                alert('Identifiants invalides');
+                    alert('Identifiants invalides');
                 }
             });
         }
@@ -64,7 +64,7 @@ function Register() {
                         </div>
 
                         <div className="text-center text-lg-start mt-4 pt-2">
-                            <button type="button" onClick={registerUserIn} data-mdb-button-init data-mdb-ripple-init className="btn btn-primary btn-lg">Créer un compte</button>
+                            <button type="button" onClick={registerUserIn} className="btn btn-primary btn-lg">Créer un compte</button>
                             <p className="small fw-bold mt-2 pt-1 mb-0">Vous avez déjà un compte? <a href="./register" className="link-danger">Se connecter</a></p>
                         </div>
                     </form>

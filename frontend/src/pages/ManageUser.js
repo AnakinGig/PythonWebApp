@@ -1,7 +1,6 @@
 import { useParams } from "react-router";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import httpClient from "../httpClient";
-import axios from "axios";
 
 function ManageUser() {
     const user_id = useParams();
@@ -16,6 +15,7 @@ function ManageUser() {
 
     const [MODIFY, setMODIFY] = useState(false)
     const [DELETE, setDELETE] = useState(false)
+    const [NEW_USER, setNEW_USER] = useState(false)
 
     const modify_account = async () => {
         const payload = {
@@ -29,8 +29,10 @@ function ManageUser() {
             payload.password = newPassword;
         }
 
-        httpClient.post("//localhost:5000/modify-user/"+user_id.id, {
-            
+        httpClient.post("//localhost:5000/modify-user/"+user_id.id, payload, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
         })
         .then(resp =>{
             window.location.href ="/admin/dashboard"
@@ -40,7 +42,12 @@ function ManageUser() {
     }
 
     const delete_account = async () => {
-        
+        httpClient.post("//localhost:5000/delete-user/"+user_id.id)
+        .then(resp => {
+            window.location.href ="/admin/dashboard"
+            console.log(resp.data)
+        })
+        .catch(error => console.error(error));
     }
 
     const handle_close = async () => {
@@ -52,7 +59,6 @@ function ManageUser() {
         httpClient.post("//localhost:5000/user-info/"+user_id.id)
             .then(res => {
                 setUser(res.data);
-                console.log('1')
             })
             .catch(err => console.error(err));
     },[]);
@@ -68,7 +74,7 @@ function ManageUser() {
 
   return (
     <div>
-        {user != undefined ? (
+        {user !== undefined ? (
             <div className="">
                 <h1>Modifier les informations de {user.first_name} {user.last_name}</h1>
                 <form className="row mt-4">
@@ -98,10 +104,15 @@ function ManageUser() {
                     </div>
 
                     <div className="text-center text-lg-start mt-4 pt-2">
+                        {user_id !== null ? 
+                        (
                         <div className="d-flex justify-content-between">
                             <button type="button" onClick={(e) => setMODIFY(true)} data-bs-toggle="modal" data-bs-target="#popup" className="btn btn-primary btn-lg">Modifier le compte</button>
                             <button type="button" onClick={(e) => setDELETE(true)} data-bs-toggle="modal" data-bs-target="#popup" className="btn btn-danger btn-lg">Supprimer le compte</button>
                         </div>
+                        ) : 
+                        (<button type="button" onClick={(e) => setNEW_USER(true)} data-bs-toggle="modal" data-bs-target="#popup" className="btn btn-danger btn-lg">Supprimer le compte</button>) 
+                        }
                         <div className="modal fade" id="popup" tabIndex="-1" aria-labelledby="popup" aria-hidden="true">
                             <div className="modal-dialog">
                                 <div className="modal-content">
@@ -126,8 +137,7 @@ function ManageUser() {
                                                 <button type="button" className="btn btn-primary" onClick={delete_account}>Oui</button>
                                                 <button type="button" className="btn btn-danger" data-bs-dismiss="modal"onClick={handle_close}>Non</button>
                                             </div>
-                                        ) : 
-                                        ("")}
+                                        ) : ("")}
                                     </div>
                                 </div>
                             </div>

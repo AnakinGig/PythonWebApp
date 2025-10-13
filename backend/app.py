@@ -76,6 +76,31 @@ def get_current_user():
         "role": user.role
     })
     
+# Add new user route
+@app.route("/add-user", methods=["POST"])
+def add_user():
+    email = request.json["email"]
+    first_name = request.json["first_name"]
+    last_name = request.json["last_name"]
+    password = request.json["password"]
+    role = request.json["role"]
+    
+    # Vérification si le nom d'utilisateur existe déjà.
+    user_already_exists = User.query.filter_by(email=email).first() is not None
+
+    if user_already_exists:
+        return jsonify({"error": "User already exists"})
+    
+    # Création du nouvel utilisateur du mot de passe.
+    hashed_password = bcrypt.generate_password_hash(password)
+    new_user = User(email=email,first_name=first_name,last_name=last_name,password=hashed_password,role=role)
+    db.session.add(new_user)
+    db.session.commit()
+    
+    return jsonify({
+        "id": new_user.id
+    })
+    
 # Modify user route
 @app.route("/modify-user/<user_id>", methods=['POST'])
 def modify_user(user_id):
@@ -83,13 +108,11 @@ def modify_user(user_id):
     if not user:
         return jsonify({"error": "User not found"}), 404
     
-    data = request.json
-    
-    new_email = data.get("email", user.email)
-    new_first_name = data.get("first_name", user.first_name)
-    new_last_name = data.get("last_name", user.last_name)
-    new_password = data.get("password")
-    new_role = data.get("role", user.role)
+    new_email = request.json["email"]
+    new_first_name = request.json["first_name"]
+    new_last_name = request.json["last_name"]
+    new_password = request.json.get("password")
+    new_role = request.json["role"]
     
     if new_email != user.email: 
         email_already_exists = User.query.filter_by(email=new_email).first() is not None
@@ -103,9 +126,26 @@ def modify_user(user_id):
     
     if new_password:
         new_hashed_password = bcrypt.generate_password_hash(new_password)
+        user.password = new_hashed_password
+    
+    db.session.commit()
     
     return jsonify({
         "id": user.id
+    })
+    
+# Delete user route
+@app.route("/delete-user/<user_id>", methods=['POST'])
+def delete_user(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    User.query.filter_by(id=user_id).delete()
+    db.session.commit()
+    
+    return jsonify({
+        "200": "User successfully deleted."
     })
     
 

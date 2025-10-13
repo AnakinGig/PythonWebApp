@@ -13,16 +13,6 @@ function Header() {
         await httpClient.post("//localhost:5000/logout");
         window.location.href = "/";
     }
-/*
-    const getUserInfo = async () => {
-        try{
-          const resp = await httpClient.post("//localhost:5000/@me")
-          setUser(resp.data)
-        } 
-        catch (e){
-          console.log(e)
-        } 
-      }*/
     
     useEffect( () => {
         httpClient.post("//localhost:5000/@me")
@@ -49,23 +39,28 @@ function Header() {
                 </div>
 
                 <div className="collapse navbar-collapse">
-                    <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li className="nav-item">
-                            {user != null && user.role === 'Administrateur' ? (
-                                <div>
+                    
+                        {user != null && user.role === 'Administrateur' ? (
+                            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                                <li className="nav-item">
+                                    <a className="nav-link" href="/">{currentPage === '' ? (<u>Home</u>) : ('Home')}</a>
+                                </li>
+                                <li className="nav-item">
                                     <a className="nav-link" href="/admin/dashboard">{currentPage === 'dashboard' ? (<u>Admin</u>) : ('Admin')}</a>
-                                </div>
-                            ) : (
-                                <div>
-                                    <a className="nav-link" href="./">{currentPage === '' ? (<u>Home</u>) : ('Home')}</a>
-                                </div>
-                            )}
-                        </li>
-                    </ul>
+                                </li>
+                            </ul>
+                        ) : (
+                            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                                <li className="nav-item">
+                                    <a className="nav-link" href="/">{currentPage === '' ? (<u>Home</u>) : ('Home')}</a>
+                                </li>
+                            </ul>
+                        )}
+
                     {user == null ? (
                         <div className="d-flex align-items-center">
-                            <a href="./login" data-mdb-ripple-init type="button" className="btn btn-link px-3 me-2"> Se connecter </a>
-                            <a href="./register" data-mdb-ripple-init type="button" className="btn btn-primary me-3"> Créer un compte </a>
+                            <a href="/login" data-mdb-ripple-init type="button" className="btn btn-link px-3 me-2"> Se connecter </a>
+                            <a href="/register" data-mdb-ripple-init type="button" className="btn btn-primary me-3"> Créer un compte </a>
                         </div>
                     ) : (
                         <div className="d-flex align-items-center">
