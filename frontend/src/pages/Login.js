@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import httpClient from '../httpClient'
+import UserContext from "../UserContext";
 
 function Login() {
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const {user, setUser} = useContext(UserContext)
 
     const logUserIn = async () => {
         if (email.length === 0){
@@ -19,6 +21,7 @@ function Login() {
                 password: password
             })
             .then(function (response){
+                setUser(response.data.user);
                 console.log(response);
                 window.location.href = "/";
             })

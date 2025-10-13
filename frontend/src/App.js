@@ -1,8 +1,8 @@
-import Router from './Router'
-import Header from './pages/Header'
-
 import { useEffect, useState } from "react";
 import httpClient from "./httpClient";
+import UserContext from "./UserContext";
+import Router from './Router'
+import Header from './pages/Header'
 
 function App() {
 
@@ -17,12 +17,12 @@ function App() {
     if (user === undefined) return <div>Loading...</div>;
 
     return (
-        <div>
-            <Header></Header>
+        <UserContext.Provider value={{user, setUser}}>
+            <Header/>
             <div className='container mt-4'>
-                <Router user={user}></Router>
+                <Router user={user}/>
             </div>
-        </div>
+        </UserContext.Provider>
     );
 }
 

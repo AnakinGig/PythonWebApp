@@ -1,27 +1,9 @@
-import { useEffect, useState } from "react";
-import httpClient from "../httpClient";
+import { useContext } from "react";
+import UserContext from "../UserContext";
 
 function Home() {
 
-    const [user, setUser] = useState(null)
-
-    const getUserInfo = async () => {
-        try {
-            const resp = await httpClient.get("//localhost:5000/@me");
-            if (resp.data.error) {
-                setUser(null);
-            } else {
-                setUser(resp.data);
-            }
-        } catch (error) {
-            console.log("Erreur lors de la récupération de l'utilisateur :", error);
-            setUser(null);
-        }
-    }
-
-    useEffect( () => {
-        getUserInfo()
-    },[])
+    const {user, setUser} = useContext(UserContext)
 
     return (
         <div>

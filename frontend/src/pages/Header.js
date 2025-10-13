@@ -1,36 +1,20 @@
-import { useEffect, useState } from "react";
+import { useContext } from "react";
 import httpClient from "../httpClient";
 import logo from '../assets/logo.jpg'
+import UserContext from "../UserContext";
 
 function Header() {
 
     const currentPagePath = window.location.pathname;
     const currentPage = currentPagePath.split('/').pop();
 
-    const [user, setUser] = useState();
+    const {user, setUser} = useContext(UserContext);
 
     const logUserOut = async () => {
-        httpClient.post("//localhost:5000/logout")
-        .then(window.location.href = "/")
-    }
-    
-    const getUserInfo = async () => {
-        try {
-            const resp = await httpClient.get("//localhost:5000/@me");
-            if (resp.data.error) {
-                setUser(null);
-            } else {
-                setUser(resp.data);
-            }
-        } catch (error) {
-            console.log("Erreur lors de la récupération de l'utilisateur :", error);
-            setUser(null);
-        }
-    }
-    
-    useEffect( ()=> {
-        getUserInfo()
-    },[]);
+        await httpClient.post("//localhost:5000/logout");
+        setUser(null);
+        window.location.href = "/";
+    }  
 
   return (
     <div>

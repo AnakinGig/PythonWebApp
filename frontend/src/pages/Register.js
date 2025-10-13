@@ -37,6 +37,11 @@ function Register() {
             setEmailError("Veuillez entrer votre email")
             return false
         }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+            setEmailError("Format d'email invalide");
+            return false;
+        }
         setEmailError("")
         return true
     }
@@ -45,6 +50,11 @@ function Register() {
         if (value === ''){
             setPasswordError("Veuillez entrer votre mot de passe")
             return false
+        }
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+        if (!passwordRegex.test(value)) {
+            setPasswordError("Le mot de passe doit contenir au moins 8 caractères et doit inclure une majuscule, une minuscule, un chiffre et un caractère spécial.");
+            return false;
         }
         setPasswordError("")
         return true
@@ -73,9 +83,10 @@ function Register() {
                 window.location.href = "/"
             })
             .catch(error => {
-                console.log(error, 'error');
-                if (error.response.status === 401){
-                    alert('Identifiants invalides');
+                if (error.response && error.response.data && error.response.data.error) {
+                    alert(error.response.data.error);
+                } else {
+                    alert('Une erreur est survenue.');
                 }
             });
         }
@@ -88,7 +99,7 @@ function Register() {
                     <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.webp" className="img-fluid" alt="Sample"/>
                 </div>
                 <div className="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
-                    <form>
+                    <form onSubmit={registerUserIn}>
                         <div className="row mb-4">
                             <div className="form-outline col-6">
                                 <label className="form-label">Nom</label>
@@ -114,8 +125,8 @@ function Register() {
                         </div>
 
                         <div className="text-center text-lg-start mt-4 pt-2">
-                            <button type="button" className="btn btn-primary btn-lg" onClick={registerUserIn}>Créer un compte</button>
-                            <p className="small fw-bold mt-2 pt-1 mb-0">Vous avez déjà un compte? <a href="./register" className="link-danger">Se connecter</a></p>
+                            <button type="submit" className="btn btn-primary btn-lg">Créer un compte</button>
+                            <p className="small fw-bold mt-2 pt-1 mb-0">Vous avez déjà un compte? <a href="/login" className="link-danger">Se connecter</a></p>
                         </div>
                     </form>
                 </div>
