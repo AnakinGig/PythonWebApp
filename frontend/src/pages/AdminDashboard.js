@@ -4,14 +4,14 @@ import httpClient from "../httpClient";
 
 function AdminDashboard() {
 
+    const navigate = useNavigate();
+
     const [users, setUsers] = useState()
     const [newFirstName, setNewFirstName] = useState()
     const [newLastName, setNewLastName] = useState()
     const [newEmail, setNewEmail] = useState()
     const [newPassword, setNewPassword] = useState()
     const [newRole, setNewRole] = useState("Utilisateur")
-
-    const navigate = useNavigate();
 
     const getAllUsersInfo = async () => {
         httpClient.get("//localhost:5000/@all")
@@ -31,7 +31,7 @@ function AdminDashboard() {
         })
         .then(resp =>{
             console.log(resp);
-            window.location.href = "/admin/dashboard"
+            navigate("/admin/dashboard")
         })
         .catch(error => {console.error(error)});
     }

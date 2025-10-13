@@ -1,8 +1,11 @@
 import { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import httpClient from '../httpClient'
 import UserContext from "../UserContext";
 
 function Login() {
+
+    const navigate = useNavigate();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -23,7 +26,7 @@ function Login() {
             .then(function (response){
                 setUser(response.data.user);
                 console.log(response);
-                window.location.href = "/";
+                navigate("/");
             })
             .catch(function (error){
                 console.log(error, 'error');

@@ -1,9 +1,11 @@
 import { useParams } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import httpClient from "../httpClient";
 
 function ManageUser() {
     const user_id = useParams();
+    const navigate = useNavigate();
 
     const [user, setUser] = useState()
 
@@ -34,7 +36,7 @@ function ManageUser() {
             }
         })
         .then(resp =>{
-            window.location.href ="/admin/dashboard"
+            navigate("/admin/dashboard")
             console.log(resp.data)
         })
         .catch(error => console.error(error));
@@ -43,7 +45,7 @@ function ManageUser() {
     const delete_account = async () => {
         httpClient.post("//localhost:5000/delete-user/"+user_id.id)
         .then(resp => {
-            window.location.href ="/admin/dashboard"
+            navigate("/admin/dashboard")
             console.log(resp.data)
         })
         .catch(error => console.error(error));

@@ -1,9 +1,11 @@
 import { useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import httpClient from "../httpClient";
 import logo from '../assets/logo.jpg'
 import UserContext from "../UserContext";
 
 function Header() {
+    const navigate = useNavigate();
 
     const currentPagePath = window.location.pathname;
     const currentPage = currentPagePath.split('/').pop();
@@ -13,7 +15,7 @@ function Header() {
     const logUserOut = async () => {
         await httpClient.post("//localhost:5000/logout");
         setUser(null);
-        window.location.href = "/";
+        navigate("/");
     }  
 
   return (

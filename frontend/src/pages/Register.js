@@ -1,7 +1,10 @@
 import { useState } from "react";
 import httpClient from '../httpClient'
+import { useNavigate } from "react-router-dom";
 
 function Register() {
+
+    const navigate = useNavigate();
 
     const [email, setEmail] = useState('');
     const [first_name, setFirstName] = useState('');
@@ -80,7 +83,7 @@ function Register() {
             })
             .then(resp =>{
                 console.log(resp)
-                window.location.href = "/"
+                navigate('/');
             })
             .catch(error => {
                 if (error.response && error.response.data && error.response.data.error) {

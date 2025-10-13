@@ -10,24 +10,22 @@ import ManageUser from './pages/ManageUser'
 
 function Router({user}) {
     return (
-        <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<Home/>}/>
-                <Route path="/login" element={<Login/>}/>
-                <Route path="/register" element={<Register/>}/>
-                <Route path="/admin/dashboard" element={
-                    <PrivateRoute user={user} requiredRole={'Administrateur'}>
-                        <AdminDashboard/>
-                    </PrivateRoute>
-                }/>
-                <Route path="/admin/manage-user/:id" element={
-                    <PrivateRoute user={user} requiredRole={'Administrateur'}>
-                        <ManageUser/>
-                    </PrivateRoute>
-                }/>
-                <Route path="/*" element={<NotFound/>}/>
-            </Routes>
-        </BrowserRouter>
+        <Routes>
+            <Route path="/" element={<Home/>}/>
+            <Route path="/login" element={<Login/>}/>
+            <Route path="/register" element={<Register/>}/>
+            <Route path="/admin/dashboard" element={
+                <PrivateRoute user={user} requiredRole={'Administrateur'}>
+                    <AdminDashboard/>
+                </PrivateRoute>
+            }/>
+            <Route path="/admin/manage-user/:id" element={
+                <PrivateRoute user={user} requiredRole={'Administrateur'}>
+                    <ManageUser/>
+                </PrivateRoute>
+            }/>
+            <Route path="/*" element={<NotFound/>}/>
+        </Routes>
     );
 }
 
