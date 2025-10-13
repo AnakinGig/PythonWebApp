@@ -7,7 +7,7 @@ from config import ApplicationConfig
 from models import db, ma, User, UserSchema
 from dotenv import load_dotenv
 from functools import wraps
-import os, re
+import os, re, logging
 
 # Constantes
 ADMIN_MAIL = os.getenv('ADMIN_MAIL')
@@ -19,6 +19,16 @@ app.config.from_object(ApplicationConfig)
 CORS(app, supports_credentials=True)
 bcrypt = Bcrypt(app)
 server_session = Session(app)
+
+# Config logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    handlers=[
+        logging.FileHandler("app.log"),
+        logging.StreamHandler()
+    ]
+)
 
 # Config BDD
 db.init_app(app)
@@ -114,6 +124,7 @@ def add_user():
     new_user = User(email=email,first_name=first_name,last_name=last_name,password=hashed_password,role=role)
     db.session.add(new_user)
     db.session.commit()
+    logging.info(f"Admin {session.get('user_id')} a créé un nouvel utilisateur: {new_user.email} (id: {new_user.id}, rôle: {new_user.role})")
     
     return jsonify({
         "id": new_user.id
@@ -152,6 +163,7 @@ def modify_user(user_id):
         user.password = new_hashed_password
     
     db.session.commit()
+    logging.info(f"Admin {session.get('user_id')} a modifié l'utilisateur: {user.email} (id: {user.id}, rôle: {user.role})")
     
     return jsonify({
         "id": user.id
@@ -178,6 +190,7 @@ def delete_user(user_id):
     
     User.query.filter_by(id=user_id).delete()
     db.session.commit()
+    logging.info(f"Admin {session.get('user_id')} a supprimé l'utilisateur: {user.email} (id: {user.id})")
     
     return jsonify({
         "200": "User successfully deleted."
@@ -241,7 +254,9 @@ def register():
     new_user = User(email=email,first_name=first_name,last_name=last_name,password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
+    logging.info(f"Nouvel utilisateur enregistré: {new_user.email} (id: {new_user.id})")
     
+    # Connexion automatique après l'inscription
     session["user_id"] = new_user.id
     
     return jsonify({
