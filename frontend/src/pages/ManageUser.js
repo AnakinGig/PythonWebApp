@@ -15,31 +15,68 @@ function ManageUser() {
     const [newPassword, setNewPassword] = useState(null)
     const [newRole, setNewRole] = useState(null)
 
+    const [form_submited, setFormSubmited] = useState(false);
+    const [first_name_error, setFirstNameError] = useState('');
+    const [last_name_error, setLastNameError] = useState('');
+    const [email_error, setEmailError] = useState('');
+    const [password_error, setPasswordError] = useState('');
+
+    const emailVerif = (value) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+            setEmailError("Format d'email invalide");
+            return false;
+        }
+        setEmailError("")
+        return true
+    }
+
+    const passwordVerif = (value) => {
+        if (value){ // Only check password if it's provided
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+            if (!passwordRegex.test(value)) {
+                setPasswordError("Le mot de passe doit contenir au moins 8 caractères et doit inclure une majuscule, une minuscule, un chiffre et un caractère spécial.");
+                return false;
+            }
+        }
+        setPasswordError("")
+        return true
+    }
+
     const [MODIFY, setMODIFY] = useState(false)
     const [DELETE, setDELETE] = useState(false)
 
-    const modify_account = async () => {
-        const payload = {
-            first_name: newFirstName ?? user.first_name,
-            last_name: newLastName ?? user.last_name,
-            email: newEmail ?? user.email,
-            role: newRole ?? user.role,
-        }
+    const modify_account = async (e) => {
+        e.preventDefault();
+        setFormSubmited(true)
 
-        if (newPassword){
-            payload.password = newPassword;
-        }
+        const isEmailValid = emailVerif(newEmail);
+        const isPasswordValid = passwordVerif(newPassword);
 
-        httpClient.post("//localhost:5000/modify-user/"+user_id.id, payload, {
-            headers: {
-                'Content-Type': 'application/json'
+        const isFormValid = isEmailValid && isPasswordValid;
+        if (isFormValid) {
+            const payload = {
+                first_name: newFirstName ?? user.first_name,
+                last_name: newLastName ?? user.last_name,
+                email: newEmail ?? user.email,
+                role: newRole ?? user.role,
             }
-        })
-        .then(resp =>{
-            navigate("/admin/dashboard")
-            console.log(resp.data)
-        })
-        .catch(error => console.error(error));
+    
+            if (newPassword){
+                payload.password = newPassword;
+            }
+    
+            httpClient.post("//localhost:5000/modify-user/"+user_id.id, payload, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(resp =>{
+                navigate("/admin/dashboard")
+                console.log(resp.data)
+            })
+            .catch(error => console.error(error));
+        }
     }
 
     const delete_account = async () => {
