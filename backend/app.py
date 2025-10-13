@@ -33,47 +33,36 @@ with app.app_context():
         hashed_admin_password = bcrypt.generate_password_hash(ADMIN_PASSWORD)
         admin_user = User(first_name='Admin',last_name='Admin',email=ADMIN_MAIL,password=hashed_admin_password,role='Administrateur')
         db.session.add(admin_user)
-        db.session.commit()           
-
-# Get user info route
-@app.route('/user-info/<user_id>', methods=['POST'])
-def get_user_info(user_id):
-    user = User.query.filter_by(id=user_id).first()
-    return jsonify({
-        "id": user.id,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "email": user.email,
-        "role": user.role
-    })
+        db.session.commit()
+        
+### ADMIN ROUTES ###
+# Admin role required decorator           
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user_id = session.get("user_id")
+        if not user_id:
+            return jsonify({"error": "Unauthorized"}), 401
+        
+        user = User.query.filter_by(id=user_id).first()
+        if user.role != 'Administrateur':
+            return jsonify({"error": "Forbidden"}), 403
+        
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Get all users info route
 @app.route("/@all", methods=['GET'])
+@admin_required
 def get_all_users():
     users = User.query.all()
     user_schema = UserSchema(many=True)
     user_data = user_schema.dump(users)
     return jsonify(data=user_data)
 
-# Get current user info
-@app.route("/@me", methods=['GET'])
-def get_current_user():
-    user_id = session.get("user_id")
-    
-    if not user_id:
-        return jsonify({"error": "Not connected"})
-    
-    user = User.query.filter_by(id=user_id).first()
-    return jsonify({
-        "id": user.id,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "email": user.email,
-        "role": user.role
-    })
-    
 # Add new user route
 @app.route("/add-user", methods=["POST"])
+@admin_required
 def add_user():
     email = request.json["email"]
     first_name = request.json["first_name"]
@@ -96,9 +85,10 @@ def add_user():
     return jsonify({
         "id": new_user.id
     })
-    
+
 # Modify user route
 @app.route("/modify-user/<user_id>", methods=['POST'])
+@admin_required
 def modify_user(user_id):
     user = User.query.filter_by(id=user_id).first()
     if not user:
@@ -132,6 +122,7 @@ def modify_user(user_id):
     
 # Delete user route
 @app.route("/delete-user/<user_id>", methods=['POST'])
+@admin_required
 def delete_user(user_id):
     user = User.query.filter_by(id=user_id).first()
     if not user:
@@ -142,6 +133,37 @@ def delete_user(user_id):
     
     return jsonify({
         "200": "User successfully deleted."
+    })
+
+### User routes ###
+
+# Get user info route
+@app.route('/user-info/<user_id>', methods=['POST'])
+def get_user_info(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    return jsonify({
+        "id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "role": user.role
+    })
+
+# Get current user info
+@app.route("/@me", methods=['GET'])
+def get_current_user():
+    user_id = session.get("user_id")
+    
+    if not user_id:
+        return jsonify({"error": "Not connected"})
+    
+    user = User.query.filter_by(id=user_id).first()
+    return jsonify({
+        "id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "role": user.role
     })
 
 # Home route
