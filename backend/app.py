@@ -7,7 +7,7 @@ from config import ApplicationConfig
 from models import db, ma, User, UserSchema
 from dotenv import load_dotenv
 from functools import wraps
-import os
+import os, re
 
 # Constantes
 ADMIN_MAIL = os.getenv('ADMIN_MAIL')
@@ -34,6 +34,35 @@ with app.app_context():
         admin_user = User(first_name='Admin',last_name='Admin',email=ADMIN_MAIL,password=hashed_admin_password,role='Administrateur')
         db.session.add(admin_user)
         db.session.commit()
+
+### USEFULL FUNCTIONS ###
+# Validate user fields for database entry
+VALID_ROLES = {"Utilisateur", "Administrateur"}
+
+def validate_user_fields(email, first_name, last_name, password=None, role=None):
+    if not is_valid_email(email) or len(email) > 345:
+        return "Format d'email invalide ou trop long."
+    if len(first_name) < 1 or len(first_name) > 50:
+        return "Le prénom doit contenir entre 1 et 50 caractères."
+    if len(last_name) < 1 or len(last_name) > 50:
+        return "Le nom doit contenir entre 1 et 50 caractères."
+    if role and role not in VALID_ROLES:
+        return "Rôle invalide."
+    if password is not None:
+        if not is_strong_password(password):
+            return "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial."
+    return None
+
+# Email validation function
+def is_valid_email(email):
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(email_regex, email)
+
+# Password strength validation function
+def is_strong_password(password):
+    # Au moins 8 caractères, une majuscule, une minuscule, un chiffre, un caractère spécial
+    regex = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$'
+    return re.match(regex, password)
         
 ### ADMIN ROUTES ###
 # Admin role required decorator           
@@ -74,7 +103,11 @@ def add_user():
     user_already_exists = User.query.filter_by(email=email).first() is not None
 
     if user_already_exists:
-        return jsonify({"error": "User already exists"})
+        return jsonify({"error": "User already exists"}), 409
+    
+    error = validate_user_fields(email, first_name, last_name, password, role)
+    if error:
+        return jsonify({"error": error}), 400
     
     # Création du nouvel utilisateur du mot de passe.
     hashed_password = bcrypt.generate_password_hash(password)
@@ -103,7 +136,11 @@ def modify_user(user_id):
     if new_email != user.email: 
         email_already_exists = User.query.filter_by(email=new_email).first() is not None
         if email_already_exists:
-            return jsonify({"error": "Email already exists"})
+            return jsonify({"error": "Email already exists"}), 409
+        
+    error = validate_user_fields(new_email, new_first_name, new_last_name, new_password, new_role)
+    if error:
+        return jsonify({"error": error}), 400
     
     user.email = new_email
     user.first_name = new_first_name
@@ -128,6 +165,17 @@ def delete_user(user_id):
     if not user:
         return jsonify({"error": "User not found"}), 404
     
+    # Empêcher la suppression de son propre compte admin
+    current_user_id = session.get("user_id")
+    if user.id == current_user_id:
+        return jsonify({"error": "Vous ne pouvez pas supprimer votre propre compte admin."}), 403
+
+    # Empêcher la suppression du dernier admin
+    if user.role == "Administrateur":
+        admin_count = User.query.filter_by(role="Administrateur").count()
+        if admin_count <= 1:
+            return jsonify({"error": "Impossible de supprimer le dernier compte administrateur."}), 403
+    
     User.query.filter_by(id=user_id).delete()
     db.session.commit()
     
@@ -135,10 +183,9 @@ def delete_user(user_id):
         "200": "User successfully deleted."
     })
 
-### User routes ###
-
 # Get user info route
 @app.route('/user-info/<user_id>', methods=['POST'])
+@admin_required
 def get_user_info(user_id):
     user = User.query.filter_by(id=user_id).first()
     return jsonify({
@@ -149,29 +196,29 @@ def get_user_info(user_id):
         "role": user.role
     })
 
+### User routes ###
+
 # Get current user info
 @app.route("/@me", methods=['GET'])
 def get_current_user():
     user_id = session.get("user_id")
     
     if not user_id:
-        return jsonify({"error": "Not connected"})
+        return jsonify({"user": None}), 401
     
     user = User.query.filter_by(id=user_id).first()
-    return jsonify({
-        "id": user.id,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "email": user.email,
-        "role": user.role
-    })
+    if not user:
+        return jsonify({"user": None}), 401
+    
+    user_schema = UserSchema()
+    return user_schema.jsonify(user)
 
 # Home route
 @app.route("/")
 def home():
-    return {}    
+    return {}
 
-# Signup route
+# Register route
 @app.route("/register", methods=["POST"])
 def register():
     email = request.json["email"]
@@ -183,7 +230,11 @@ def register():
     user_already_exists = User.query.filter_by(email=email).first() is not None
 
     if user_already_exists:
-        return jsonify({"error": "User already exists"})
+        return jsonify({"error": "User already exists"}), 409
+    
+    error = validate_user_fields(email, first_name, last_name, password, role=None)
+    if error:
+        return jsonify({"error": error}), 400
     
     # Création du nouvel utilisateur du mot de passe.
     hashed_password = bcrypt.generate_password_hash(password)
@@ -221,10 +272,8 @@ def login_user():
 # Logout route
 @app.route("/logout", methods=['POST'])
 def logout():
-    if session['user_id']:
-        session.pop('user_id')
-        return "200"
-    return jsonify({"error": "No sessions found"}), 500
+    session.pop('user_id', None)
+    return jsonify({"message": "Successfully logged out."}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)
