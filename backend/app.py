@@ -259,9 +259,8 @@ def register():
     # Connexion automatique après l'inscription
     session["user_id"] = new_user.id
     
-    return jsonify({
-        "id": new_user.id
-    })
+    user_schema = UserSchema()
+    return user_schema.jsonify(new_user)
 
 # Login route
 @app.route("/login", methods=["POST"])
@@ -279,10 +278,8 @@ def login_user():
     
     session["user_id"] = user.id
     
-    return jsonify({
-        "id": user.id,
-        "email": user.email
-    })
+    user_schema = UserSchema()
+    return user_schema.jsonify(user)
 
 # Logout route
 @app.route("/logout", methods=['POST'])

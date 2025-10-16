@@ -2,7 +2,7 @@ import { useState } from "react";
 import httpClient from '../httpClient'
 import { useNavigate } from "react-router-dom";
 
-function Register() {
+const Register = ({setUser}) => {
 
     const navigate = useNavigate();
 
@@ -82,7 +82,8 @@ function Register() {
                 password: password
             })
             .then(resp =>{
-                console.log(resp)
+                setUser(resp.data);
+                console.log(resp.data)
                 navigate('/');
             })
             .catch(error => {

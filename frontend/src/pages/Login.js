@@ -1,15 +1,13 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from '../httpClient'
-import UserContext from "../UserContext";
 
-function Login() {
+function Login({ setUser }) {
 
     const navigate = useNavigate();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const {user, setUser} = useContext(UserContext)
 
     const logUserIn = async () => {
         if (email.length === 0){
@@ -24,8 +22,8 @@ function Login() {
                 password: password
             })
             .then(function (response){
-                setUser(response.data.user);
-                console.log(response);
+                setUser(response.data);
+                console.log(response.data);
                 navigate("/");
             })
             .catch(function (error){

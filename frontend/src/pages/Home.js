@@ -1,10 +1,6 @@
-import { useContext } from "react";
-import UserContext from "../UserContext";
+import React from "react";
 
-function Home() {
-
-    const {user, setUser} = useContext(UserContext)
-
+const Home = ({user}) => {
     return (
         <div>
         <h1>Application test - React Flask</h1><br/>

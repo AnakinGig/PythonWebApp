@@ -9,17 +9,35 @@ function ManageUser() {
 
     const [user, setUser] = useState()
 
-    const [newFirstName, setNewFirstName] = useState(null)
-    const [newLastName, setNewLastName] = useState(null)
-    const [newEmail, setNewEmail] = useState(null)
-    const [newPassword, setNewPassword] = useState(null)
-    const [newRole, setNewRole] = useState(null)
+    const [new_first_name, setNewFirstName] = useState(null)
+    const [new_last_name, setNewLastName] = useState(null)
+    const [new_email, setNewEmail] = useState(null)
+    const [new_password, setNewPassword] = useState(null)
+    const [new_role, setNewRole] = useState(null)
 
     const [form_submited, setFormSubmited] = useState(false);
     const [first_name_error, setFirstNameError] = useState('');
     const [last_name_error, setLastNameError] = useState('');
     const [email_error, setEmailError] = useState('');
     const [password_error, setPasswordError] = useState('');
+
+    const firstNameVerif = (value) => {
+        if (value === ''){
+            setFirstNameError("Veuillez entrer votre prénom")
+            return false
+        }
+        setFirstNameError("")
+        return true
+    }
+
+    const lastNameVerif = (value) => {
+        if (value === ''){
+            setLastNameError("Veuillez entrer votre nom")
+            return false
+        }
+        setLastNameError("")
+        return true
+    }
 
     const emailVerif = (value) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,20 +68,24 @@ function ManageUser() {
         e.preventDefault();
         setFormSubmited(true)
 
-        const isEmailValid = emailVerif(newEmail);
-        const isPasswordValid = passwordVerif(newPassword);
+        const isFirstNameValid = firstNameVerif(new_first_name);
+        const isLastNameValid = lastNameVerif(new_last_name);
+        const isEmailValid = emailVerif(new_email);
+        const isPasswordValid = passwordVerif(new_password);
 
-        const isFormValid = isEmailValid && isPasswordValid;
+        const isFormValid = isFirstNameValid && isLastNameValid && isEmailValid && isPasswordValid;
         if (isFormValid) {
             const payload = {
-                first_name: newFirstName ?? user.first_name,
-                last_name: newLastName ?? user.last_name,
-                email: newEmail ?? user.email,
-                role: newRole ?? user.role,
+                first_name: new_first_name ?? user.first_name,
+                last_name: new_last_name ?? user.last_name,
+                email: new_email ?? user.email,
+                role: new_role ?? user.role,
             }
     
-            if (newPassword){
-                payload.password = newPassword;
+            if (new_password){
+                payload.password = new_password;
+            }else{
+                payload.password = user.password;
             }
     
             httpClient.post("//localhost:5000/modify-user/"+user_id.id, payload, {
@@ -75,17 +97,33 @@ function ManageUser() {
                 navigate("/admin/dashboard")
                 console.log(resp.data)
             })
-            .catch(error => console.error(error));
+            .catch(error => {
+                if (error.response && error.response.data && error.response.data.error) {
+                    alert(error.response.data.error);
+                } else {
+                    alert('Une erreur est survenue.');
+                }
+            });
         }
     }
 
     const delete_account = async () => {
+        setFormSubmited(true)
         httpClient.post("//localhost:5000/delete-user/"+user_id.id)
         .then(resp => {
             navigate("/admin/dashboard")
             console.log(resp.data)
         })
-        .catch(error => console.error(error));
+        .catch(error => {
+            if (error.response && error.response.data && error.response.data.error) {
+                alert(error.response.data.error);
+                if (error.response.data.error === "Vous ne pouvez pas supprimer votre propre compte admin."){
+                    navigate("/admin/dashboard")
+                }
+            } else {
+                alert('Une erreur est survenue.');
+            }
+        });
     }
 
     const handle_close = async () => {
@@ -95,10 +133,16 @@ function ManageUser() {
 
     useEffect(() => {
         httpClient.post("//localhost:5000/user-info/"+user_id.id)
-            .then(res => {
-                setUser(res.data);
+            .then(resp => {
+                setUser(resp.data);
             })
-            .catch(err => console.error(err));
+            .catch(error => {
+                if (error.response && error.response.data && error.response.data.error) {
+                    alert(error.response.data.error);
+                } else {
+                    alert('Une erreur est survenue.');
+                }
+            });
     },[]);
 
     useEffect(() => {
@@ -117,28 +161,32 @@ function ManageUser() {
                 <h1>Modifier les informations de {user.first_name} {user.last_name}</h1>
                 <form className="row mt-4">
                     <div className="form-outline col-4">
-                        <input type="text" id="nom" value={newLastName} onChange={(e) => setNewLastName(e.target.value)} className="form-control form-control-lg" placeholder="Entrer un nouveau nom." />
+                        <input type="text" id="nom" value={new_last_name} onChange={(e) => {setNewLastName(e.target.value);lastNameVerif(e.target.value)}} className={`form-control form-control-lg ${last_name_error ? 'is-invalid' : form_submited ? 'is-valid' : ''}`} placeholder="Entrer un nouveau nom." />
                         <label className="form-label">Nom</label>
+                        <div className="invalid-feedback">{last_name_error}</div>
                     </div>
                     <div className="form-outline col-4">
-                        <input type="text" id="prénom" value={newFirstName} onChange={(e) => setNewFirstName(e.target.value)} className="form-control form-control-lg" placeholder="Entrer un nouveau prénom." />
+                        <input type="text" id="prénom" value={new_first_name} onChange={(e) => {setNewFirstName(e.target.value);firstNameVerif(e.target.value)}} className={`form-control form-control-lg ${first_name_error ? 'is-invalid' : form_submited ? 'is-valid' : ''}`} placeholder="Entrer un nouveau prénom." />
                         <label className="form-label">Prénom</label>
+                        <div className="invalid-feedback">{first_name_error}</div>
                     </div>
                     <div className="form-outline col-4">
-                        <select className="form-select form-select-lg" value={newRole} onChange={(e) => setNewRole(e.target.value)}>
+                        <select className="form-select form-select-lg" value={new_role} onChange={(e) => setNewRole(e.target.value)}>
                             <option value="Utilisateur">Utilisateur</option>
                             <option value="Administrateur">Administrateur</option>
                         </select>
                         <label className="form-label">Rôle</label>
                     </div>
                     <div className="form-outline mb-4">
-                        <input type="email" id="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="form-control form-control-lg" placeholder="Entrer une nouvelle adresse  mail." />
+                        <input type="email" id="email" value={new_email} onChange={(e) => {setNewEmail(e.target.value);emailVerif(e.target.value)}} className={`form-control form-control-lg ${email_error ? 'is-invalid' : form_submited ? 'is-valid' : ''}`} placeholder="Entrer une nouvelle adresse  mail." />
                         <label className="form-label">Adresse mail</label>
+                        <div className="invalid-feedback">{email_error}</div>
                     </div>
 
                     <div className="form-outline mb-3">
-                        <input type="password" id="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="form-control form-control-lg" placeholder="Entrer un nouveau mot de passe." />
+                        <input type="password" id="password" value={new_password} onChange={(e) => {setNewPassword(e.target.value);passwordVerif(e.target.value)}} className={`form-control form-control-lg ${password_error ? 'is-invalid' : form_submited ? 'is-valid' : ''}`} placeholder="Entrer un nouveau mot de passe." />
                         <label className="form-label">Mot de passe</label>
+                        <div className="invalid-feedback">{password_error}</div>
                     </div>
 
                     <div className="text-center text-lg-start mt-4 pt-2">
@@ -160,14 +208,14 @@ function ManageUser() {
                                         {MODIFY === true ? 
                                         (
                                             <div>
-                                                <button type="button" className="btn btn-primary" onClick={modify_account}>Oui</button>
+                                                <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={modify_account}>Oui</button>
                                                 <button type="button" className="btn btn-danger" data-bs-dismiss="modal" onClick={handle_close}>Non</button>
                                             </div>
                                         ) : 
                                         DELETE === true ? 
                                         (
                                             <div>
-                                                <button type="button" className="btn btn-primary" onClick={delete_account}>Oui</button>
+                                                <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={delete_account}>Oui</button>
                                                 <button type="button" className="btn btn-danger" data-bs-dismiss="modal"onClick={handle_close}>Non</button>
                                             </div>
                                         ) : ("")}
