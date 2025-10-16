@@ -17,6 +17,7 @@ class User(db.Model):
     password = db.Column(db.Text, nullable=False)
     role = db.Column(db.String(50), nullable=False, default="Utilisateur")
 
+# Marshmallow Schema to strucuture the JSON response
 class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User

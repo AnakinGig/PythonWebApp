@@ -7,10 +7,12 @@ load_dotenv()
 class ApplicationConfig:
     SECRET_KEY = os.environ["SECRET_KEY"]
     
+    # Database config
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///users.db'
     
+    # Server side ession config
     SESSION_TYPE = "redis"
     SESSION_PERMANENT = False
     SESSION_USER_SIGNER = True

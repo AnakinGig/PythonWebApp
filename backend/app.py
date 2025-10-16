@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 from functools import wraps
 import os, re, logging
 
-# Constantes
+# CONSTANTS
+load_dotenv()
 ADMIN_MAIL = os.getenv('ADMIN_MAIL')
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 
@@ -24,10 +25,7 @@ server_session = Session(app)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(message)s',
-    handlers=[
-        logging.FileHandler("app.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("app.log"),logging.StreamHandler()]
 )
 
 # Config BDD
@@ -46,6 +44,7 @@ with app.app_context():
         db.session.commit()
 
 ### USEFULL FUNCTIONS ###
+
 # Validate user fields for database entry
 VALID_ROLES = {"Utilisateur", "Administrateur"}
 
@@ -113,7 +112,7 @@ def add_user():
     user_already_exists = User.query.filter_by(email=email).first() is not None
 
     if user_already_exists:
-        return jsonify({"error": "User already exists"}), 409
+        return jsonify({"error": "Cette addresse email est déjà utilisée."}), 409
     
     error = validate_user_fields(email, first_name, last_name, password, role)
     if error:
@@ -144,10 +143,15 @@ def modify_user(user_id):
     new_password = request.json.get("password")
     new_role = request.json["role"]
     
+    if user.role == "Administrateur":
+        admin_count = User.query.filter_by(role="Administrateur").count()
+        if admin_count <= 1 and new_role != "Administrateur":
+            return jsonify({"error": "Impossible de modifier le rôle du dernier compte administrateur."}), 403
+    
     if new_email != user.email: 
         email_already_exists = User.query.filter_by(email=new_email).first() is not None
         if email_already_exists:
-            return jsonify({"error": "Email already exists"}), 409
+            return jsonify({"error": "Cette addresse email est déjà utilisée."}), 409
         
     error = validate_user_fields(new_email, new_first_name, new_last_name, new_password, new_role)
     if error:
@@ -226,11 +230,6 @@ def get_current_user():
     user_schema = UserSchema()
     return user_schema.jsonify(user)
 
-# Home route
-@app.route("/")
-def home():
-    return {}
-
 # Register route
 @app.route("/register", methods=["POST"])
 def register():
@@ -271,10 +270,10 @@ def login_user():
     user = User.query.filter_by(email=email).first()
 
     if user is None:
-        return jsonify({"error": "Unauthorized"}), 401
+        return jsonify({"error": "Email invalide"}), 401
     
     if not bcrypt.check_password_hash(user.password, password):
-        return jsonify({"error": "Unauthorized"}), 401
+        return jsonify({"error": "Mot de passe invalide"}), 401
     
     session["user_id"] = user.id
     
