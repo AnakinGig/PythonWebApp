@@ -76,11 +76,7 @@ function AdminDashboard() {
         setUsers(resp.data);
       })
       .catch((error) => {
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.error
-        ) {
+        if (error.response && error.response.data && error.response.data.error) {
           alert(error.response.data.error);
         } else {
           alert("Une erreur est survenue.");
@@ -113,13 +109,10 @@ function AdminDashboard() {
         .then((resp) => {
           console.log(resp);
           handleClose();
+          getAllUsersInfo();
         })
         .catch((error) => {
-          if (
-            error.response &&
-            error.response.data &&
-            error.response.data.error
-          ) {
+          if (error.response && error.response.data && error.response.data.error) {
             alert(error.response.data.error);
           } else {
             alert("Une erreur est survenue.");

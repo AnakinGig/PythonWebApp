@@ -20,6 +20,7 @@ function ManageUser() {
   const [last_name_error, setLastNameError] = useState("");
   const [email_error, setEmailError] = useState("");
   const [password_error, setPasswordError] = useState("");
+  const [role_error, setRoleError] = useState("");
 
   // Set modal to modify or delete mode
   const [MODIFY, setMODIFY] = useState(false);
@@ -105,9 +106,12 @@ function ManageUser() {
         })
         .catch((error) => {
           if (error.response && error.response.data && error.response.data.error) {
-            alert(error.response.data.error);
-            if (error.response.data.error ==="Impossible de modifier le rôle du dernier compte administrateur.") {
-              navigate("/admin/dashboard");
+            if (error.response.data.error === "Impossible de modifier le rôle du dernier compte administrateur.") {
+              setRoleError("Impossible de modifier le rôle du dernier compte administrateur.");
+            }else if (error.response.data.error === "Impossible de modifier votre propre rôle administrateur.") {
+              setRoleError("Impossible de modifier votre propre rôle administrateur.");
+            }else{
+              alert(error.response.data.error);
             }
           } else {
             alert("Une erreur est survenue.");
@@ -176,43 +180,42 @@ function ManageUser() {
           <h1>Modifier les informations de {user.first_name} {user.last_name}</h1>
           <form className="row mt-4">
             <div className="form-outline col-4">
-              <input type="text" id="nom" value={new_last_name}
-                onChange={(e) => {
-                  setNewLastName(e.target.value);
-                  lastNameVerif(e.target.value);
-                }}
+              <label className="form-label">Nom</label>
+              <input type="text" id="nom" value={new_last_name} onChange={(e) => {setNewLastName(e.target.value);lastNameVerif(e.target.value);}}
                 className={`form-control form-control-lg ${last_name_error ? "is-invalid" : form_submited ? "is-valid" : ""}`} placeholder="Entrer un nouveau nom."
               />
-              <label className="form-label">Nom</label>
               <div className="invalid-feedback">{last_name_error}</div>
             </div>
             <div className="form-outline col-4">
+              <label className="form-label">Prénom</label>
               <input type="text" id="prénom" value={new_first_name} onChange={(e) => {setNewFirstName(e.target.value);firstNameVerif(e.target.value);}}
                 className={`form-control form-control-lg ${first_name_error ? "is-invalid" : form_submited ? "is-valid" : ""}`} placeholder="Entrer un nouveau prénom."
               />
-              <label className="form-label">Prénom</label>
               <div className="invalid-feedback">{first_name_error}</div>
             </div>
             <div className="form-outline col-4">
-              <select className="form-select form-select-lg" value={new_role} onChange={(e) => setNewRole(e.target.value)}>
+              <label className="form-label">Rôle</label>
+              <select value={new_role} onChange={(e) => setNewRole(e.target.value)}
+                className={`form-control form-control-lg ${role_error ? "is-invalid" : form_submited ? "is-valid" : ""}`} 
+              >
                 <option value="Utilisateur">Utilisateur</option>
                 <option value="Administrateur">Administrateur</option>
               </select>
-              <label className="form-label">Rôle</label>
+              <div className="invalid-feedback">{role_error}</div>
             </div>
             <div className="form-outline mb-4">
+              <label className="form-label">Adresse mail</label>
               <input type="email" id="email" value={new_email}onChange={(e) => {setNewEmail(e.target.value);emailVerif(e.target.value);}}
                 className={`form-control form-control-lg ${email_error ? "is-invalid" : form_submited ? "is-valid" : ""}`} placeholder="Entrer une nouvelle adresse  mail."
               />
-              <label className="form-label">Adresse mail</label>
               <div className="invalid-feedback">{email_error}</div>
             </div>
 
             <div className="form-outline mb-3">
+              <label className="form-label">Mot de passe</label>
               <input type="password" id="password" value={new_password} onChange={(e) => {setNewPassword(e.target.value);passwordVerif(e.target.value);}}
                 className={`form-control form-control-lg ${password_error ? "is-invalid" : form_submited ? "is-valid" : ""}`} placeholder="Entrer un nouveau mot de passe."
               />
-              <label className="form-label">Mot de passe</label>
               <div className="invalid-feedback">{password_error}</div>
             </div>
 

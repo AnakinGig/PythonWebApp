@@ -143,10 +143,17 @@ def modify_user(user_id):
     new_password = request.json.get("password")
     new_role = request.json["role"]
     
+    # Empêcher la modification du rôle du dernier admin
     if user.role == "Administrateur":
         admin_count = User.query.filter_by(role="Administrateur").count()
         if admin_count <= 1 and new_role != "Administrateur":
             return jsonify({"error": "Impossible de modifier le rôle du dernier compte administrateur."}), 403
+
+    # Empêcher la modification de son propre rôle admin
+    if user.role == "Administrateur":
+        current_user_id = session.get("user_id")
+        if user.id == current_user_id and new_role != "Administrateur":
+            return jsonify({"error": "Impossible de modifier votre propre rôle administrateur."}), 403
     
     if new_email != user.email: 
         email_already_exists = User.query.filter_by(email=new_email).first() is not None
