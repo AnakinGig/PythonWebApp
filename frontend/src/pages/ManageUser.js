@@ -97,7 +97,7 @@ function ManageUser() {
       }
 
       httpClient
-        .post("//localhost:5000/modify-user/" + user_id.id, payload, {
+        .post(`${process.env.REACT_APP_BACKEND_URL}/modify-user/${user_id.id}`, payload, {
           headers: {"Content-Type": "application/json"},
         })
         .then((resp) => {
@@ -124,7 +124,7 @@ function ManageUser() {
   const delete_account = async () => {
     setFormSubmited(true);
     httpClient
-      .post("//localhost:5000/delete-user/" + user_id.id)
+      .post(`${process.env.REACT_APP_BACKEND_URL}/delete-user/${user_id.id}`)
       .then((resp) => {
         navigate("/admin/dashboard");
         console.log(resp.data);
@@ -150,7 +150,7 @@ function ManageUser() {
   // ### Fetch user info on page load ###
   useEffect(() => {
     httpClient
-      .post("//localhost:5000/user-info/" + user_id.id)
+      .post(`${process.env.REACT_APP_BACKEND_URL}/user-info/${user_id.id}`)
       .then((resp) => {
         setUser(resp.data);
       })

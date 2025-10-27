@@ -24,7 +24,7 @@ function App() {
 
     const fetchUser = async () => {
       try {
-        const resp = await httpClient.get("//localhost:5000/@me");
+        const resp = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/@me`);
         if (isMounted) setUser(resp.data);
       } catch (error) {
         console.error("Error fetching user:", error);
