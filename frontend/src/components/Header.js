@@ -8,7 +8,7 @@ function Header({ user, setUser }) {
   const location = useLocation();
 
   const logUserOut = async () => {
-    await httpClient.post("//localhost:5000/logout");
+    await httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/logout`);
     setUser(null);
     navigate("/");
   };

@@ -17,7 +17,7 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 # Config App
 app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
-CORS(app, supports_credentials=True)
+CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
 bcrypt = Bcrypt(app)
 server_session = Session(app)
 

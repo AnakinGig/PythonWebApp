@@ -13,7 +13,8 @@ Tout d'abord mettez a jour votre VPS :
 ### Installation de docker
 
 Tout d'abord il faut installer le repo apt de Docker
-``
+
+``` bash
 sudo apt-get install ca-certificates curl
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
@@ -24,7 +25,7 @@ echo \
   $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
-``
+```
 
 Ensuite on peut l'installer
 ``sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y``
@@ -48,6 +49,17 @@ Pour la générer faite dans votre terminal linux :
 
 Copier ensuite cette la clée qui devrais resemblé à quelque chose comme ça :
 ``0rnd5wsmCJYz9wucw4OCl3uOP3FxbRC+nV6pptA07KE=``
+
+Créer ensuite un fichier .env à la racine du dossier du site et créer les variable d'environement suivantes :
+
+``` bash
+SECRET_KEY=your_key
+ADMIN_MAIL=your_admin_mail
+ADMIN_PASSWORD=your_admin_password
+REACT_APP_BACKEND_URL=http:127.0.0.1
+```
+
+Remplacer les 'your_...' par vos identifiant et votre clée secrète.
 
 Ensuite il faut initialiser l'application
 ``sudo docker compose build``
