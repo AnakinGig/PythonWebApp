@@ -10,7 +10,7 @@ class ApplicationConfig:
     # Database config
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///users.db'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://user:password@db:5432/users_db'
     
     # Server side ession config
     SESSION_TYPE = "redis"
