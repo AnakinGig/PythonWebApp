@@ -58,6 +58,8 @@ SECRET_KEY=your_key
 ADMIN_MAIL=your_admin_mail
 ADMIN_PASSWORD=your_admin_password
 REACT_APP_BACKEND_URL=http://localhost:5000
+DATABASE_URL=postgresql://user:password@db:5432/users_db
+FRONTEND_URL=http://localhost:3000
 ```
 
 Remplacer les 'your_...' par vos identifiant et votre clée secrète.
