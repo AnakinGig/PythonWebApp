@@ -71,7 +71,7 @@ function AdminDashboard() {
   // ### Fetch all users from the backend ###
   const getAllUsersInfo = async () => {
     httpClient
-      .get(`${process.env.REACT_APP_BACKEND_URL}/@all`)
+      .get(`${process.env.REACT_APP_BACKEND_URL}/admin/@all`)
       .then((resp) => {
         setUsers(resp.data);
       })
@@ -103,7 +103,7 @@ function AdminDashboard() {
 
     if (isFormValid) {
       httpClient
-        .post(`${process.env.REACT_APP_BACKEND_URL}/add-user`, {
+        .post(`${process.env.REACT_APP_BACKEND_URL}/admin/add-user`, {
           first_name: new_first_name,
           last_name: new_last_name,
           email: new_email,
@@ -112,6 +112,7 @@ function AdminDashboard() {
         })
         .then((resp) => {
           console.log(resp);
+          getAllUsersInfo();
           handleClose();
         })
         .catch((error) => {

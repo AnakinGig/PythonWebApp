@@ -1,6 +1,7 @@
 import { useEffect, useState, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import httpClient from "./components/httpClient";
+import Cookies from 'js-cookie';
 
 // Component imports
 const Header = lazy(() => import('./components/Header'));
@@ -18,24 +19,27 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ### Fetch the current user on app load ###
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchUser = async () => {
+    const fetchCsrfAndUser = async () => {
+      let isMounted = true;
       try {
-        const resp = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/@me`);
-        if (isMounted) setUser(resp.data);
+        // Fetch CSRF token first
+        const csrfResponse = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/get_csrf_token`);
+        const csrfToken = csrfResponse.data.csrf_token;
+        Cookies.set('csrf_token', csrfToken);
+
+        // Then fetch user
+        const userResponse = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/@me`);
+        if (isMounted) setUser(userResponse.data);
       } catch (error) {
-        console.error("Error fetching user:", error);
+        console.error("Error fetching data:", error);
         if (isMounted) setUser(null);
       } finally {
         if (isMounted) setLoading(false);
       }
-    };
-    
-    fetchUser();
-    return () => { isMounted = false; };
+      return () => { isMounted = false; };
+    }
+    fetchCsrfAndUser();
   }, []);
 
   if (loading) return <div>Chargement...</div>;
