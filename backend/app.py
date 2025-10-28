@@ -20,7 +20,7 @@ ADMIN_PASSWORD = open("/run/secrets/ADMIN_PASSWORD").read() if os.path.exists("/
 # Config App
 app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
-CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
+CORS(app, origins=os.environ.get("FRONTEND_URL"), supports_credentials=True)
 bcrypt = Bcrypt()
 bcrypt.init_app(app)
 server_session = Session(app)
