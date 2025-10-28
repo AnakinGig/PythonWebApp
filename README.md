@@ -50,16 +50,26 @@ Pour la générer faite dans votre terminal linux :
 Copier ensuite cette la clée qui devrais resemblé à quelque chose comme ça :
 ``0rnd5wsmCJYz9wucw4OCl3uOP3FxbRC+nV6pptA07KE=``
 
-Créer ensuite un fichier .env à la racine du dossier du site et créer les variable d'environement suivantes :
+**Pour le développement :**
+Créer un fichier `.env` à la racine du dossier du site et créer les variables d'environnement suivantes :
 
 ``` bash
 SECRET_KEY=your_key
 ADMIN_MAIL=your_admin_mail
 ADMIN_PASSWORD=your_admin_password
-REACT_APP_BACKEND_URL=http:127.0.0.1
+REACT_APP_BACKEND_URL=http://localhost:5000
 ```
 
 Remplacer les 'your_...' par vos identifiant et votre clée secrète.
+
+**Pour la production (avec Docker Secrets) :**
+Créez un dossier `.env_prod_secrets` à la racine du projet. À l'intérieur de ce dossier, créez des fichiers séparés pour chaque secret, contenant uniquement la valeur du secret.
+
+Exemple :
+
+- `.env_prod_secrets/SECRET_KEY` (contenant `your_secret_key_value`)
+- `.env_prod_secrets/ADMIN_MAIL` (contenant `your_admin_mail_value`)
+- `.env_prod_secrets/ADMIN_PASSWORD` (contenant `your_admin_password_value`)
 
 Ensuite il faut initialiser l'application
 ``sudo docker compose build``

@@ -14,8 +14,8 @@ from routes.auth import auth_bp
 
 # CONSTANTS
 load_dotenv()
-ADMIN_MAIL = os.getenv('ADMIN_MAIL')
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
+ADMIN_MAIL = open("/run/secrets/ADMIN_MAIL").read() if os.path.exists("/run/secrets/ADMIN_MAIL") else os.getenv('ADMIN_MAIL')
+ADMIN_PASSWORD = open("/run/secrets/ADMIN_PASSWORD").read() if os.path.exists("/run/secrets/ADMIN_PASSWORD") else os.getenv('ADMIN_PASSWORD')
 
 # Config App
 app = Flask(__name__)

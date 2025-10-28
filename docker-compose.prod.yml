@@ -7,13 +7,16 @@ services:
       dockerfile: backend/Dockerfile.prod
     environment:
       FLASK_ENV: production
-      SECRET_KEY: ${SECRET_KEY}
-      ADMIN_MAIL: ${ADMIN_MAIL}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      DATABASE_URL: postgresql://user:password@db:5432/users_db
+    secrets:
+      - SECRET_KEY
+      - ADMIN_MAIL
+      - ADMIN_PASSWORD
     expose:
       - "5000"
     depends_on:
       - redis
+      - db
     networks:
       - main
     volumes:
@@ -37,9 +40,31 @@ services:
     networks:
       - main
 
+  db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    networks:
+      - main
+
 volumes:
   db_data:
+  postgres_data:
 
 networks:
   main:
     driver: bridge
+
+secrets:
+  SECRET_KEY:
+    file: ./.env_prod_secrets/SECRET_KEY
+  ADMIN_MAIL:
+    file: ./.env_prod_secrets/ADMIN_MAIL
+  ADMIN_PASSWORD:
+    file: ./.env_prod_secrets/ADMIN_PASSWORD

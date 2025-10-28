@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install production dependencies
 COPY backend/requirements.txt .
-RUN pip install --no-cache-dir gunicorn
+RUN apt-get update && apt-get install -y libpq-dev gcc && pip install --no-cache-dir gunicorn
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Final image

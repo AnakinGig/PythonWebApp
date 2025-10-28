@@ -5,12 +5,12 @@ import redis
 load_dotenv()
 
 class ApplicationConfig:
-    SECRET_KEY = os.environ["SECRET_KEY"]
+    SECRET_KEY = open("/run/secrets/SECRET_KEY").read() if os.path.exists("/run/secrets/SECRET_KEY") else os.environ["SECRET_KEY"]
     
     # Database config
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://user:password@db:5432/users_db'
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
     
     # Server side ession config
     SESSION_TYPE = "redis"
