@@ -119,6 +119,12 @@ Enfin on peut lancer le site web
 
 ## Commandes utiles
 
+### Vérification de l'environnement
+```bash
+# Vérifier que tout est correctement configuré
+docker compose exec backend python check_setup.py
+```
+
 ### Migrations de base de données
 ```bash
 # Initialiser les migrations (première fois seulement)
@@ -142,4 +148,22 @@ curl http://localhost:5000/health
 # Voir les logs
 docker compose logs -f backend
 docker compose logs -f frontend
+
+# Voir les logs en temps réel pour tous les services
+docker compose logs -f
+```
+
+### Développement
+```bash
+# Rebuilder après changement de dépendances
+docker compose build --no-cache
+
+# Accéder au shell du conteneur backend
+docker compose exec backend /bin/bash
+
+# Accéder au shell du conteneur frontend
+docker compose exec frontend /bin/sh
+
+# Nettoyer les conteneurs et volumes
+docker compose down -v
 ```
