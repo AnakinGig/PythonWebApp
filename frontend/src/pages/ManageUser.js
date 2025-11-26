@@ -2,10 +2,12 @@ import { useParams } from "react-router";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import httpClient from "../components/httpClient";
+import Toast from "../components/Toast";
 
 function ManageUser() {
   const user_id = useParams();
   const navigate = useNavigate();
+  const [toast, setToast] = useState(null);
 
   const [user, setUser] = useState();
 
@@ -99,13 +101,10 @@ function ManageUser() {
           console.log(resp.data);
         })
         .catch((error) => {
-          if (error.response && error.response.data && error.response.data.error) {
-            alert(error.response.data.error);
-            if (error.response.data.error ==="Impossible de modifier le rôle du dernier compte administrateur.") {
-              navigate("/admin/dashboard");
-            }
-          } else {
-            alert("Une erreur est survenue.");
+          const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+          setToast({ message: errorMsg, type: 'error' });
+          if (errorMsg.includes("dernier compte administrateur") || errorMsg.includes("propre rôle")) {
+            setTimeout(() => navigate("/admin/dashboard"), 2000);
           }
         });
     }
@@ -121,13 +120,10 @@ function ManageUser() {
         console.log(resp.data);
       })
       .catch((error) => {
-        if (error.response && error.response.data && error.response.data.error) {
-          alert(error.response.data.error);
-          if (error.response.data.error === "Vous ne pouvez pas supprimer votre propre compte admin.") {
-            navigate("/admin/dashboard");
-          }
-        } else {
-          alert("Une erreur est survenue.");
+        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+        setToast({ message: errorMsg, type: 'error' });
+        if (errorMsg.includes("propre compte") || errorMsg.includes("dernier compte")) {
+          setTimeout(() => navigate("/admin/dashboard"), 2000);
         }
       });
   };
@@ -146,11 +142,8 @@ function ManageUser() {
         setUser(resp.data);
       })
       .catch((error) => {
-        if (error.response && error.response.data && error.response.data.error) {
-          alert(error.response.data.error);
-        } else {
-          alert("Une erreur est survenue.");
-        }
+        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+        setToast({ message: errorMsg, type: 'error' });
       });
   }, [user_id.id]);
 
@@ -166,6 +159,7 @@ function ManageUser() {
 
   return (
     <div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       {user !== undefined ? (
         <div className="">
           <h1>Modifier les informations de {user.first_name} {user.last_name}</h1>

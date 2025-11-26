@@ -3,7 +3,8 @@ from flask_bcrypt import Bcrypt
 from models import db, User, UserSchema
 from functools import wraps
 import logging
-from utils import validate_user_fields
+from utils import validate_user_fields, sanitize_input
+from constants import UserRole, ErrorMessages, SuccessMessages
 
 # Create a Blueprint for admin-related routes
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/admin')
@@ -16,41 +17,58 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         user_id = session.get("user_id")
         if not user_id:
-            return jsonify({"error": "Unauthorized"}), 401
+            return jsonify({"error": ErrorMessages.UNAUTHORIZED}), 401
         
         user = User.query.filter_by(id=user_id).first()
-        if user.role != 'Administrateur':
-            return jsonify({"error": "Forbidden"}), 403
+        if user.role != UserRole.ADMIN:
+            return jsonify({"error": ErrorMessages.FORBIDDEN}), 403
         
         return f(*args, **kwargs)
     return decorated_function
 
 ### ADMIN ROUTES ###
 
-# Get all users info route
+# Get all users info route with pagination
 @admin_bp.route("/@all", methods=['GET'])
 @admin_required
 def get_all_users():
-    users = User.query.all()
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    
+    # Limit per_page to prevent abuse
+    per_page = min(per_page, 100)
+    
+    pagination = User.query.paginate(page=page, per_page=per_page, error_out=False)
     user_schema = UserSchema(many=True)
-    user_data = user_schema.dump(users)
-    return jsonify(data=user_data)
+    user_data = user_schema.dump(pagination.items)
+    
+    return jsonify({
+        'data': user_data,
+        'pagination': {
+            'page': page,
+            'per_page': per_page,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
+    })
 
 # Add new user route
 @admin_bp.route("/add-user", methods=["POST"])
 @admin_required
 def add_user():
-    email = request.json["email"]
-    first_name = request.json["first_name"]
-    last_name = request.json["last_name"]
-    password = request.json["password"]
+    email = sanitize_input(request.json["email"])
+    first_name = sanitize_input(request.json["first_name"])
+    last_name = sanitize_input(request.json["last_name"])
+    password = request.json["password"]  # Don't sanitize passwords
     role = request.json["role"]
     
     # Vérification si le nom d'utilisateur existe déjà.
     user_already_exists = User.query.filter_by(email=email).first() is not None
 
     if user_already_exists:
-        return jsonify({"error": "Cette addresse email est déjà utilisée."}), 409
+        return jsonify({"error": ErrorMessages.USER_EXISTS}), 409
     
     error = validate_user_fields(email, first_name, last_name, password, role)
     if error:
@@ -73,28 +91,28 @@ def add_user():
 def modify_user(user_id):
     user = User.query.filter_by(id=user_id).first()
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": ErrorMessages.USER_NOT_FOUND}), 404
     
-    new_email = request.json["email"]
-    new_first_name = request.json["first_name"]
-    new_last_name = request.json["last_name"]
-    new_password = request.json.get("password")
+    new_email = sanitize_input(request.json["email"])
+    new_first_name = sanitize_input(request.json["first_name"])
+    new_last_name = sanitize_input(request.json["last_name"])
+    new_password = request.json.get("password")  # Don't sanitize passwords
     new_role = request.json["role"]
     
     # Empêcher la modification du rôle du dernier admin
-    if user.role == "Administrateur":
-        admin_count = User.query.filter_by(role="Administrateur").count()
-        if admin_count <= 1 and new_role != "Administrateur":
-            return jsonify({"error": "Impossible de modifier le rôle du dernier compte administrateur."}), 403
+    if user.role == UserRole.ADMIN:
+        admin_count = User.query.filter_by(role=UserRole.ADMIN).count()
+        if admin_count <= 1 and new_role != UserRole.ADMIN:
+            return jsonify({"error": ErrorMessages.CANNOT_MODIFY_LAST_ADMIN_ROLE}), 403
 
     # Empêcher la modification de son propre rôle admin
-    if user.id == session.get("user_id") and new_role != "Administrateur":
-        return jsonify({"error": "Impossible de modifier votre propre rôle administrateur."}), 403
+    if user.id == session.get("user_id") and new_role != UserRole.ADMIN:
+        return jsonify({"error": ErrorMessages.CANNOT_MODIFY_SELF_ROLE}), 403
     
     if new_email != user.email: 
         email_already_exists = User.query.filter_by(email=new_email).first() is not None
         if email_already_exists:
-            return jsonify({"error": "Cette addresse email est déjà utilisée."}), 409
+            return jsonify({"error": ErrorMessages.USER_EXISTS}), 409
         
     error = validate_user_fields(new_email, new_first_name, new_last_name, new_password, new_role)
     if error:
@@ -122,25 +140,25 @@ def modify_user(user_id):
 def delete_user(user_id):
     user = User.query.filter_by(id=user_id).first()
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": ErrorMessages.USER_NOT_FOUND}), 404
     
     # Empêcher la suppression de son propre compte admin
     current_user_id = session.get("user_id")
     if user.id == current_user_id:
-        return jsonify({"error": "Vous ne pouvez pas supprimer votre propre compte admin."}), 403
+        return jsonify({"error": ErrorMessages.CANNOT_DELETE_SELF}), 403
 
     # Empêcher la suppression du dernier admin
-    if user.role == "Administrateur":
-        admin_count = User.query.filter_by(role="Administrateur").count()
+    if user.role == UserRole.ADMIN:
+        admin_count = User.query.filter_by(role=UserRole.ADMIN).count()
         if admin_count <= 1:
-            return jsonify({"error": "Impossible de supprimer le dernier compte administrateur."}), 403
+            return jsonify({"error": ErrorMessages.CANNOT_DELETE_LAST_ADMIN}), 403
     
     User.query.filter_by(id=user_id).delete()
     db.session.commit()
     logging.info(f"Admin {session.get('user_id')} a supprimé l'utilisateur: {user.email} (id: {user.id})")
     
     return jsonify({
-        "200": "User successfully deleted."
+        "message": SuccessMessages.USER_DELETED
     })
 
 # Get user info route
@@ -149,7 +167,7 @@ def delete_user(user_id):
 def get_user_info(user_id):
     user = User.query.filter_by(id=user_id).first()
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": ErrorMessages.USER_NOT_FOUND}), 404
     return jsonify({
         "id": user.id,
         "first_name": user.first_name,

@@ -76,5 +76,70 @@ Exemple :
 Ensuite il faut initialiser l'application
 ``sudo docker compose build``
 
-Enfin on peut lance le site web
+Enfin on peut lancer le site web
 ``sudo docker compose up``
+
+## Fonctionnalités
+
+### Sécurité
+- ✅ Protection CSRF (Cross-Site Request Forgery)
+- ✅ Hachage de mots de passe avec bcrypt
+- ✅ Validation forte des mots de passe (8+ caractères, majuscule, minuscule, chiffre, caractère spécial)
+- ✅ Sanitisation des entrées utilisateur (protection XSS)
+- ✅ Rate limiting sur les endpoints d'authentification (anti brute-force)
+- ✅ En-têtes de sécurité HTTP (X-Frame-Options, X-Content-Type-Options, etc.)
+- ✅ Gestion des rôles (Utilisateur/Administrateur)
+- ✅ Sessions sécurisées avec Redis
+
+### Backend
+- ✅ API REST avec Flask
+- ✅ Base de données PostgreSQL
+- ✅ Migrations de base de données avec Flask-Migrate
+- ✅ Pagination des listes d'utilisateurs
+- ✅ Endpoint de santé (`/health`) pour monitoring
+- ✅ Logging des opérations importantes
+- ✅ Gestion centralisée des constantes et messages d'erreur
+
+### Frontend
+- ✅ Interface React moderne avec Bootstrap 5
+- ✅ Routing avec React Router
+- ✅ Lazy loading des composants
+- ✅ Notifications toast pour meilleure UX
+- ✅ Validation en temps réel des formulaires
+- ✅ Pagination côté client
+- ✅ Routes protégées par rôle
+
+### DevOps
+- ✅ Docker Compose pour dev et production
+- ✅ Dockerignore pour optimiser les images
+- ✅ Politiques de redémarrage automatique des conteneurs
+- ✅ Health checks sur la base de données
+- ✅ Variables d'environnement sécurisées
+- ✅ Docker secrets pour la production
+
+## Commandes utiles
+
+### Migrations de base de données
+```bash
+# Initialiser les migrations (première fois seulement)
+docker compose exec backend python init_migrations.py
+
+# Créer une nouvelle migration après modification des models
+docker compose exec backend flask db migrate -m "description des changements"
+
+# Appliquer les migrations
+docker compose exec backend flask db upgrade
+
+# Revenir en arrière
+docker compose exec backend flask db downgrade
+```
+
+### Monitoring
+```bash
+# Vérifier la santé de l'application
+curl http://localhost:5000/health
+
+# Voir les logs
+docker compose logs -f backend
+docker compose logs -f frontend
+```

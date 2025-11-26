@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../components/httpClient";
 import bootstrap from "bootstrap/dist/js/bootstrap.js";
+import Toast from "../components/Toast";
 
 function AdminDashboard() {
   const navigate = useNavigate();
 
   const [users, setUsers] = useState();
+  const [pagination, setPagination] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [toast, setToast] = useState(null);
+  
   const [new_first_name, setNewFirstName] = useState("");
   const [new_last_name, setNewLastName] = useState("");
   const [new_email, setNewEmail] = useState("");
@@ -69,22 +74,17 @@ function AdminDashboard() {
   };
 
   // ### Fetch all users from the backend ###
-  const getAllUsersInfo = async () => {
+  const getAllUsersInfo = async (page = 1) => {
     httpClient
-      .get(`${process.env.REACT_APP_BACKEND_URL}/admin/@all`)
+      .get(`${process.env.REACT_APP_BACKEND_URL}/admin/@all?page=${page}&per_page=20`)
       .then((resp) => {
-        setUsers(resp.data);
+        setUsers(resp.data.data);
+        setPagination(resp.data.pagination);
+        setCurrentPage(page);
       })
       .catch((error) => {
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.error
-        ) {
-          alert(error.response.data.error);
-        } else {
-          alert("Une erreur est survenue.");
-        }
+        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+        setToast({ message: errorMsg, type: 'error' });
       });
   };
 
@@ -112,19 +112,13 @@ function AdminDashboard() {
         })
         .then((resp) => {
           console.log(resp);
-          getAllUsersInfo();
+          getAllUsersInfo(currentPage);
           handleClose();
+          setToast({ message: 'Utilisateur créé avec succès', type: 'success' });
         })
         .catch((error) => {
-          if (
-            error.response &&
-            error.response.data &&
-            error.response.data.error
-          ) {
-            alert(error.response.data.error);
-          } else {
-            alert("Une erreur est survenue.");
-          }
+          const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+          setToast({ message: errorMsg, type: 'error' });
         });
     }
   };
@@ -152,6 +146,7 @@ function AdminDashboard() {
 
   return (
     <div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div>
         <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#popup">+ Ajouter un nouvel utilisateur</button>
         <br />
@@ -219,10 +214,10 @@ function AdminDashboard() {
         </thead>
         <tbody>
           {users !== undefined ? (
-            users.data.map((user) => (
+            users.map((user) => (
               <tr key={user.id} onClick={() => {
                 navigate({ pathname: `/admin/manage-user/` + user.id });
-              }}>
+              }} style={{ cursor: 'pointer' }}>
                 <td>{user.id}</td>
                 <td>{user.last_name}</td>
                 <td>{user.first_name}</td>
@@ -232,11 +227,39 @@ function AdminDashboard() {
             ))
           ) : (
             <tr>
-              <td>"Chargement..."</td>
+              <td colSpan="5" className="text-center">Chargement...</td>
             </tr>
           )}
         </tbody>
       </table>
+      
+      {/* Pagination Controls */}
+      {pagination && pagination.pages > 1 && (
+        <nav>
+          <ul className="pagination justify-content-center">
+            <li className={`page-item ${!pagination.has_prev ? 'disabled' : ''}`}>
+              <button className="page-link" onClick={() => getAllUsersInfo(currentPage - 1)} disabled={!pagination.has_prev}>
+                Précédent
+              </button>
+            </li>
+            {[...Array(pagination.pages)].map((_, i) => (
+              <li key={i + 1} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+                <button className="page-link" onClick={() => getAllUsersInfo(i + 1)}>
+                  {i + 1}
+                </button>
+              </li>
+            ))}
+            <li className={`page-item ${!pagination.has_next ? 'disabled' : ''}`}>
+              <button className="page-link" onClick={() => getAllUsersInfo(currentPage + 1)} disabled={!pagination.has_next}>
+                Suivant
+              </button>
+            </li>
+          </ul>
+          <p className="text-center text-muted">
+            Page {pagination.page} sur {pagination.pages} ({pagination.total} utilisateurs au total)
+          </p>
+        </nav>
+      )}
     </div>
   );
 }

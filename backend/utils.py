@@ -1,20 +1,27 @@
 import re
-
-VALID_ROLES = {"Utilisateur", "Administrateur"}
+import bleach
+from constants import UserRole, ErrorMessages
 
 def validate_user_fields(email, first_name, last_name, password=None, role=None):
     if not is_valid_email(email) or len(email) > 345:
-        return "Format d'email invalide ou trop long."
+        return ErrorMessages.EMAIL_INVALID_FORMAT
     if len(first_name) < 1 or len(first_name) > 50:
-        return "Le prénom doit contenir entre 1 et 50 caractères."
+        return ErrorMessages.FIRST_NAME_LENGTH
     if len(last_name) < 1 or len(last_name) > 50:
-        return "Le nom doit contenir entre 1 et 50 caractères."
-    if role and role not in VALID_ROLES:
-        return "Rôle invalide."
+        return ErrorMessages.LAST_NAME_LENGTH
+    if role and role not in UserRole.all():
+        return ErrorMessages.INVALID_ROLE
     if password is not None:
         if not is_strong_password(password):
-            return "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial."
+            return ErrorMessages.WEAK_PASSWORD
     return None
+
+def sanitize_input(text):
+    """Sanitize user input to prevent XSS attacks"""
+    if text is None:
+        return None
+    # Remove all HTML tags and attributes
+    return bleach.clean(text, tags=[], attributes={}, strip=True)
 
 # Email validation function
 def is_valid_email(email):
