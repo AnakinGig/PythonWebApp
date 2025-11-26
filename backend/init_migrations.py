@@ -19,25 +19,25 @@ def initialize_migrations():
     
     with app.app_context():
         if not os.path.exists(migrations_dir):
-            print("🔧 Initializing Flask-Migrate...")
+            print("Initializing Flask-Migrate...")
             init()
-            print("✅ Flask-Migrate initialized!")
+            print("Flask-Migrate initialized!")
             
-            print("🔧 Creating initial migration...")
+            print("Creating initial migration...")
             migrate(message="Initial migration")
-            print("✅ Initial migration created!")
+            print("Initial migration created!")
             
-            print("🔧 Applying migration to database...")
+            print("Applying migration to database...")
             upgrade()
-            print("✅ Database schema updated!")
+            print("Database schema updated!")
             
-            print("\n✨ Database migrations setup complete!")
+            print("\nDatabase migrations setup complete!")
             print("\nFuture schema changes:")
             print("  1. Modify your models in models.py")
             print("  2. Run: flask db migrate -m 'description of changes'")
             print("  3. Run: flask db upgrade")
         else:
-            print("⚠️  Migrations directory already exists.")
+            print("Migrations directory already exists.")
             print("To create a new migration, run: flask db migrate -m 'your message'")
 
 if __name__ == "__main__":
