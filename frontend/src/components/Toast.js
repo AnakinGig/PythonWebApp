@@ -24,7 +24,7 @@ const Toast = ({ message, type = 'error', duration = 5000, onClose }) => {
     >
       <div className="toast-header">
         <strong className="me-auto">
-          {type === 'error' ? '❌ Erreur' : type === 'success' ? '✅ Succès' : 'ℹ️ Info'}
+          {type === 'error' ? 'Erreur' : type === 'success' ? 'Succès' : 'ℹInfo'}
         </strong>
         <button 
           type="button" 

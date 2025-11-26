@@ -2,6 +2,8 @@ import { useEffect, useState, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import httpClient from "./components/httpClient";
 import Cookies from 'js-cookie';
+import ErrorBoundary from './components/ErrorBoundary';
+import LoadingSpinner from './components/LoadingSpinner';
 
 // Component imports
 const Header = lazy(() => import('./components/Header'));
@@ -42,32 +44,38 @@ function App() {
     fetchCsrfAndUser();
   }, []);
 
-  if (loading) return <div>Chargement...</div>;
+  if (loading) return (
+    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
+      <LoadingSpinner size="lg" text="Chargement de l'application..." />
+    </div>
+  );
 
   return (
-    <div>
-      <Header user={user} setUser={setUser}/>
-      <div className='container mt-4'>
-        <Suspense fallback={<div>Chargement...</div>}>
-          <Routes>
-            <Route path="/" element={<Home user={user}/>}/>
-            <Route path="/login" element={<Login setUser={setUser}/>}/>
-            <Route path="/register" element={<Register setUser={setUser}/>}/>
-            <Route path="/admin/dashboard" element={
-              <PrivateRoute user={user} requiredRole={'Administrateur'}>
-                <AdminDashboard setUser={setUser}/>
-              </PrivateRoute>
-            }/>
-            <Route path="/admin/manage-user/:id" element={
-              <PrivateRoute user={user} requiredRole={'Administrateur'}>
-                <ManageUser/>
-              </PrivateRoute>
-            }/>
-            <Route path="/*" element={<NotFound/>}/>
-          </Routes>
-        </Suspense>
+    <ErrorBoundary>
+      <div>
+        <Header user={user} setUser={setUser}/>
+        <div className='container mt-4'>
+          <Suspense fallback={<LoadingSpinner text="Chargement de la page..." />}>
+            <Routes>
+              <Route path="/" element={<Home user={user}/>}/>
+              <Route path="/login" element={<Login setUser={setUser}/>}/>
+              <Route path="/register" element={<Register setUser={setUser}/>}/>
+              <Route path="/admin/dashboard" element={
+                <PrivateRoute user={user} requiredRole={'Administrateur'}>
+                  <AdminDashboard setUser={setUser}/>
+                </PrivateRoute>
+              }/>
+              <Route path="/admin/manage-user/:id" element={
+                <PrivateRoute user={user} requiredRole={'Administrateur'}>
+                  <ManageUser/>
+                </PrivateRoute>
+              }/>
+              <Route path="/*" element={<NotFound/>}/>
+            </Routes>
+          </Suspense>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
 

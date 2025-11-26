@@ -16,18 +16,16 @@ function Header({ user, setUser }) {
   return (
     <div>
       <nav className="navbar navbar-expand-lg bg-body-tertiary">
-        <div className="d-flex flex-row justify-content-between mx-4 w-100">
-          <div>
-            <a className="navbar-brand me-2" href="/">
-              <img src={logo} height="32" alt="Logo" />
-            </a>
+        <div className="container-fluid">
+          <a className="navbar-brand" href="/">
+            <img src={logo} height="32" alt="Logo" />
+          </a>
 
-            <button className="navbar-toggler" type="button">
-              <i className="fas fa-bars"></i>
-            </button>
-          </div>
+          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span className="navbar-toggler-icon"></span>
+          </button>
 
-          <div className="collapse navbar-collapse">
+          <div className="collapse navbar-collapse" id="navbarNav">
             {user != null && user.role === "Administrateur" ? (
               <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                 <li className="nav-item">
@@ -46,13 +44,16 @@ function Header({ user, setUser }) {
             )}
 
             {user == null ? (
-              <div className="d-flex align-items-center">
-                <a href="/login" type="button" className="btn btn-link px-3 me-2">Se connecter</a>
-                <a href="/register" type="button" className="btn btn-primary me-3">Créer un compte</a>
+              <div className="d-flex flex-column flex-lg-row align-items-start align-items-lg-center ms-auto">
+                <a href="/login" className="btn btn-link px-3 me-2 mb-2 mb-lg-0">Se connecter</a>
+                <a href="/register" className="btn btn-primary me-lg-3">Créer un compte</a>
               </div>
             ) : (
-              <div className="d-flex align-items-center">
-                <button type="button" onClick={logUserOut} className="btn btn-danger px-3 me-2">Se déconnecter</button>
+              <div className="d-flex flex-column flex-lg-row align-items-start align-items-lg-center ms-auto">
+                <span className="navbar-text me-3 mb-2 mb-lg-0">
+                  👤 {user.first_name} {user.last_name}
+                </span>
+                <button type="button" onClick={logUserOut} className="btn btn-danger px-3">Se déconnecter</button>
               </div>
             )}
           </div>
