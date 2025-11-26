@@ -1,11 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../components/httpClient";
 import bootstrap from "bootstrap/dist/js/bootstrap.js";
 import Toast from "../components/Toast";
+import { ButtonSpinner } from "../components/LoadingSpinner";
+import useApi from "../components/useApi";
 
 function AdminDashboard() {
   const navigate = useNavigate();
+  const { loading, error, callApi } = useApi();
 
   const [users, setUsers] = useState();
   const [pagination, setPagination] = useState(null);
@@ -74,19 +77,21 @@ function AdminDashboard() {
   };
 
   // ### Fetch all users from the backend ###
-  const getAllUsersInfo = async (page = 1) => {
-    httpClient
-      .get(`${process.env.REACT_APP_BACKEND_URL}/admin/@all?page=${page}&per_page=20`)
-      .then((resp) => {
-        setUsers(resp.data.data);
-        setPagination(resp.data.pagination);
-        setCurrentPage(page);
-      })
-      .catch((error) => {
-        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
-        setToast({ message: errorMsg, type: 'error' });
-      });
-  };
+  const getAllUsersInfo = useCallback(async (page = 1) => {
+    const result = await callApi(() =>
+      httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/@all?page=${page}&per_page=20`)
+    );
+
+    if (result) {
+      setUsers(result.data);
+      setPagination(result.pagination);
+      setCurrentPage(page);
+    } else if (error) {
+      const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+      setToast({ message: errorMsg, type: 'error' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ### Add a new user to the database ###
   const addNewUser = async (e) => {
@@ -102,23 +107,24 @@ function AdminDashboard() {
       isFirstNameValid && isLastNameValid && isEmailValid && isPasswordValid;
 
     if (isFormValid) {
-      httpClient
-        .post(`${process.env.REACT_APP_BACKEND_URL}/admin/add-user`, {
+      const result = await callApi(() =>
+        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/admin/add-user`, {
           first_name: new_first_name,
           last_name: new_last_name,
           email: new_email,
           password: new_password,
           role: new_role,
         })
-        .then((resp) => {
-          getAllUsersInfo(currentPage);
-          handleClose();
-          setToast({ message: 'Utilisateur créé avec succès', type: 'success' });
-        })
-        .catch((error) => {
-          const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
-          setToast({ message: errorMsg, type: 'error' });
-        });
+      );
+
+      if (result) {
+        getAllUsersInfo(currentPage);
+        handleClose();
+        setToast({ message: 'Utilisateur créé avec succès', type: 'success' });
+      } else if (error) {
+        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+        setToast({ message: errorMsg, type: 'error' });
+      }
     }
   };
 
@@ -141,6 +147,7 @@ function AdminDashboard() {
 
   useEffect(() => {
     getAllUsersInfo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -195,7 +202,9 @@ function AdminDashboard() {
               </div>
               <div className="modal-footer d-flex justify-content-between">
                 <button className="btn btn-lg btn-danger" data-bs-dismiss="modal" onClick={handleClose}>Annuler</button>
-                <button className="btn btn-lg btn-success" onClick={addNewUser}>Enregistrer</button>
+                <button className="btn btn-lg btn-success" disabled={loading} onClick={addNewUser}>
+                  {loading ? <ButtonSpinner /> : "Enregistrer"}
+                </button>
               </div>
             </div>
           </div>

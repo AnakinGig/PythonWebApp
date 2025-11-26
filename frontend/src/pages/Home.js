@@ -5,7 +5,7 @@ const Home = ({ user }) => {
     <div>
       <h1>Application test - React Flask</h1>
       <br />
-      {user === null ? (
+      {!user ? (
         <div>
           <p>Vous n'êtes pas connecter.</p>
         </div>

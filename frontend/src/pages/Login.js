@@ -2,13 +2,16 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../components/httpClient";
 import Toast from "../components/Toast";
+import { ButtonSpinner } from "../components/LoadingSpinner";
+import useApi from "../components/useApi";
 
 function Login({ setUser }) {
   const navigate = useNavigate();
+  const { loading, error, callApi } = useApi();
+  const [toast, setToast] = useState(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [toast, setToast] = useState(null);
 
   const [form_submited, setFormSubmited] = useState(false);
   const [email_error, setEmailError] = useState("");
@@ -43,15 +46,17 @@ function Login({ setUser }) {
     const isFormValid = isEmailValid && isPasswordValid;
 
     if (isFormValid){
-      await httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/login`, {
-        email: email,
-        password: password,
-      })
-      .then(function (response) {
-        setUser(response.data);
+      const result = await callApi(() =>
+        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/login`, {
+          email: email,
+          password: password,
+        })
+      );
+
+      if (result) {
+        setUser(result);
         navigate("/");
-      })
-      .catch((error) => {
+      } else if (error) {
         if (error.response && error.response.data && error.response.data.error) {
           if (error.response.data.error === "Email invalide") {
             setEmailError("Email invalide");
@@ -63,7 +68,7 @@ function Login({ setUser }) {
         } else {
           setToast({ message: "Une erreur est survenue.", type: 'error' });
         }
-      });
+      }
     }
   };
 
@@ -91,7 +96,9 @@ function Login({ setUser }) {
             </div>
 
             <div className="text-center text-lg-start mt-4 pt-2">
-              <button type="button" onClick={logUserIn} data-mdb-button-init data-mdb-ripple-init className="btn btn-primary btn-lg">Se connecter</button>
+              <button type="button" onClick={logUserIn} disabled={loading} data-mdb-button-init data-mdb-ripple-init className="btn btn-primary btn-lg">
+                {loading ? <ButtonSpinner /> : "Se connecter"}
+              </button>
               <p className="small fw-bold mt-2 pt-1 mb-0">
                 Vous n'avez pas de compte?{" "}<a href="./register" className="link-danger">Créer un compte</a>
               </p>

@@ -26,7 +26,7 @@ function Header({ user, setUser }) {
           </button>
 
           <div className="collapse navbar-collapse" id="navbarNav">
-            {user != null && user.role === "Administrateur" ? (
+            {user && user.role === "Administrateur" ? (
               <ul className="navbar-nav me-auto mb-2 mb-lg-0">
                 <li className="nav-item">
                   <a className="nav-link" href="/">{location.pathname === "/" ? <u>Home</u> : "Home"}</a>
@@ -43,7 +43,7 @@ function Header({ user, setUser }) {
               </ul>
             )}
 
-            {user == null ? (
+            {!user ? (
               <div className="d-flex flex-column flex-lg-row align-items-start align-items-lg-center ms-auto">
                 <a href="/login" className="btn btn-link px-3 me-2 mb-2 mb-lg-0">Se connecter</a>
                 <a href="/register" className="btn btn-primary me-lg-3">Créer un compte</a>

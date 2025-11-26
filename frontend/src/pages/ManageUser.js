@@ -3,10 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import httpClient from "../components/httpClient";
 import Toast from "../components/Toast";
+import { ButtonSpinner } from "../components/LoadingSpinner";
+import useApi from "../components/useApi";
 
 function ManageUser() {
   const user_id = useParams();
   const navigate = useNavigate();
+  const { loading, error, callApi } = useApi();
   const [toast, setToast] = useState(null);
 
   const [user, setUser] = useState();
@@ -92,40 +95,42 @@ function ManageUser() {
         password: new_password || ""
       };
 
-      httpClient
-        .post(`${process.env.REACT_APP_BACKEND_URL}/admin/modify-user/${user_id.id}`, payload, {
+      const result = await callApi(() =>
+        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/admin/modify-user/${user_id.id}`, payload, {
           headers: {"Content-Type": "application/json"},
         })
-        .then((resp) => {
-          setToast({ message: 'Utilisateur modifié avec succès', type: 'success' });
-          setTimeout(() => navigate("/admin/dashboard"), 1500);
-        })
-        .catch((error) => {
-          const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
-          setToast({ message: errorMsg, type: 'error' });
-          if (errorMsg.includes("dernier compte administrateur") || errorMsg.includes("propre rôle")) {
-            setTimeout(() => navigate("/admin/dashboard"), 2000);
-          }
-        });
+      );
+
+      if (result) {
+        setToast({ message: 'Utilisateur modifié avec succès', type: 'success' });
+        setTimeout(() => navigate("/admin/dashboard"), 1500);
+      } else if (error) {
+        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+        setToast({ message: errorMsg, type: 'error' });
+        if (errorMsg.includes("dernier compte administrateur") || errorMsg.includes("propre rôle")) {
+          setTimeout(() => navigate("/admin/dashboard"), 2000);
+        }
+      }
     }
   };
 
   // ### Delete account ###
   const delete_account = async () => {
     setFormSubmited(true);
-    httpClient
-      .post(`${process.env.REACT_APP_BACKEND_URL}/admin/delete-user/${user_id.id}`)
-      .then((resp) => {
-        setToast({ message: 'Utilisateur supprimé avec succès', type: 'success' });
-        setTimeout(() => navigate("/admin/dashboard"), 1500);
-      })
-      .catch((error) => {
-        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
-        setToast({ message: errorMsg, type: 'error' });
-        if (errorMsg.includes("propre compte") || errorMsg.includes("dernier compte")) {
-          setTimeout(() => navigate("/admin/dashboard"), 2000);
-        }
-      });
+    const result = await callApi(() =>
+      httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/admin/delete-user/${user_id.id}`)
+    );
+
+    if (result) {
+      setToast({ message: 'Utilisateur supprimé avec succès', type: 'success' });
+      setTimeout(() => navigate("/admin/dashboard"), 1500);
+    } else if (error) {
+      const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+      setToast({ message: errorMsg, type: 'error' });
+      if (errorMsg.includes("propre compte") || errorMsg.includes("dernier compte")) {
+        setTimeout(() => navigate("/admin/dashboard"), 2000);
+      }
+    }
   };
 
   // ### Handle modal close ###
@@ -136,15 +141,20 @@ function ManageUser() {
 
   // ### Fetch user info on page load ###
   useEffect(() => {
-    httpClient
-      .get(`${process.env.REACT_APP_BACKEND_URL}/admin/user-info/${user_id.id}`)
-      .then((resp) => {
-        setUser(resp.data);
-      })
-      .catch((error) => {
+    const fetchUser = async () => {
+      const result = await callApi(() =>
+        httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/user-info/${user_id.id}`)
+      );
+
+      if (result) {
+        setUser(result);
+      } else if (error) {
         const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
         setToast({ message: errorMsg, type: 'error' });
-      });
+      }
+    };
+    fetchUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user_id.id]);
 
   // ### Pre-fill form with current user info ###
@@ -226,12 +236,16 @@ function ManageUser() {
                     <div className="modal-footer d-flex justify-content-center">
                       {MODIFY === true ? (
                         <div>
-                          <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={modify_account}>Oui</button>
+                          <button type="button" className="btn btn-primary" disabled={loading} data-bs-dismiss="modal" onClick={modify_account}>
+                            {loading ? <ButtonSpinner /> : "Oui"}
+                          </button>
                           <button type="button" className="btn btn-danger" data-bs-dismiss="modal" onClick={handle_close}>Non</button>
                         </div>
                       ) : DELETE === true ? (
                         <div>
-                          <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={delete_account}>Oui</button>
+                          <button type="button" className="btn btn-primary" disabled={loading} data-bs-dismiss="modal" onClick={delete_account}>
+                            {loading ? <ButtonSpinner /> : "Oui"}
+                          </button>
                           <button type="button" className="btn btn-danger" data-bs-dismiss="modal" onClick={handle_close}>Non</button>
                         </div>
                       ) : (

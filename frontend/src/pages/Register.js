@@ -2,9 +2,12 @@ import { useState } from "react";
 import httpClient from "../components/httpClient";
 import { useNavigate } from "react-router-dom";
 import Toast from "../components/Toast";
+import { ButtonSpinner } from "../components/LoadingSpinner";
+import useApi from "../components/useApi";
 
 const Register = ({ setUser }) => {
   const navigate = useNavigate();
+  const { loading, error, callApi } = useApi();
 
   const [email, setEmail] = useState("");
   const [first_name, setFirstName] = useState("");
@@ -82,21 +85,22 @@ const Register = ({ setUser }) => {
       isFirstNameValid && isLastNameValid && isEmailValid && isPasswordValid;
 
     if (isFormValid) {
-      httpClient
-        .post(`${process.env.REACT_APP_BACKEND_URL}/register`, {
+      const result = await callApi(() =>
+        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/register`, {
           email: email,
           first_name: first_name,
           last_name: last_name,
           password: password,
         })
-        .then((resp) => {
-          setUser(resp.data);
-          navigate("/");
-        })
-        .catch((error) => {
-          const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
-          setToast({ message: errorMsg, type: 'error' });
-        });
+      );
+
+      if (result) {
+        setUser(result);
+        navigate("/");
+      } else if (error) {
+        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+        setToast({ message: errorMsg, type: 'error' });
+      }
     }
   };
 
@@ -138,7 +142,9 @@ const Register = ({ setUser }) => {
             </div>
 
             <div className="text-center text-lg-start mt-4 pt-2">
-              <button type="submit" className="btn btn-primary btn-lg">Créer un compte</button>
+              <button type="submit" disabled={loading} className="btn btn-primary btn-lg">
+                {loading ? <ButtonSpinner /> : "Créer un compte"}
+              </button>
               <p className="small fw-bold mt-2 pt-1 mb-0">Vous avez déjà un compte?<a href="/login" className="link-danger">Se connecter</a></p>
             </div>
           </form>
