@@ -4,16 +4,16 @@ function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-light mt-auto py-3 border-top">
+    <footer className="bg-body-tertiary mt-auto py-3 border-top">
       <div className="container">
         <div className="row">
           <div className="col-md-6 text-center text-md-start">
-            <p className="mb-0 text-muted">
+            <p className="mb-0 text-body-secondary">
               © {currentYear} PythonWebApp. Tous droits réservés.
             </p>
           </div>
           <div className="col-md-6 text-center text-md-end">
-            <p className="mb-0 text-muted">
+            <p className="mb-0 text-body-secondary">
               Développé avec <span className="text-danger">❤</span> par <strong>Gigant Anakin</strong>
             </p>
           </div>

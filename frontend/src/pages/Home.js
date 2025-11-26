@@ -2,23 +2,126 @@ import React from "react";
 
 const Home = ({ user }) => {
   return (
-    <div>
-      <h1>Application test - React Flask</h1>
-      <br />
-      {!user ? (
-        <div>
-          <p>Vous n'êtes pas connecter.</p>
+    <div className="container py-5">
+      <div className="row justify-content-center">
+        <div className="col-lg-10">
+          {/* Hero Section */}
+          <div className="text-center mb-5">
+            <h1 className="display-4 fw-bold mb-3">
+              Bienvenue sur PythonWebApp
+            </h1>
+            <p className="lead text-muted">
+              Application moderne de gestion d'utilisateurs avec React & Flask
+            </p>
+          </div>
+
+          {!user ? (
+            /* Not Logged In */
+            <div className="row g-4">
+              <div className="col-md-6">
+                <div className="card h-100 border-primary">
+                  <div className="card-body text-center p-4">
+                    <div className="display-1 mb-3">🔐</div>
+                    <h4 className="card-title mb-3">Vous n'êtes pas connecté</h4>
+                    <p className="card-text text-muted mb-4">
+                      Connectez-vous pour accéder à votre espace personnel
+                    </p>
+                    <a href="/login" className="btn btn-primary btn-lg">
+                      Se connecter
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="card h-100 border-success">
+                  <div className="card-body text-center p-4">
+                    <div className="display-1 mb-3">✨</div>
+                    <h4 className="card-title mb-3">Nouveau sur la plateforme ?</h4>
+                    <p className="card-text text-muted mb-4">
+                      Créez votre compte gratuitement en quelques clics
+                    </p>
+                    <a href="/register" className="btn btn-success btn-lg">
+                      Créer un compte
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Logged In */
+            <div>
+              <div className="card border-0 shadow-sm">
+                <div className="card-body p-4">
+                  <div className="d-flex align-items-center mb-4">
+                    <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                         style={{width: '60px', height: '60px', fontSize: '24px'}}>
+                      {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="mb-1">Bonjour, {user.first_name} {user.last_name}</h3>
+                      <p className="text-muted mb-0">Content de vous revoir !</p>
+                    </div>
+                  </div>
+
+                  {user.role === 'Administrateur' && (
+                    <div className="mt-4 pt-4 border-top">
+                      <h5 className="mb-3">Accès rapide</h5>
+                      <div className="d-flex gap-2 flex-wrap">
+                        <a href="/admin/dashboard" className="btn btn-outline-primary">
+                          Tableau de bord
+                        </a>
+                        <a href="/admin/users" className="btn btn-outline-primary">
+                          Utilisateurs
+                        </a>
+                        <a href="/admin/activity-logs" className="btn btn-outline-primary">
+                          Activité
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Features Section */}
+              <div className="row g-4 mt-4">
+                <div className="col-md-4">
+                  <div className="card h-100 border-0 shadow-sm">
+                    <div className="card-body text-center p-4">
+                      <div className="fs-1 mb-3">🚀</div>
+                      <h5 className="card-title">Performances</h5>
+                      <p className="card-text text-muted small">
+                        Application rapide et optimisée
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="card h-100 border-0 shadow-sm">
+                    <div className="card-body text-center p-4">
+                      <div className="fs-1 mb-3">🔒</div>
+                      <h5 className="card-title">Sécurité</h5>
+                      <p className="card-text text-muted small">
+                        Vos données sont protégées
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <div className="card h-100 border-0 shadow-sm">
+                    <div className="card-body text-center p-4">
+                      <div className="fs-1 mb-3">⚡</div>
+                      <h5 className="card-title">Moderne</h5>
+                      <p className="card-text text-muted small">
+                        Technologies de pointe
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="d-flex flex-column">
-          <h2>Bonjour {user.first_name} {user.last_name}.</h2>
-          <br></br>
-          <h4>Id: {user.id}</h4>
-          <h4>Email: {user.email}</h4>
-          <h4>Role: {user.role}</h4>
-          <br></br>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

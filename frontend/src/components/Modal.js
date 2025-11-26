@@ -56,37 +56,106 @@ const Modal = ({
   if (!isOpen) return null;
 
   const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && !loading) {
       onClose();
     }
   };
 
   return (
-    <div className="modal fade show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={handleBackdropClick} aria-labelledby="modalTitle" aria-modal="true" role="dialog">
-      <div className={`modal-dialog modal-${size}`}>
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title" id="modalTitle">{title}</h5>
-            <button type="button" className="btn-close" onClick={onClose} aria-label="Close" disabled={loading}></button>
-          </div>
-          <div className="modal-body">
-            {children}
-          </div>
-          {showFooter && (
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" onClick={onClose} disabled={loading}>
-                {cancelText}
-              </button>
-              {onConfirm && (
-                <button type="button" className={`btn btn-${confirmVariant}`} onClick={onConfirm} disabled={loading}>
-                  {loading ? <ButtonSpinner /> : confirmText}
-                </button>
-              )}
+    <>
+      {/* Backdrop with fade animation */}
+      <div 
+        className="modal-backdrop fade show" 
+        style={{ 
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 1050
+        }}
+        onClick={handleBackdropClick}
+      />
+      
+      {/* Modal Dialog */}
+      <div 
+        className="modal fade show d-block" 
+        tabIndex="-1" 
+        style={{ 
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 1055,
+          overflow: 'auto'
+        }} 
+        onClick={handleBackdropClick}
+        aria-labelledby="modalTitle" 
+        aria-modal="true" 
+        role="dialog"
+      >
+        <div 
+          className={`modal-dialog modal-${size} modal-dialog-centered modal-dialog-scrollable`}
+          style={{
+            animation: 'modalSlideIn 0.3s ease-out'
+          }}
+        >
+          <div className="modal-content shadow-lg border-0">
+            <div className="modal-header bg-light border-bottom">
+              <h5 className="modal-title fw-bold" id="modalTitle">{title}</h5>
+              <button 
+                type="button" 
+                className="btn-close" 
+                onClick={onClose} 
+                aria-label="Close" 
+                disabled={loading}
+              />
             </div>
-          )}
+            <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+              {children}
+            </div>
+            {showFooter && (
+              <div className="modal-footer bg-light border-top">
+                <button 
+                  type="button" 
+                  className="btn btn-outline-secondary" 
+                  onClick={onClose} 
+                  disabled={loading}
+                >
+                  {cancelText}
+                </button>
+                {onConfirm && (
+                  <button 
+                    type="button" 
+                    className={`btn btn-${confirmVariant}`} 
+                    onClick={onConfirm} 
+                    disabled={loading}
+                  >
+                    {loading ? <ButtonSpinner /> : confirmText}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Add animation styles */}
+      <style>{`
+        @keyframes modalSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-50px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+    </>
   );
 };
 

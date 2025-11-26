@@ -13,7 +13,7 @@ auth_bp = Blueprint('auth_bp', __name__)
 bcrypt = Bcrypt()
 
 # Get current user info
-@auth_bp.route("/@me", methods=['GET'])
+@auth_bp.route("/current-user", methods=['GET'])
 def get_current_user():
     """
     Get Current User

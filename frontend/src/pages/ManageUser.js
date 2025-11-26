@@ -95,7 +95,7 @@ function ManageUser() {
       };
 
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/admin/modify-user/${user_id.id}`, payload, {
+        httpClient.put(`${process.env.REACT_APP_BACKEND_URL}/admin/users/${user_id.id}`, payload, {
           headers: {"Content-Type": "application/json"},
         })
       );
@@ -127,7 +127,7 @@ function ManageUser() {
   const delete_account = async () => {
     setFormSubmited(true);
     const { data: result, error: apiError } = await callApi(() =>
-      httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/admin/delete-user/${user_id.id}`)
+      httpClient.delete(`${process.env.REACT_APP_BACKEND_URL}/admin/users/${user_id.id}`)
     );
 
     if (result) {
@@ -155,7 +155,7 @@ function ManageUser() {
   useEffect(() => {
     const fetchUser = async () => {
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/user-info/${user_id.id}`)
+        httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/users/${user_id.id}`)
       );
 
       if (result) {

@@ -10,13 +10,14 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [endpointFilter, setEndpointFilter] = useState("");
 
   const fetchData = async () => {
     try {
       const [metricsRes, healthRes, usersRes] = await Promise.all([
         httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/metrics`),
         httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/health`),
-        httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/@all?page=1&per_page=1000`)
+        httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/users?page=1&per_page=1000`)
       ]);
       
       setMetrics(metricsRes.data);
@@ -59,6 +60,12 @@ function AdminDashboard() {
     link.click();
   };
 
+  // Filter endpoints based on search
+  const filteredEndpoints = metrics ? 
+    Object.entries(metrics.application.endpoints).filter(([endpoint]) => 
+      endpoint.toLowerCase().includes(endpointFilter.toLowerCase())
+    ) : [];
+
   useEffect(() => {
     fetchData();
     
@@ -94,7 +101,7 @@ function AdminDashboard() {
         <h1>Tableau de Bord</h1>
         <div className="d-flex align-items-center gap-3">
           <button className="btn btn-success" onClick={exportMetricsJSON} disabled={!metrics}>
-            📊 Exporter Métriques
+            Exporter les métriques
           </button>
           <div className="form-check form-switch mb-0">
             <input 
@@ -280,33 +287,69 @@ function AdminDashboard() {
 
           {/* Endpoint Metrics */}
           <div className="card">
-            <div className="card-header bg-info text-white">
+            <div className="card-header bg-info text-white d-flex justify-content-between align-items-center">
               <h5 className="mb-0">Métriques par Endpoint</h5>
+              <span className="badge bg-light text-dark">{filteredEndpoints.length} endpoint{filteredEndpoints.length > 1 ? 's' : ''}</span>
             </div>
             <div className="card-body">
+              {/* Search Filter */}
+              <div className="mb-3">
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <i className="bi bi-search">🔍</i>
+                  </span>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Rechercher un endpoint..."
+                    value={endpointFilter}
+                    onChange={(e) => setEndpointFilter(e.target.value)}
+                  />
+                  {endpointFilter && (
+                    <button 
+                      className="btn btn-outline-secondary" 
+                      onClick={() => setEndpointFilter("")}>
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="table-responsive">
-                <table className="table table-hover">
-                  <thead>
+                <table className="table table-hover table-sm">
+                  <thead className="table-light">
                     <tr>
                       <th>Endpoint</th>
-                      <th>Requêtes</th>
-                      <th>Erreurs</th>
-                      <th>Temps Moyen (ms)</th>
-                      <th>Temps Total (ms)</th>
+                      <th className="text-center">Requêtes</th>
+                      <th className="text-center">Erreurs</th>
+                      <th className="text-center">Temps Moyen</th>
+                      <th className="text-center">Temps Total</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {Object.entries(metrics.application.endpoints).map(([endpoint, data]) => (
-                      <tr key={endpoint}>
-                        <td><code>{endpoint}</code></td>
-                        <td>{data.count}</td>
-                        <td className={data.errors > 0 ? 'text-danger' : 'text-success'}>
-                          {data.errors}
+                    {filteredEndpoints.length > 0 ? (
+                      filteredEndpoints.map(([endpoint, data]) => (
+                        <tr key={endpoint}>
+                          <td><code className="text-primary">{endpoint}</code></td>
+                          <td className="text-center">
+                            <span className="badge bg-secondary">{data.count}</span>
+                          </td>
+                          <td className="text-center">
+                            <span className={`badge ${data.errors > 0 ? 'bg-danger' : 'bg-success'}`}>
+                              {data.errors}
+                            </span>
+                          </td>
+                          <td className="text-center">{data.avg_time.toFixed(2)} ms</td>
+                          <td className="text-center text-muted">{data.total_time.toFixed(2)} ms</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="text-center text-muted py-4">
+                          <i>Aucun endpoint trouvé</i>
                         </td>
-                        <td>{data.avg_time.toFixed(2)}</td>
-                        <td>{data.total_time.toFixed(2)}</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>

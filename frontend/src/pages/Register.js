@@ -145,7 +145,7 @@ const Register = ({ setUser }) => {
               <button type="submit" disabled={loading} className="btn btn-primary btn-lg">
                 {loading ? <ButtonSpinner /> : "Créer un compte"}
               </button>
-              <p className="small fw-bold mt-2 pt-1 mb-0">Vous avez déjà un compte?<a href="/login" className="link-danger">Se connecter</a></p>
+              <p className="small fw-bold mt-2 pt-1 mb-0">Vous avez déjà un compte? <a href="/login" className="link-danger">Se connecter</a></p>
             </div>
           </form>
         </div>

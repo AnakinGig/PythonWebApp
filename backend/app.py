@@ -79,7 +79,7 @@ swagger_template = {
         "description": "API Documentation for PythonWebApp - Flask & React Application",
         "version": "1.0.0",
         "contact": {
-            "name": "Artech Sécurité",
+            "name": "Python Web App",
             "url": "https://github.com"
         }
     },

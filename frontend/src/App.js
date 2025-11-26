@@ -35,7 +35,7 @@ function App() {
         Cookies.set('csrf_token', csrfToken);
 
         // Then fetch user
-        const userResponse = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/@me`);
+        const userResponse = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/current-user`);
         if (isMounted) setUser(userResponse.data);
       } catch (error) {
         console.error("Error fetching data:", error);

@@ -95,7 +95,7 @@ function UsersList() {
   // ### Fetch all users from the backend ###
   const getAllUsersInfo = useCallback(async (page = 1) => {
     const { data: result, error: apiError } = await callApi(() =>
-      httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/@all?page=${page}&per_page=20`)
+      httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/users?page=${page}&per_page=20`)
     );
 
     if (result) {
@@ -124,7 +124,7 @@ function UsersList() {
 
     if (isFormValid) {
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/admin/add-user`, {
+        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/admin/users`, {
           first_name: new_first_name,
           last_name: new_last_name,
           email: new_email,
@@ -196,10 +196,10 @@ function UsersList() {
         <h1>Gestion des Utilisateurs</h1>
         <div>
           <button className="btn btn-success me-2" onClick={exportToCSV} disabled={!users || users.length === 0}>
-            📊 Exporter CSV
+            Exporter en CSV
           </button>
           <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-            ➕ Ajouter un utilisateur
+            + Ajouter un utilisateur
           </button>
         </div>
       </div>

@@ -15,32 +15,45 @@ function Header({ user, setUser }) {
     navigate("/");
   };
 
+  const isActive = (path) => location.pathname === path;
+
   return (
-    <div>
-      <nav className="navbar navbar-expand-lg bg-body-tertiary">
-        <div className="container-fluid">
-          <a className="navbar-brand" href="/">
-            <img src={logo} height="32" alt="Logo" />
-          </a>
+    <nav className="navbar navbar-expand-lg bg-body-tertiary shadow-sm">
+      <div className="container-fluid">
+        <a className="navbar-brand d-flex align-items-center" href="/">
+          <img src={logo} height="32" alt="Logo" className="me-2" />
+          <span className="fw-bold d-none d-md-inline">PythonWebApp</span>
+        </a>
 
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span className="navbar-toggler-icon"></span>
-          </button>
+        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span className="navbar-toggler-icon"></span>
+        </button>
 
-          <div className="collapse navbar-collapse" id="navbarNav">
-            {user && user.role === "Administrateur" ? (
-              <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+        <div className="collapse navbar-collapse" id="navbarNav">
+          {/* Navigation Links */}
+          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+            <li className="nav-item">
+              <a className={`nav-link ${isActive('/') ? 'active fw-bold' : ''}`} href="/">
+                Accueil
+              </a>
+            </li>
+            
+            {user && user.role === "Administrateur" && (
+              <>
                 <li className="nav-item">
-                  <a className="nav-link" href="/">{location.pathname === "/" ? <u>Home</u> : "Home"}</a>
+                  <a className={`nav-link ${isActive('/admin/dashboard') ? 'active fw-bold' : ''}`} href="/admin/dashboard">
+                    Tableau de bord
+                  </a>
                 </li>
                 <li className="nav-item">
-                  <a className="nav-link" href="/admin/dashboard">{location.pathname === "/admin/dashboard" ? (<u>Tableau de bord</u>) : ("Tableau de bord")}</a>
+                  <a className={`nav-link ${isActive('/admin/users') ? 'active fw-bold' : ''}`} href="/admin/users">
+                    Utilisateurs
+                  </a>
                 </li>
                 <li className="nav-item">
-                  <a className="nav-link" href="/admin/users">{location.pathname === "/admin/users" ? (<u>Utilisateurs</u>) : ("Utilisateurs")}</a>
-                </li>
-                <li className="nav-item">
-                  <a className="nav-link" href="/admin/activity-logs">{location.pathname === "/admin/activity-logs" ? (<u>Activité</u>) : ("Activité")}</a>
+                  <a className={`nav-link ${isActive('/admin/activity-logs') ? 'active fw-bold' : ''}`} href="/admin/activity-logs">
+                    Activité
+                  </a>
                 </li>
                 <li className="nav-item">
                   <a 
@@ -52,44 +65,52 @@ function Header({ user, setUser }) {
                     API Docs
                   </a>
                 </li>
-              </ul>
-            ) : (
-              <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-                <li className="nav-item">
-                  <a className="nav-link" href="/">{location.pathname === "" ? <u>Home</u> : "Home"}</a>
-                </li>
-              </ul>
+              </>
             )}
+          </ul>
+
+          {/* Right Side Actions */}
+          <div className="d-flex align-items-center gap-2">
+            {/* Theme Toggle */}
+            <button 
+              onClick={toggleTheme} 
+              className="btn btn-outline-secondary btn-sm"
+              title={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
+              style={{minWidth: '40px'}}
+            >
+              {theme === 'light' ? '🌙' : '☀️'}
+            </button>
 
             {!user ? (
-              <div className="d-flex flex-column flex-lg-row align-items-start align-items-lg-center ms-auto">
-                <button 
-                  onClick={toggleTheme} 
-                  className="btn btn-outline-secondary me-2 mb-2 mb-lg-0"
-                  title={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
-                >
-                  {theme === 'light' ? '🌙' : '☀️'}
-                </button>
-                <a href="/login" className="btn btn-link px-3 me-2 mb-2 mb-lg-0">Se connecter</a>
-                <a href="/register" className="btn btn-primary me-lg-3">Créer un compte</a>
-              </div>
+              <>
+                <a href="/login" className="btn btn-outline-primary btn-sm">Se connecter</a>
+                <a href="/register" className="btn btn-primary btn-sm">Créer un compte</a>
+              </>
             ) : (
-              <div className="d-flex flex-column flex-lg-row align-items-start align-items-lg-center ms-auto">
-                <button 
-                  onClick={toggleTheme} 
-                  className="btn btn-outline-secondary me-2 mb-2 mb-lg-0"
-                  title={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
-                >
-                  {theme === 'light' ? '🌙' : '☀️'}
+              <>
+                <div className="d-none d-lg-flex align-items-center border-start ps-3 ms-2">
+                  <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
+                       style={{width: '32px', height: '32px', fontSize: '12px', fontWeight: 'bold'}}>
+                    {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+                  </div>
+                  <div className="text-start">
+                    <div className="fw-semibold" style={{fontSize: '0.875rem', lineHeight: '1.2'}}>
+                      {user.first_name} {user.last_name}
+                    </div>
+                    <div className="text-muted" style={{fontSize: '0.75rem', lineHeight: '1'}}>
+                      {user.role}
+                    </div>
+                  </div>
+                </div>
+                <button type="button" onClick={logUserOut} className="btn btn-danger btn-sm">
+                  Se déconnecter
                 </button>
-                <span className="navbar-text me-3 mb-2 mb-lg-0">{user.first_name} {user.last_name}</span>
-                <button type="button" onClick={logUserOut} className="btn btn-danger px-3">Se déconnecter</button>
-              </div>
+              </>
             )}
           </div>
         </div>
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 }
 

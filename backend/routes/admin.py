@@ -31,7 +31,7 @@ def admin_required(f):
 ### ADMIN ROUTES ###
 
 # Get all users info route with pagination
-@admin_bp.route("/@all", methods=['GET'])
+@admin_bp.route("/users", methods=['GET'])
 @admin_required
 def get_all_users():
     page = request.args.get('page', 1, type=int)
@@ -57,7 +57,7 @@ def get_all_users():
     )
 
 # Add new user route
-@admin_bp.route("/add-user", methods=["POST"])
+@admin_bp.route("/users", methods=["POST"])
 @admin_required
 def add_user():
     email = sanitize_input(request.json["email"])
@@ -89,7 +89,7 @@ def add_user():
     return success_response(data={"id": new_user.id}, message=SuccessMessages.USER_CREATED, status=201)
 
 # Modify user route
-@admin_bp.route("/modify-user/<user_id>", methods=['POST'])
+@admin_bp.route("/users/<user_id>", methods=['PUT', 'PATCH'])
 @admin_required
 def modify_user(user_id):
     user = User.query.filter_by(id=user_id).first()
@@ -139,7 +139,7 @@ def modify_user(user_id):
     return success_response(data={"id": user.id}, message=SuccessMessages.USER_MODIFIED)
     
 # Delete user route
-@admin_bp.route("/delete-user/<user_id>", methods=['POST'])
+@admin_bp.route("/users/<user_id>", methods=['DELETE'])
 @admin_required
 def delete_user(user_id):
     user = User.query.filter_by(id=user_id).first()
@@ -168,7 +168,7 @@ def delete_user(user_id):
     return success_response(message=SuccessMessages.USER_DELETED)
 
 # Get user info route
-@admin_bp.route('/user-info/<user_id>', methods=['GET'])
+@admin_bp.route('/users/<user_id>', methods=['GET'])
 @admin_required
 def get_user_info(user_id):
     user = User.query.filter_by(id=user_id).first()
