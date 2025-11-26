@@ -487,10 +487,13 @@ sudo ufw status
 ```bash
 #!/bin/bash
 BACKUP_DIR="/opt/backups/pythonwebapp"
+ARCHIVE_DIR="/opt/backups/pythonwebapp/archives"
 DATE=$(date +%Y%m%d_%H%M%S)
+MONTH=$(date +%Y%m)
 COMPOSE_FILE="/chemin/vers/docker-compose.prod.yml"
 
 mkdir -p $BACKUP_DIR
+mkdir -p $ARCHIVE_DIR
 
 # Backup PostgreSQL
 docker compose -f $COMPOSE_FILE exec -T db \
@@ -499,10 +502,32 @@ docker compose -f $COMPOSE_FILE exec -T db \
 # Compresser
 gzip "$BACKUP_DIR/db_backup_$DATE.sql"
 
-# Garder seulement les 7 derniers jours
-find $BACKUP_DIR -name "*.sql.gz" -mtime +7 -delete
+echo "✅ Backup créé : db_backup_$DATE.sql.gz"
 
-echo "✅ Backup terminé : db_backup_$DATE.sql.gz"
+# Archiver les backups de plus de 60 jours dans un fichier tar par mois
+find $BACKUP_DIR -maxdepth 1 -name "*.sql.gz" -mtime +60 | while read backup; do
+    BACKUP_MONTH=$(basename "$backup" | grep -oP '\d{6}' | head -1)
+    if [ ! -z "$BACKUP_MONTH" ]; then
+        ARCHIVE_FILE="$ARCHIVE_DIR/archive_${BACKUP_MONTH}.tar.gz"
+        
+        # Ajouter au fichier d'archive du mois correspondant
+        if [ -f "$ARCHIVE_FILE" ]; then
+            # Ajouter au tar existant
+            gunzip -c "$backup" | tar -rzf "$ARCHIVE_FILE" --transform "s|.*/||" -
+        else
+            # Créer un nouveau tar
+            tar -czf "$ARCHIVE_FILE" -C "$(dirname "$backup")" "$(basename "$backup")"
+        fi
+        
+        echo "📦 Archivé : $(basename "$backup") -> archive_${BACKUP_MONTH}.tar.gz"
+        rm "$backup"
+    fi
+done
+
+# Garder seulement les 60 derniers jours de backups non-archivés
+find $BACKUP_DIR -maxdepth 1 -name "*.sql.gz" -mtime +60 -delete
+
+echo "✅ Nettoyage terminé - Backups récents conservés (60 jours), anciens archivés"
 ```
 
 **Rendre le script exécutable** :
