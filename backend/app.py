@@ -7,6 +7,7 @@ from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flasgger import Swagger
 from config import ApplicationConfig
 from models import db, ma, User, UserSchema
 from constants import UserRole
@@ -55,6 +56,54 @@ db.init_app(app)
 ma.init_app(app)
 migrate = Migrate(app, db)
 
+# Swagger API Documentation
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": 'apispec',
+            "route": '/apispec.json',
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/api/docs"
+}
+
+swagger_template = {
+    "swagger": "2.0",
+    "info": {
+        "title": "PythonWebApp API",
+        "description": "API Documentation for PythonWebApp - Flask & React Application",
+        "version": "1.0.0",
+        "contact": {
+            "name": "Artech Sécurité",
+            "url": "https://github.com"
+        }
+    },
+    "host": os.environ.get("API_HOST", "localhost:5000"),
+    "basePath": "/",
+    "schemes": ["http", "https"],
+    "securityDefinitions": {
+        "SessionAuth": {
+            "type": "apiKey",
+            "name": "session",
+            "in": "cookie",
+            "description": "Session-based authentication using Flask-Session"
+        },
+        "CSRF": {
+            "type": "apiKey",
+            "name": "X-CSRFToken",
+            "in": "header",
+            "description": "CSRF token for state-changing requests"
+        }
+    }
+}
+
+swagger = Swagger(app, config=swagger_config, template=swagger_template)
+
 # Register Blueprints
 app.register_blueprint(admin_bp)
 app.register_blueprint(auth_bp)
@@ -70,12 +119,64 @@ def after_request(response):
 
 @app.route('/get_csrf_token', methods=['GET'])
 def get_csrf_token():
+    """
+    Get CSRF Token
+    ---
+    tags:
+      - Authentication
+    responses:
+      200:
+        description: CSRF token generated successfully
+        schema:
+          type: object
+          properties:
+            csrf_token:
+              type: string
+              description: CSRF token for secure requests
+    """
     token = generate_csrf()
     return jsonify({'csrf_token': token})
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint for monitoring"""
+    """
+    Health Check
+    ---
+    tags:
+      - Monitoring
+    responses:
+      200:
+        description: Application is healthy
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: healthy
+            database:
+              type: string
+              example: connected
+            redis:
+              type: string
+              example: connected
+            uptime:
+              type: object
+              properties:
+                seconds:
+                  type: number
+                formatted:
+                  type: string
+      503:
+        description: Application is unhealthy
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: unhealthy
+            error:
+              type: string
+    """
     try:
         # Check database connection
         db.session.execute(text('SELECT 1'))
@@ -94,7 +195,44 @@ def health_check():
 
 @app.route('/metrics', methods=['GET'])
 def get_metrics():
-    """Get application metrics"""
+    """
+    Application Metrics
+    ---
+    tags:
+      - Monitoring
+    responses:
+      200:
+        description: Application and system metrics
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: success
+            timestamp:
+              type: string
+              format: date-time
+            uptime:
+              type: object
+            application:
+              type: object
+              properties:
+                requests:
+                  type: object
+                performance:
+                  type: object
+                endpoints:
+                  type: object
+            system:
+              type: object
+              properties:
+                cpu:
+                  type: object
+                memory:
+                  type: object
+                disk:
+                  type: object
+    """
     try:
         app_metrics = metrics_collector.get_metrics()
         system_metrics = metrics_collector.get_system_metrics()

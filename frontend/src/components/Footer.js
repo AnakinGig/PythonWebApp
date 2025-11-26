@@ -14,7 +14,7 @@ function Footer() {
           </div>
           <div className="col-md-6 text-center text-md-end">
             <p className="mb-0 text-muted">
-              Développé avec <span className="text-danger">❤</span> par <strong>Artech Sécurité</strong>
+              Développé avec <span className="text-danger">❤</span> par <strong>Gigant Anakin</strong>
             </p>
           </div>
         </div>

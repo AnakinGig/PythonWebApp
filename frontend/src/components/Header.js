@@ -1,11 +1,13 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import httpClient from "../components/httpClient";
-import logo from "../assets/logo.jpg";
+import logo from "../assets/basic-logo.png";
+import { useTheme } from "../context/ThemeContext";
 
 function Header({ user, setUser }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   const logUserOut = async () => {
     await httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/logout`);
@@ -37,6 +39,19 @@ function Header({ user, setUser }) {
                 <li className="nav-item">
                   <a className="nav-link" href="/admin/users">{location.pathname === "/admin/users" ? (<u>Utilisateurs</u>) : ("Utilisateurs")}</a>
                 </li>
+                <li className="nav-item">
+                  <a className="nav-link" href="/admin/activity-logs">{location.pathname === "/admin/activity-logs" ? (<u>Activité</u>) : ("Activité")}</a>
+                </li>
+                <li className="nav-item">
+                  <a 
+                    className="nav-link" 
+                    href={`${process.env.REACT_APP_BACKEND_URL}/api/docs`}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    API Docs
+                  </a>
+                </li>
               </ul>
             ) : (
               <ul className="navbar-nav me-auto mb-2 mb-lg-0">
@@ -48,11 +63,25 @@ function Header({ user, setUser }) {
 
             {!user ? (
               <div className="d-flex flex-column flex-lg-row align-items-start align-items-lg-center ms-auto">
+                <button 
+                  onClick={toggleTheme} 
+                  className="btn btn-outline-secondary me-2 mb-2 mb-lg-0"
+                  title={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
+                >
+                  {theme === 'light' ? '🌙' : '☀️'}
+                </button>
                 <a href="/login" className="btn btn-link px-3 me-2 mb-2 mb-lg-0">Se connecter</a>
                 <a href="/register" className="btn btn-primary me-lg-3">Créer un compte</a>
               </div>
             ) : (
               <div className="d-flex flex-column flex-lg-row align-items-start align-items-lg-center ms-auto">
+                <button 
+                  onClick={toggleTheme} 
+                  className="btn btn-outline-secondary me-2 mb-2 mb-lg-0"
+                  title={theme === 'light' ? 'Activer le mode sombre' : 'Activer le mode clair'}
+                >
+                  {theme === 'light' ? '🌙' : '☀️'}
+                </button>
                 <span className="navbar-text me-3 mb-2 mb-lg-0">{user.first_name} {user.last_name}</span>
                 <button type="button" onClick={logUserOut} className="btn btn-danger px-3">Se déconnecter</button>
               </div>

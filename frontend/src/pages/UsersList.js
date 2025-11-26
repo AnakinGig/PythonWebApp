@@ -5,6 +5,7 @@ import Toast from "../components/Toast";
 import { ButtonSpinner } from "../components/LoadingSpinner";
 import useApi from "../components/useApi";
 import Modal from "../components/Modal";
+import { SkeletonTable } from "../components/SkeletonLoader";
 
 function UsersList() {
   const navigate = useNavigate();
@@ -27,6 +28,20 @@ function UsersList() {
   const [last_name_error, setLastNameError] = useState("");
   const [email_error, setEmailError] = useState("");
   const [password_error, setPasswordError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
+
+  // Filtered users based on search and role filter
+  const filteredUsers = users?.filter(user => {
+    const matchesSearch = searchTerm === "" || 
+      user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesRole = filterRole === "all" || user.role === filterRole;
+    
+    return matchesSearch && matchesRole;
+  });
 
   // ### User input verifications ###
   const firstNameVerif = (value) => {
@@ -149,14 +164,92 @@ function UsersList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Export users to CSV
+  const exportToCSV = () => {
+    if (!users || users.length === 0) return;
+    
+    const headers = ['ID', 'Nom', 'Prénom', 'Email', 'Rôle'];
+    const csvData = users.map(user => [
+      user.id,
+      user.last_name,
+      user.first_name,
+      user.email,
+      user.role
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `utilisateurs_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
   return (
     <div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Gestion des Utilisateurs</h1>
-        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-          <i className="bi bi-plus-circle me-2"></i>Ajouter un utilisateur
-        </button>
+        <div>
+          <button className="btn btn-success me-2" onClick={exportToCSV} disabled={!users || users.length === 0}>
+            📊 Exporter CSV
+          </button>
+          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
+            ➕ Ajouter un utilisateur
+          </button>
+        </div>
+      </div>
+      
+      {/* Search and Filter Bar */}
+      <div className="card mb-4">
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-md-8">
+              <div className="input-group">
+                <span className="input-group-text">🔍</span>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Rechercher par nom, prénom ou email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <button 
+                    className="btn btn-outline-secondary" 
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="col-md-4">
+              <select 
+                className="form-select" 
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+              >
+                <option value="all">Tous les rôles</option>
+                <option value="Utilisateur">Utilisateur</option>
+                <option value="Administrateur">Administrateur</option>
+              </select>
+            </div>
+          </div>
+          {filteredUsers && (
+            <div className="mt-2">
+              <small className="text-muted">
+                {filteredUsers.length} utilisateur(s) trouvé(s)
+                {(searchTerm || filterRole !== "all") && ` sur ${users.length} total`}
+              </small>
+            </div>
+          )}
+        </div>
       </div>
       
       <Modal
@@ -211,21 +304,23 @@ function UsersList() {
         </div>
       </Modal>
 
-      <div className="card">
-        <div className="card-body">
-          <table className="table table-hover table-striped mb-0">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Nom</th>
-                <th scope="col">Prénom</th>
-                <th scope="col">Adresse mail</th>
-                <th scope="col">Rôle</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users !== undefined ? (
-                users.map((user) => (
+      {users === undefined ? (
+        <SkeletonTable rows={10} columns={5} />
+      ) : filteredUsers && filteredUsers.length > 0 ? (
+        <div className="card">
+          <div className="card-body">
+            <table className="table table-hover table-striped mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Nom</th>
+                  <th scope="col">Prénom</th>
+                  <th scope="col">Adresse mail</th>
+                  <th scope="col">Rôle</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((user) => (
                   <tr key={user.id} onClick={() => {
                     navigate({ pathname: `/admin/manage-user/` + user.id });
                   }} style={{ cursor: 'pointer' }}>
@@ -239,16 +334,19 @@ function UsersList() {
                       </span>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="5" className="text-center">Chargement...</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="card">
+          <div className="card-body text-center py-5">
+            <h5 className="text-muted">Aucun utilisateur trouvé</h5>
+            <p className="text-muted">Essayez de modifier vos critères de recherche</p>
+          </div>
+        </div>
+      )}
       
       {/* Pagination Controls */}
       {pagination && pagination.pages > 1 && (

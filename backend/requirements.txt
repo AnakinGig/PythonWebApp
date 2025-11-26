@@ -31,3 +31,4 @@ Flask-WTF==1.2.1
 Flask-Migrate==4.0.5
 Flask-Limiter==3.5.0
 psutil==6.1.0
+flasgger==0.9.7.1

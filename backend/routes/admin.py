@@ -1,11 +1,12 @@
 from flask import Blueprint, request, jsonify, session
 from flask_bcrypt import Bcrypt
-from models import db, User, UserSchema
+from models import db, User, UserSchema, ActivityLog, ActivityLogSchema
 from functools import wraps
 import logging
 from utils import validate_user_fields, sanitize_input
 from constants import UserRole, ErrorMessages, SuccessMessages
 from api_response import success_response, error_response, paginated_response
+from activity_logger import log_activity_with_details
 
 # Create a Blueprint for admin-related routes
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/admin')
@@ -82,6 +83,9 @@ def add_user():
     db.session.commit()
     logging.info(f"Admin {session.get('user_id')} a créé un nouvel utilisateur: {new_user.email} (id: {new_user.id}, rôle: {new_user.role})")
     
+    # Log activity
+    log_activity_with_details("Création d'utilisateur", f"Créé utilisateur: {email} (rôle: {role})")
+    
     return success_response(data={"id": new_user.id}, message=SuccessMessages.USER_CREATED, status=201)
 
 # Modify user route
@@ -129,6 +133,9 @@ def modify_user(user_id):
     db.session.commit()
     logging.info(f"Admin {session.get('user_id')} a modifié l'utilisateur: {user.email} (id: {user.id}, rôle: {user.role})")
     
+    # Log activity
+    log_activity_with_details("Modification d'utilisateur", f"Modifié utilisateur: {new_email} (ID: {user_id})")
+    
     return success_response(data={"id": user.id}, message=SuccessMessages.USER_MODIFIED)
     
 # Delete user route
@@ -150,9 +157,13 @@ def delete_user(user_id):
         if admin_count <= 1:
             return error_response(ErrorMessages.CANNOT_DELETE_LAST_ADMIN, status=403)
     
+    # Log activity before deletion
+    user_email = user.email
+    log_activity_with_details("Suppression d'utilisateur", f"Supprimé utilisateur: {user_email} (ID: {user_id})")
+    
     User.query.filter_by(id=user_id).delete()
     db.session.commit()
-    logging.info(f"Admin {session.get('user_id')} a supprimé l'utilisateur: {user.email} (id: {user.id})")
+    logging.info(f"Admin {session.get('user_id')} a supprimé l'utilisateur: {user_email} (id: {user_id})")
     
     return success_response(message=SuccessMessages.USER_DELETED)
 
@@ -170,3 +181,52 @@ def get_user_info(user_id):
         "email": user.email,
         "role": user.role
     })
+
+# Get activity logs route with pagination
+@admin_bp.route('/activity-logs', methods=['GET'])
+@admin_required
+def get_activity_logs():
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+    user_id = request.args.get('user_id', None, type=str)
+    
+    # Limit per page to prevent abuse
+    per_page = min(per_page, 100)
+    
+    # Build query
+    query = ActivityLog.query
+    if user_id:
+        query = query.filter_by(user_id=user_id)
+    
+    # Order by most recent first
+    query = query.order_by(ActivityLog.timestamp.desc())
+    
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Include user information with each log
+    logs_with_users = []
+    for log in pagination.items:
+        user = User.query.get(log.user_id)
+        log_data = {
+            'id': log.id,
+            'user_id': log.user_id,
+            'user_name': f"{user.first_name} {user.last_name}" if user else "Utilisateur supprimé",
+            'user_email': user.email if user else "N/A",
+            'action': log.action,
+            'details': log.details,
+            'ip_address': log.ip_address,
+            'timestamp': log.timestamp.isoformat()
+        }
+        logs_with_users.append(log_data)
+    
+    return paginated_response(
+        items=logs_with_users,
+        pagination={
+            'page': page,
+            'per_page': per_page,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
+    )
