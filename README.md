@@ -294,22 +294,39 @@ echo "admin@votredomaine.com" > ADMIN_MAIL
 # Mot de passe admin (8+ caractères, maj/min/chiffre/spécial)
 echo "VotreMotDePasseSecure123!" > ADMIN_PASSWORD
 
-# URL du backend (changez selon votre domaine)
-echo "https://api.votredomaine.com" > REACT_APP_BACKEND_URL
-
 # URL du frontend (changez selon votre domaine)
 echo "https://votredomaine.com" > FRONTEND_URL
 
-# URL de la base de données
-echo "postgresql://user:password@db:5432/users_db" > DATABASE_URL
+# URL du backend pour le frontend (changez selon votre domaine)
+echo "https://api.votredomaine.com" > REACT_APP_BACKEND_URL
 ```
+
+**Note**: Les secrets sont automatiquement lus par Docker depuis `/run/secrets/` dans les conteneurs.
 
 **Important**: Sécurisez ces fichiers !
 ```bash
 chmod 600 .env_prod_secrets/*
 ```
 
-#### 3. Déployer en Production
+#### 3. Configurer les Variables d'Environnement
+
+⚠️ **Important**: Changez les identifiants de base de données dans `docker-compose.prod.yml` :
+
+```yaml
+db:
+  environment:
+    POSTGRES_USER: votre_utilisateur_secure  # ⚠️ À CHANGER
+    POSTGRES_PASSWORD: votre_mot_de_passe_secure  # ⚠️ À CHANGER
+```
+
+Et mettez à jour `DATABASE_URL` dans la section backend :
+```yaml
+backend:
+  environment:
+    DATABASE_URL: postgresql://votre_utilisateur_secure:votre_mot_de_passe_secure@db:5432/users_db
+```
+
+#### 4. Déployer en Production
 
 ```bash
 # Build les images de production
@@ -321,7 +338,16 @@ sudo docker compose -f docker-compose.prod.yml up -d
 # Vérifier que tout fonctionne
 sudo docker compose -f docker-compose.prod.yml ps
 sudo docker compose -f docker-compose.prod.yml logs -f
+
+# Initialiser la base de données (première fois uniquement)
+sudo docker compose -f docker-compose.prod.yml exec backend flask db upgrade
 ```
+
+**Vérifications importantes** :
+- ✅ Backend accessible et sain : `curl http://localhost:5000/health`
+- ✅ Frontend accessible : `curl http://localhost:80`
+- ✅ Pas d'erreurs dans les logs
+- ✅ Compte admin créé automatiquement
 
 ### Commandes de Production
 
@@ -350,55 +376,95 @@ sudo docker compose -f docker-compose.prod.yml exec db pg_dump -U user users_db 
 sudo docker compose -f docker-compose.prod.yml exec -T db psql -U user users_db < backup_20240127_120000.sql
 ```
 
-#### Monitoring
+#### Health Checks et Monitoring
 ```bash
-# Vérifier la santé
+# Vérifier la santé du backend
 curl http://localhost:5000/health
 
-# Métriques
+# Voir les métriques
 curl http://localhost:5000/metrics
+
+# Vérifier les services
+sudo docker compose -f docker-compose.prod.yml ps
 
 # Statistiques de ressources
 docker stats
 
-# Espace disque
-df -h
+# Vérifier les health checks
+sudo docker inspect --format='{{json .State.Health}}' pythonwebapp-backend-1 | python3 -m json.tool
 ```
 
 ### Sécurité en Production
 
-#### Configuration Nginx (Reverse Proxy + SSL)
-Si vous utilisez un reverse proxy Nginx avec SSL :
+#### 1. Changez les Identifiants par Défaut
+
+⚠️ **CRITIQUE** : Changez immédiatement les identifiants PostgreSQL dans `docker-compose.prod.yml` :
+
+```yaml
+db:
+  environment:
+    POSTGRES_DB: users_db
+    POSTGRES_USER: votre_utilisateur_secure  # ⚠️ NE PAS UTILISER "user"
+    POSTGRES_PASSWORD: votre_mot_de_passe_secure  # ⚠️ NE PAS UTILISER "password"
+```
+
+#### 2. Configuration SSL/TLS
+
+**Installer Certbot pour Let's Encrypt** :
+
+```bash
+# Installer Certbot
+sudo apt-get install certbot python3-certbot-nginx
+
+# Obtenir un certificat SSL
+sudo certbot --nginx -d votredomaine.com -d www.votredomaine.com
+```
+
+**Configurer Nginx en tant que reverse proxy** :
+
+Créez `/etc/nginx/sites-available/pythonwebapp` :
 
 ```nginx
+# Redirection HTTP vers HTTPS
 server {
     listen 80;
-    server_name votredomaine.com;
+    server_name votredomaine.com www.votredomaine.com;
     return 301 https://$server_name$request_uri;
 }
 
+# HTTPS
 server {
     listen 443 ssl http2;
-    server_name votredomaine.com;
+    server_name votredomaine.com www.votredomaine.com;
 
+    # Certificats SSL
     ssl_certificate /etc/letsencrypt/live/votredomaine.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/votredomaine.com/privkey.pem;
 
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
+    # En-têtes de sécurité
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
 
-    location /api {
-        proxy_pass http://localhost:5000;
+    # Frontend
+    location / {
+        proxy_pass http://localhost:80;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 ```
 
-#### Firewall
+Activez la configuration :
+```bash
+sudo ln -s /etc/nginx/sites-available/pythonwebapp /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+#### 3. Configuration du Firewall
 ```bash
 # Autoriser HTTP/HTTPS
 sudo ufw allow 80/tcp
@@ -409,7 +475,48 @@ sudo ufw allow 22/tcp
 
 # Activer le firewall
 sudo ufw enable
+
+# Vérifier l'état
+sudo ufw status
 ```
+
+#### 4. Sauvegardes Automatiques
+
+**Créer un script de backup** (`/opt/backup_pythonwebapp.sh`) :
+
+```bash
+#!/bin/bash
+BACKUP_DIR="/opt/backups/pythonwebapp"
+DATE=$(date +%Y%m%d_%H%M%S)
+COMPOSE_FILE="/chemin/vers/docker-compose.prod.yml"
+
+mkdir -p $BACKUP_DIR
+
+# Backup PostgreSQL
+docker compose -f $COMPOSE_FILE exec -T db \
+    pg_dump -U user users_db > "$BACKUP_DIR/db_backup_$DATE.sql"
+
+# Compresser
+gzip "$BACKUP_DIR/db_backup_$DATE.sql"
+
+# Garder seulement les 7 derniers jours
+find $BACKUP_DIR -name "*.sql.gz" -mtime +7 -delete
+
+echo "✅ Backup terminé : db_backup_$DATE.sql.gz"
+```
+
+**Rendre le script exécutable** :
+```bash
+sudo chmod +x /opt/backup_pythonwebapp.sh
+```
+
+**Ajouter au crontab** (sauvegarde quotidienne à 2h du matin) :
+```bash
+sudo crontab -e
+# Ajouter cette ligne :
+0 2 * * * /opt/backup_pythonwebapp.sh >> /var/log/pythonwebapp_backup.log 2>&1
+```
+
 
 ---
 
