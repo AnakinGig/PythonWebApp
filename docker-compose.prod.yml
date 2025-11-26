@@ -22,6 +22,7 @@ services:
       - main
     volumes:
       - db_data:/app/instance
+    restart: always
 
   frontend:
     build:
@@ -33,6 +34,7 @@ services:
       - backend
     networks:
       - main
+    restart: always
 
   redis:
     image: redis:7-alpine
@@ -40,6 +42,7 @@ services:
       - "6379"
     networks:
       - main
+    restart: always
 
   db:
     image: postgres:13-alpine
@@ -53,6 +56,7 @@ services:
       - "5432"
     networks:
       - main
+    restart: always
 
 volumes:
   db_data:

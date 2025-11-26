@@ -144,10 +144,12 @@ def delete_user(user_id):
     })
 
 # Get user info route
-@admin_bp.route('/user-info/<user_id>', methods=['POST'])
+@admin_bp.route('/user-info/<user_id>', methods=['GET'])
 @admin_required
 def get_user_info(user_id):
     user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
     return jsonify({
         "id": user.id,
         "first_name": user.first_name,

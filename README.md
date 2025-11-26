@@ -2,8 +2,8 @@
 
 Application web basic fullstack
 
-- Frontend : Flask
-- Backend : Nodejs
+- Frontend : React (avec Node.js)
+- Backend : Python Flask
 
 ## Setup
 

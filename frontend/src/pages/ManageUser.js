@@ -87,13 +87,8 @@ function ManageUser() {
         last_name: new_last_name ?? user.last_name,
         email: new_email ?? user.email,
         role: new_role ?? user.role,
+        password: new_password || ""
       };
-
-      if (new_password) {
-        payload.password = new_password;
-      } else {
-        payload.password = user.password;
-      }
 
       httpClient
         .post(`${process.env.REACT_APP_BACKEND_URL}/admin/modify-user/${user_id.id}`, payload, {
@@ -146,7 +141,7 @@ function ManageUser() {
   // ### Fetch user info on page load ###
   useEffect(() => {
     httpClient
-      .post(`${process.env.REACT_APP_BACKEND_URL}/admin/user-info/${user_id.id}`)
+      .get(`${process.env.REACT_APP_BACKEND_URL}/admin/user-info/${user_id.id}`)
       .then((resp) => {
         setUser(resp.data);
       })
