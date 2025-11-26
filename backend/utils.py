@@ -30,6 +30,6 @@ def is_valid_email(email):
 
 # Password strength validation function
 def is_strong_password(password):
-    # Au moins 8 caractères, une majuscule, une minuscule, un chiffre, un caractère spécial
+    # At least 8 characters, one uppercase, one lowercase, one digit, one special character
     regex = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$'
     return re.match(regex, password)

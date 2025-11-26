@@ -3,9 +3,6 @@ import { useState } from 'react';
 /**
  * Custom hook for handling API calls with loading and error states
  * 
- * NOTE: This hook is currently not used but provides a clean way to handle
- * API calls with automatic loading and error state management.
- * 
  * @returns {Object} { loading, error, callApi, resetError }
  * 
  * Usage example:

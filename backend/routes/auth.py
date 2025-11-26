@@ -3,6 +3,7 @@ from flask_bcrypt import Bcrypt
 from models import db, User, UserSchema
 from utils import validate_user_fields, sanitize_input
 from constants import UserRole, ErrorMessages, SuccessMessages, RateLimits
+from api_response import success_response, error_response
 import logging
 
 # Create a Blueprint for authentication-related routes
@@ -16,11 +17,11 @@ def get_current_user():
     user_id = session.get("user_id")
     
     if not user_id:
-        return jsonify({"user": None}), 401
+        return error_response(ErrorMessages.UNAUTHORIZED, status=401)
     
     user = User.query.filter_by(id=user_id).first()
     if not user:
-        return jsonify({"user": None}), 401
+        return error_response(ErrorMessages.UNAUTHORIZED, status=401)
     
     user_schema = UserSchema()
     return user_schema.jsonify(user)
@@ -40,11 +41,11 @@ def register():
     user_already_exists = User.query.filter_by(email=email).first() is not None
 
     if user_already_exists:
-        return jsonify({"error": ErrorMessages.USER_EXISTS}), 409
+        return error_response(ErrorMessages.USER_EXISTS, status=409)
     
     error = validate_user_fields(email, first_name, last_name, password, role=None)
     if error:
-        return jsonify({"error": error}), 400
+        return error_response(error, status=400)
     
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     new_user = User(email=email,first_name=first_name,last_name=last_name,password=hashed_password,role=UserRole.USER)
@@ -70,10 +71,10 @@ def login_user():
     user = User.query.filter_by(email=email).first()
 
     if user is None:
-        return jsonify({"error": ErrorMessages.INVALID_EMAIL}), 401
+        return error_response(ErrorMessages.INVALID_EMAIL, status=401)
     
     if not bcrypt.check_password_hash(user.password, password):
-        return jsonify({"error": ErrorMessages.INVALID_PASSWORD}), 401
+        return error_response(ErrorMessages.INVALID_PASSWORD, status=401)
     
     session["user_id"] = user.id
     
@@ -84,4 +85,4 @@ def login_user():
 @auth_bp.route("/logout", methods=['POST'])
 def logout():
     session.pop('user_id', None)
-    return jsonify({"message": SuccessMessages.LOGGED_OUT}), 200
+    return success_response(message=SuccessMessages.LOGGED_OUT)

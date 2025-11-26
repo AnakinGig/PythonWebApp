@@ -40,8 +40,10 @@ class ErrorMessages:
 
 # Success Messages
 class SuccessMessages:
-    USER_DELETED = "User successfully deleted."
-    LOGGED_OUT = "Successfully logged out."
+    USER_CREATED = "Utilisateur créé avec succès."
+    USER_MODIFIED = "Utilisateur modifié avec succès."
+    USER_DELETED = "Utilisateur supprimé avec succès."
+    LOGGED_OUT = "Déconnexion réussie."
 
 # Rate Limiting
 class RateLimits:

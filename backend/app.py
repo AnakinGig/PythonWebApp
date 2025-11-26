@@ -104,7 +104,7 @@ def wait_for_db(max_retries=30, delay=2):
 if wait_for_db():
     with app.app_context():
         db.create_all()
-        # Créer le 1er admin si la table users est vide.
+        # Create admin user if not exists
         table_empty = User.query.filter_by(email=ADMIN_MAIL).first() is None
 
         if table_empty:

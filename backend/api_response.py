@@ -3,15 +3,15 @@ API Response Helper
 
 Provides consistent response format across all endpoints.
 
-NOTE: This module is currently not used but provides standardized response
-helpers for future API endpoints. Use these functions to ensure consistent
-response structure across your API:
+All API routes use these standardized response helpers to ensure consistent
+response structure across the API.
 
 Example usage:
-    from api_response import success_response, error_response
+    from api_response import success_response, error_response, paginated_response
     
     return success_response(data={'users': users}, message='Success')
     return error_response('User not found', status=404)
+    return paginated_response(items=users, pagination=pagination_info)
 """
 
 from flask import jsonify
