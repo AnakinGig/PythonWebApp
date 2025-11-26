@@ -96,6 +96,7 @@ const Register = ({ setUser }) => {
       );
 
       if (result) {
+        localStorage.setItem('isLoggedIn', 'true');
         setUser(result);
         navigate("/");
       } else {

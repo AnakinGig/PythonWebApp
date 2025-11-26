@@ -11,6 +11,7 @@ function Header({ user, setUser }) {
 
   const logUserOut = async () => {
     await httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/logout`);
+    localStorage.removeItem('isLoggedIn');
     setUser(null);
     navigate("/");
   };

@@ -55,6 +55,7 @@ function Login({ setUser }) {
       );
 
       if (result) {
+        localStorage.setItem('isLoggedIn', 'true');
         setUser(result);
         navigate("/");
       } else {
