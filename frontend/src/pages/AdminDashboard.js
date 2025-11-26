@@ -1,19 +1,20 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../components/httpClient";
-import bootstrap from "bootstrap/dist/js/bootstrap.js";
 import Toast from "../components/Toast";
 import { ButtonSpinner } from "../components/LoadingSpinner";
 import useApi from "../components/useApi";
+import Modal from "../components/Modal";
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const { loading, error, callApi } = useApi();
+  const { loading, callApi } = useApi();
 
   const [users, setUsers] = useState();
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const [new_first_name, setNewFirstName] = useState("");
   const [new_last_name, setNewLastName] = useState("");
@@ -78,7 +79,7 @@ function AdminDashboard() {
 
   // ### Fetch all users from the backend ###
   const getAllUsersInfo = useCallback(async (page = 1) => {
-    const result = await callApi(() =>
+    const { data: result, error: apiError } = await callApi(() =>
       httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/@all?page=${page}&per_page=20`)
     );
 
@@ -86,8 +87,8 @@ function AdminDashboard() {
       setUsers(result.data);
       setPagination(result.pagination);
       setCurrentPage(page);
-    } else if (error) {
-      const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+    } else {
+      const errorMsg = apiError || "Une erreur est survenue.";
       setToast({ message: errorMsg, type: 'error' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -107,7 +108,7 @@ function AdminDashboard() {
       isFirstNameValid && isLastNameValid && isEmailValid && isPasswordValid;
 
     if (isFormValid) {
-      const result = await callApi(() =>
+      const { data: result, error: apiError } = await callApi(() =>
         httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/admin/add-user`, {
           first_name: new_first_name,
           last_name: new_last_name,
@@ -121,17 +122,15 @@ function AdminDashboard() {
         getAllUsersInfo(currentPage);
         handleClose();
         setToast({ message: 'Utilisateur créé avec succès', type: 'success' });
-      } else if (error) {
-        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+      } else {
+        const errorMsg = apiError || "Une erreur est survenue.";
         setToast({ message: errorMsg, type: 'error' });
       }
     }
   };
 
   const handleClose = () => {
-    const popup = document.getElementById("popup");
-    const modal = bootstrap.Modal.getInstance(popup);
-    modal.hide();
+    setIsModalOpen(false);
     // Reset form
     setNewFirstName("");
     setNewLastName("");
@@ -154,16 +153,18 @@ function AdminDashboard() {
     <div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div>
-        <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#popup">+ Ajouter un nouvel utilisateur</button>
+        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>+ Ajouter un nouvel utilisateur</button>
         <br />
         <br />
-        <div className="modal fade" id="popup" tabIndex="-1">
-          <div className="modal-dialog modal-xl">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h1 className="modal-title fs-5" id="popupLabel">Ajouter un nouvel utilisateur.</h1>
-              </div>
-              <div className="modal-body">
+        
+        <Modal
+          isOpen={isModalOpen}
+          onClose={handleClose}
+          title="Ajouter un nouvel utilisateur"
+          size="xl"
+          showFooter={false}
+        >
+          <div>
                 <form className="row">
                   <div className="form-outline col-4">
                     <label className="form-label">Nom</label>
@@ -199,16 +200,14 @@ function AdminDashboard() {
                     <div className="invalid-feedback">{password_error}</div>
                   </div>
                 </form>
-              </div>
-              <div className="modal-footer d-flex justify-content-between">
-                <button className="btn btn-lg btn-danger" data-bs-dismiss="modal" onClick={handleClose}>Annuler</button>
-                <button className="btn btn-lg btn-success" disabled={loading} onClick={addNewUser}>
-                  {loading ? <ButtonSpinner /> : "Enregistrer"}
-                </button>
-              </div>
-            </div>
+                <div className="d-flex justify-content-between mt-4">
+                  <button className="btn btn-lg btn-danger" onClick={handleClose} disabled={loading}>Annuler</button>
+                  <button className="btn btn-lg btn-success" disabled={loading} onClick={addNewUser}>
+                    {loading ? <ButtonSpinner /> : "Enregistrer"}
+                  </button>
+                </div>
           </div>
-        </div>
+        </Modal>
       </div>
       <table className="table table-hover table-striped">
         <thead>

@@ -7,7 +7,7 @@ import useApi from "../components/useApi";
 
 const Register = ({ setUser }) => {
   const navigate = useNavigate();
-  const { loading, error, callApi } = useApi();
+  const { loading, callApi } = useApi();
 
   const [email, setEmail] = useState("");
   const [first_name, setFirstName] = useState("");
@@ -85,7 +85,7 @@ const Register = ({ setUser }) => {
       isFirstNameValid && isLastNameValid && isEmailValid && isPasswordValid;
 
     if (isFormValid) {
-      const result = await callApi(() =>
+      const { data: result, error: apiError } = await callApi(() =>
         httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/register`, {
           email: email,
           first_name: first_name,
@@ -97,8 +97,8 @@ const Register = ({ setUser }) => {
       if (result) {
         setUser(result);
         navigate("/");
-      } else if (error) {
-        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+      } else {
+        const errorMsg = apiError || "Une erreur est survenue.";
         setToast({ message: errorMsg, type: 'error' });
       }
     }

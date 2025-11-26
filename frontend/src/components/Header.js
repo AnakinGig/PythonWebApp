@@ -50,9 +50,7 @@ function Header({ user, setUser }) {
               </div>
             ) : (
               <div className="d-flex flex-column flex-lg-row align-items-start align-items-lg-center ms-auto">
-                <span className="navbar-text me-3 mb-2 mb-lg-0">
-                  👤 {user.first_name} {user.last_name}
-                </span>
+                <span className="navbar-text me-3 mb-2 mb-lg-0">{user.first_name} {user.last_name}</span>
                 <button type="button" onClick={logUserOut} className="btn btn-danger px-3">Se déconnecter</button>
               </div>
             )}

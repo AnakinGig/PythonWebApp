@@ -7,7 +7,7 @@ import useApi from "../components/useApi";
 
 function Login({ setUser }) {
   const navigate = useNavigate();
-  const { loading, error, callApi } = useApi();
+  const { loading, callApi } = useApi();
   const [toast, setToast] = useState(null);
 
   const [email, setEmail] = useState("");
@@ -46,7 +46,7 @@ function Login({ setUser }) {
     const isFormValid = isEmailValid && isPasswordValid;
 
     if (isFormValid){
-      const result = await callApi(() =>
+      const { data: result, error: apiError } = await callApi(() =>
         httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/login`, {
           email: email,
           password: password,
@@ -56,17 +56,13 @@ function Login({ setUser }) {
       if (result) {
         setUser(result);
         navigate("/");
-      } else if (error) {
-        if (error.response && error.response.data && error.response.data.error) {
-          if (error.response.data.error === "Email invalide") {
-            setEmailError("Email invalide");
-          } else if(error.response.data.error === "Mot de passe invalide"){
-            setPasswordError("Mot de passe invalide");
-          } else {
-            setToast({ message: error.response.data.error, type: 'error' });
-          }
+      } else {
+        if (apiError === "Email invalide") {
+          setEmailError("Email invalide");
+        } else if(apiError === "Mot de passe invalide"){
+          setPasswordError("Mot de passe invalide");
         } else {
-          setToast({ message: "Une erreur est survenue.", type: 'error' });
+          setToast({ message: apiError || "Une erreur est survenue.", type: 'error' });
         }
       }
     }

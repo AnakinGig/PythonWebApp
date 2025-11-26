@@ -3,13 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import httpClient from "../components/httpClient";
 import Toast from "../components/Toast";
-import { ButtonSpinner } from "../components/LoadingSpinner";
+import ConfirmDialog from "../components/ConfirmDialog";
 import useApi from "../components/useApi";
 
 function ManageUser() {
   const user_id = useParams();
   const navigate = useNavigate();
-  const { loading, error, callApi } = useApi();
+  const { loading, callApi } = useApi();
   const [toast, setToast] = useState(null);
 
   const [user, setUser] = useState();
@@ -26,9 +26,8 @@ function ManageUser() {
   const [email_error, setEmailError] = useState("");
   const [password_error, setPasswordError] = useState("");
 
-  // Set modal to modify or delete mode
-  const [MODIFY, setMODIFY] = useState(false);
-  const [DELETE, setDELETE] = useState(false);
+  // Modal action state: null | 'modify' | 'delete'
+  const [modalAction, setModalAction] = useState(null);
 
   // ### User input verifications ###
   const firstNameVerif = (value) => {
@@ -95,19 +94,29 @@ function ManageUser() {
         password: new_password || ""
       };
 
-      const result = await callApi(() =>
+      const { data: result, error: apiError } = await callApi(() =>
         httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/admin/modify-user/${user_id.id}`, payload, {
           headers: {"Content-Type": "application/json"},
         })
       );
 
       if (result) {
+        setModalAction(null);
         setToast({ message: 'Utilisateur modifié avec succès', type: 'success' });
         setTimeout(() => navigate("/admin/dashboard"), 1500);
-      } else if (error) {
-        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+      } else {
+        // Error occurred
+        setModalAction(null);
+        const errorMsg = apiError || "Une erreur est survenue.";
         setToast({ message: errorMsg, type: 'error' });
-        if (errorMsg.includes("dernier compte administrateur") || errorMsg.includes("propre rôle")) {
+        
+        // Handle admin-specific restrictions
+        if (errorMsg === "Impossible de modifier le rôle du dernier compte administrateur." ||
+            errorMsg === "Impossible de modifier votre propre rôle administrateur." || 
+            errorMsg === "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.") {
+          // Don't navigate away, let user see the error and try again
+        } else {
+          // For other errors, navigate back after showing error
           setTimeout(() => navigate("/admin/dashboard"), 2000);
         }
       }
@@ -117,39 +126,42 @@ function ManageUser() {
   // ### Delete account ###
   const delete_account = async () => {
     setFormSubmited(true);
-    const result = await callApi(() =>
+    const { data: result, error: apiError } = await callApi(() =>
       httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/admin/delete-user/${user_id.id}`)
     );
 
     if (result) {
+      setModalAction(null);
       setToast({ message: 'Utilisateur supprimé avec succès', type: 'success' });
       setTimeout(() => navigate("/admin/dashboard"), 1500);
-    } else if (error) {
-      const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+    } else {
+      setModalAction(null);
+      const errorMsg = apiError || "Une erreur est survenue.";
       setToast({ message: errorMsg, type: 'error' });
-      if (errorMsg.includes("propre compte") || errorMsg.includes("dernier compte")) {
+      
+      // Handle admin-specific restrictions
+      if (errorMsg === "Vous ne pouvez pas supprimer votre propre compte admin." ||
+          errorMsg === "Impossible de supprimer le dernier compte administrateur.") {
+        // Navigate back immediately for these critical restrictions
+      } else{
         setTimeout(() => navigate("/admin/dashboard"), 2000);
       }
     }
   };
 
-  // ### Handle modal close ###
-  const handle_close = async () => {
-    setDELETE(false);
-    setMODIFY(false);
-  };
+
 
   // ### Fetch user info on page load ###
   useEffect(() => {
     const fetchUser = async () => {
-      const result = await callApi(() =>
+      const { data: result, error: apiError } = await callApi(() =>
         httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/user-info/${user_id.id}`)
       );
 
       if (result) {
-        setUser(result);
-      } else if (error) {
-        const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+        setUser(result.data);
+      } else {
+        const errorMsg = apiError || "Une erreur est survenue.";
         setToast({ message: errorMsg, type: 'error' });
       }
     };
@@ -217,45 +229,25 @@ function ManageUser() {
 
             <div className="text-center text-lg-start mt-4 pt-2">
               <div className="d-flex justify-content-between">
-                <button type="button" onClick={(e) => setMODIFY(true)} data-bs-toggle="modal" data-bs-target="#popup" className="btn btn-primary btn-lg">Modifier le compte</button>
-                <button type="button" onClick={(e) => setDELETE(true)} data-bs-toggle="modal" data-bs-target="#popup" className="btn btn-danger btn-lg"> Supprimer le compte</button>
-              </div>
-              <div className="modal fade" id="popup" tabIndex="-1">
-                <div className="modal-dialog">
-                  <div className="modal-content">
-                    <div className="modal-header">
-                      <h1 className="modal-title fs-5" id="popupLabel">Attention !</h1>
-                    </div>
-                    <div className="modal-body">
-                      {MODIFY === true
-                        ? "Êtes vous sur de vouloir modifier le compte de " + user.first_name + " " + user.last_name + " ?"
-                        : DELETE === true
-                        ? "Êtes vous sur de vouloir supprimer le compte de " + user.first_name + " " + user.last_name + " ?"
-                        : ""}
-                    </div>
-                    <div className="modal-footer d-flex justify-content-center">
-                      {MODIFY === true ? (
-                        <div>
-                          <button type="button" className="btn btn-primary" disabled={loading} data-bs-dismiss="modal" onClick={modify_account}>
-                            {loading ? <ButtonSpinner /> : "Oui"}
-                          </button>
-                          <button type="button" className="btn btn-danger" data-bs-dismiss="modal" onClick={handle_close}>Non</button>
-                        </div>
-                      ) : DELETE === true ? (
-                        <div>
-                          <button type="button" className="btn btn-primary" disabled={loading} data-bs-dismiss="modal" onClick={delete_account}>
-                            {loading ? <ButtonSpinner /> : "Oui"}
-                          </button>
-                          <button type="button" className="btn btn-danger" data-bs-dismiss="modal" onClick={handle_close}>Non</button>
-                        </div>
-                      ) : (
-                        ""
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <button type="button" onClick={() => setModalAction('modify')} className="btn btn-primary btn-lg">Modifier le compte</button>
+                <button type="button" onClick={() => setModalAction('delete')} className="btn btn-danger btn-lg">Supprimer le compte</button>
               </div>
             </div>
+
+            {/* Confirm Dialog */}
+            <ConfirmDialog
+              isOpen={modalAction !== null}
+              onClose={() => setModalAction(null)}
+              onConfirm={modalAction === 'modify' ? modify_account : delete_account}
+              title="Attention !"
+              message={
+                modalAction === 'modify'
+                  ? `Êtes-vous sûr de vouloir modifier le compte de ${user.first_name} ${user.last_name} ?`
+                  : `Êtes-vous sûr de vouloir supprimer le compte de ${user.first_name} ${user.last_name} ?`
+              }
+              loading={loading}
+              danger={modalAction === 'delete'}
+            />
           </form>
         </div>
       ) : (

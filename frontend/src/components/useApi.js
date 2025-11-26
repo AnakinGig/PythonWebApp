@@ -9,11 +9,14 @@ import { useState } from 'react';
  * const { loading, error, callApi } = useApi();
  * 
  * const handleSubmit = async () => {
- *   const result = await callApi(() => 
+ *   const { data: result, error: apiError } = await callApi(() => 
  *     httpClient.post('/endpoint', data)
  *   );
  *   if (result) {
- *     // Handle success
+ *     // Handle success - result contains the response data
+ *   } else {
+ *     // Handle error - apiError contains the error message
+ *     console.log(apiError);
  *   }
  * };
  * 
@@ -32,12 +35,12 @@ export const useApi = () => {
     try {
       const response = await apiFunction();
       setLoading(false);
-      return response.data;
+      return { data: response.data, error: null };
     } catch (err) {
       const errorMessage = err.response?.data?.error || 'Une erreur est survenue.';
       setError(errorMessage);
       setLoading(false);
-      return null;
+      return { data: null, error: errorMessage };
     }
   };
 
