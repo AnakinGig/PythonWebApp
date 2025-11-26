@@ -8,16 +8,14 @@ from flask_migrate import Migrate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flasgger import Swagger
-from config import ApplicationConfig
+from core import ApplicationConfig, UserRole
 from models import db, ma, User, UserSchema
-from constants import UserRole
 from dotenv import load_dotenv
 from functools import wraps
 import os, logging, time
-from routes.admin import admin_bp
-from routes.auth import auth_bp
+from routes import admin_bp, auth_bp
 from sqlalchemy import text
-from monitoring import metrics_collector, monitor_request, record_request_metrics, get_uptime
+from middleware import metrics_collector, monitor_request, record_request_metrics, get_uptime
 
 # CONSTANTS
 load_dotenv()

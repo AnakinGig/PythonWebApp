@@ -1,15 +1,15 @@
 import { useEffect, useState, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import httpClient from "./components/httpClient";
+import httpClient from "./utils/httpClient";
 import Cookies from 'js-cookie';
-import ErrorBoundary from './components/ErrorBoundary';
-import LoadingSpinner from './components/LoadingSpinner';
+import ErrorBoundary from './components/common/ErrorBoundary';
+import LoadingSpinner from './components/common/LoadingSpinner';
 import { ThemeProvider } from './context/ThemeContext';
 
 // Component imports
-const Header = lazy(() => import('./components/Header'));
-const Footer = lazy(() => import('./components/Footer'));
-const PrivateRoute = lazy(() => import ('./components/PrivateRoute'));
+const Header = lazy(() => import('./components/layout/Header'));
+const Footer = lazy(() => import('./components/layout/Footer'));
+const PrivateRoute = lazy(() => import ('./components/common/PrivateRoute'));
 
 // Page imports
 const Home = lazy(() => import ('./pages/Home'));

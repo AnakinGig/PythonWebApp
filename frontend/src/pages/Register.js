@@ -1,9 +1,9 @@
 import { useState } from "react";
-import httpClient from "../components/httpClient";
+import httpClient from "../utils/httpClient";
 import { useNavigate } from "react-router-dom";
-import Toast from "../components/Toast";
-import { ButtonSpinner } from "../components/LoadingSpinner";
-import useApi from "../components/useApi";
+import Toast from "../components/common/Toast";
+import { ButtonSpinner } from "../components/common/LoadingSpinner";
+import useApi from "../hooks/useApi";
 
 const Register = ({ setUser }) => {
   const navigate = useNavigate();

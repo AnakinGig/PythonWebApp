@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import httpClient from '../components/httpClient';
-import Toast from '../components/Toast';
-import LoadingSpinner from '../components/LoadingSpinner';
+import httpClient from '../utils/httpClient';
+import Toast from '../components/common/Toast';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 function ActivityLogs() {
   const [logs, setLogs] = useState([]);

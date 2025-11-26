@@ -48,11 +48,14 @@ export const SkeletonMetric = () => (
     <div className="card-body text-center">
       <div className="placeholder-glow">
         <span className="placeholder col-6 mb-2"></span>
-        <h2 className="placeholder col-4"></h2>
+        <h2 className="placeholder col-4">
+          <span className="visually-hidden">Loading</span>
+        </h2>
         <span className="placeholder col-8"></span>
       </div>
     </div>
   </div>
 );
 
-export default { SkeletonCard, SkeletonTable, SkeletonMetric };
+const SkeletonComponents = { SkeletonCard, SkeletonTable, SkeletonMetric };
+export default SkeletonComponents;

@@ -1,8 +1,8 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import httpClient from "../components/httpClient";
-import logo from "../assets/basic-logo.png";
-import { useTheme } from "../context/ThemeContext";
+import httpClient from "../../utils/httpClient";
+import logo from "../../assets/basic-logo.png";
+import { useTheme } from "../../context/ThemeContext";
 
 function Header({ user, setUser }) {
   const navigate = useNavigate();

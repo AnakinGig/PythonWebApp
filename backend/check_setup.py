@@ -41,7 +41,7 @@ def check_env_var(var_name, required=True):
 
 def check_dependencies():
     """Check if required Python packages are installed"""
-    print("\n📦 Checking Python dependencies...")
+    print("\nChecking Python dependencies...")
     required_packages = [
         'flask', 'flask_bcrypt', 'flask_cors', 'flask_session',
         'flask_sqlalchemy', 'flask_migrate', 'flask_limiter',
@@ -89,7 +89,7 @@ def main():
         print(f"\n{RED}Missing dependencies. Run: pip install -r requirements.txt{RESET}")
     
     # Check .env file exists
-    print("\n📄 Checking configuration files...")
+    print("\nChecking configuration files...")
     if os.path.exists('.env'):
         print(f"{GREEN}✓{RESET} .env file exists")
     else:
@@ -99,11 +99,11 @@ def main():
     # Final verdict
     print("\n" + "="*50)
     if all_good:
-        print(f"{GREEN}✅ All checks passed! You're ready to run the application.{RESET}")
+        print(f"{GREEN}All checks passed! You're ready to run the application.{RESET}")
         print("\nStart with: docker compose up")
         return 0
     else:
-        print(f"{RED}❌ Some checks failed. Please fix the issues above.{RESET}")
+        print(f"{RED}Some checks failed. Please fix the issues above.{RESET}")
         return 1
 
 if __name__ == "__main__":

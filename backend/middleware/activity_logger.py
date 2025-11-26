@@ -1,6 +1,6 @@
 from flask import request
 from functools import wraps
-from models import db, ActivityLog
+from models.models import db, ActivityLog
 
 def log_activity(action):
     """

@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from uuid import uuid4
-from constants import UserRole
+from core import UserRole
 
 db = SQLAlchemy()
 ma = Marshmallow()

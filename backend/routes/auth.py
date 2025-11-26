@@ -1,10 +1,9 @@
 from flask import Blueprint, request, jsonify, session
 from flask_bcrypt import Bcrypt
 from models import db, User, UserSchema
-from utils import validate_user_fields, sanitize_input
-from constants import UserRole, ErrorMessages, SuccessMessages, RateLimits
-from api_response import success_response, error_response
-from activity_logger import log_activity_with_details
+from utils import validate_user_fields, sanitize_input, success_response, error_response
+from core import UserRole, ErrorMessages, SuccessMessages, RateLimits
+from middleware import log_activity_with_details
 import logging
 
 # Create a Blueprint for authentication-related routes

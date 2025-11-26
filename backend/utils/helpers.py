@@ -1,6 +1,6 @@
 import re
 import bleach
-from constants import UserRole, ErrorMessages
+from core import UserRole, ErrorMessages
 
 def validate_user_fields(email, first_name, last_name, password=None, role=None):
     if not is_valid_email(email) or len(email) > 345:

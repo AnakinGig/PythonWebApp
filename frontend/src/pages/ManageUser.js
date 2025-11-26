@@ -1,10 +1,10 @@
 import { useParams } from "react-router";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import httpClient from "../components/httpClient";
-import Toast from "../components/Toast";
-import ConfirmDialog from "../components/ConfirmDialog";
-import useApi from "../components/useApi";
+import httpClient from "../utils/httpClient";
+import Toast from "../components/common/Toast";
+import ConfirmDialog from "../components/common/ConfirmDialog";
+import useApi from "../hooks/useApi";
 
 function ManageUser() {
   const user_id = useParams();

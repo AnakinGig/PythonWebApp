@@ -3,10 +3,9 @@ from flask_bcrypt import Bcrypt
 from models import db, User, UserSchema, ActivityLog, ActivityLogSchema
 from functools import wraps
 import logging
-from utils import validate_user_fields, sanitize_input
-from constants import UserRole, ErrorMessages, SuccessMessages
-from api_response import success_response, error_response, paginated_response
-from activity_logger import log_activity_with_details
+from utils import validate_user_fields, sanitize_input, success_response, error_response, paginated_response
+from core import UserRole, ErrorMessages, SuccessMessages
+from middleware import log_activity_with_details
 
 # Create a Blueprint for admin-related routes
 admin_bp = Blueprint('admin_bp', __name__, url_prefix='/admin')

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import httpClient from "../components/httpClient";
-import LoadingSpinner from "../components/LoadingSpinner";
-import Toast from "../components/Toast";
+import httpClient from "../utils/httpClient";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import Toast from "../components/common/Toast";
 
 function AdminDashboard() {
   const [metrics, setMetrics] = useState(null);

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import httpClient from "../components/httpClient";
-import Toast from "../components/Toast";
-import { ButtonSpinner } from "../components/LoadingSpinner";
-import useApi from "../components/useApi";
+import httpClient from "../utils/httpClient";
+import Toast from "../components/common/Toast";
+import { ButtonSpinner } from "../components/common/LoadingSpinner";
+import useApi from "../hooks/useApi";
 
 function Login({ setUser }) {
   const navigate = useNavigate();

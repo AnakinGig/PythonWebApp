@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import httpClient from "../components/httpClient";
-import Toast from "../components/Toast";
-import { ButtonSpinner } from "../components/LoadingSpinner";
-import useApi from "../components/useApi";
-import Modal from "../components/Modal";
-import { SkeletonTable } from "../components/SkeletonLoader";
+import httpClient from "../utils/httpClient";
+import Toast from "../components/common/Toast";
+import { ButtonSpinner } from "../components/common/LoadingSpinner";
+import useApi from "../hooks/useApi";
+import Modal from "../components/common/Modal";
+import { SkeletonTable } from "../components/common/SkeletonLoader";
 
 function UsersList() {
   const navigate = useNavigate();
