@@ -4,9 +4,12 @@ import httpClient from './httpClient';
 /**
  * Custom hook for handling API calls with loading and error states
  * 
- * @returns {Object} { loading, error, callApi }
+ * NOTE: This hook is currently not used but provides a clean way to handle
+ * API calls with automatic loading and error state management.
  * 
- * Usage:
+ * @returns {Object} { loading, error, callApi, resetError }
+ * 
+ * Usage example:
  * const { loading, error, callApi } = useApi();
  * 
  * const handleSubmit = async () => {
@@ -14,9 +17,13 @@ import httpClient from './httpClient';
  *     httpClient.post('/endpoint', data)
  *   );
  *   if (result) {
- *     Handle success
+ *     // Handle success
  *   }
  * };
+ * 
+ * Then in your JSX:
+ * {loading && <LoadingSpinner />}
+ * {error && <Toast message={error} type="error" />}
  */
 export const useApi = () => {
   const [loading, setLoading] = useState(false);

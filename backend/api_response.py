@@ -2,6 +2,16 @@
 API Response Helper
 
 Provides consistent response format across all endpoints.
+
+NOTE: This module is currently not used but provides standardized response
+helpers for future API endpoints. Use these functions to ensure consistent
+response structure across your API:
+
+Example usage:
+    from api_response import success_response, error_response
+    
+    return success_response(data={'users': users}, message='Success')
+    return error_response('User not found', status=404)
 """
 
 from flask import jsonify
