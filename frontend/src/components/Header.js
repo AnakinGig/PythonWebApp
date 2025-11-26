@@ -32,7 +32,10 @@ function Header({ user, setUser }) {
                   <a className="nav-link" href="/">{location.pathname === "/" ? <u>Home</u> : "Home"}</a>
                 </li>
                 <li className="nav-item">
-                  <a className="nav-link" href="/admin/dashboard">{location.pathname.includes("admin") ? (<u>Admin</u>) : ("Admin")}</a>
+                  <a className="nav-link" href="/admin/dashboard">{location.pathname === "/admin/dashboard" ? (<u>Tableau de bord</u>) : ("Tableau de bord")}</a>
+                </li>
+                <li className="nav-item">
+                  <a className="nav-link" href="/admin/users">{location.pathname === "/admin/users" ? (<u>Utilisateurs</u>) : ("Utilisateurs")}</a>
                 </li>
               </ul>
             ) : (

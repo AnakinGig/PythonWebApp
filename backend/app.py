@@ -16,6 +16,7 @@ import os, logging, time
 from routes.admin import admin_bp
 from routes.auth import auth_bp
 from sqlalchemy import text
+from monitoring import metrics_collector, monitor_request, record_request_metrics, get_uptime
 
 # CONSTANTS
 load_dotenv()
@@ -46,6 +47,9 @@ logging.basicConfig(
     handlers=[logging.FileHandler("app.log"),logging.StreamHandler()]
 )
 
+# Track application start time for uptime monitoring
+APP_START_TIME = time.time()
+
 # Config BDD
 db.init_app(app)
 ma.init_app(app)
@@ -54,6 +58,15 @@ migrate = Migrate(app, db)
 # Register Blueprints
 app.register_blueprint(admin_bp)
 app.register_blueprint(auth_bp)
+
+# Register monitoring middleware
+@app.before_request
+def before_request():
+    monitor_request()
+
+@app.after_request
+def after_request(response):
+    return record_request_metrics(response)
 
 @app.route('/get_csrf_token', methods=['GET'])
 def get_csrf_token():
@@ -69,7 +82,8 @@ def health_check():
         return jsonify({
             'status': 'healthy',
             'database': 'connected',
-            'redis': 'connected'
+            'redis': 'connected',
+            'uptime': get_uptime(APP_START_TIME)
         }), 200
     except Exception as e:
         logging.error(f"Health check failed: {e}")
@@ -77,6 +91,27 @@ def health_check():
             'status': 'unhealthy',
             'error': str(e)
         }), 503
+
+@app.route('/metrics', methods=['GET'])
+def get_metrics():
+    """Get application metrics"""
+    try:
+        app_metrics = metrics_collector.get_metrics()
+        system_metrics = metrics_collector.get_system_metrics()
+        
+        return jsonify({
+            'status': 'success',
+            'timestamp': time.time(),
+            'uptime': get_uptime(APP_START_TIME),
+            'application': app_metrics,
+            'system': system_metrics
+        }), 200
+    except Exception as e:
+        logging.error(f"Error retrieving metrics: {e}")
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
 
 def wait_for_db(max_retries=30, delay=2):
     """Wait for database to be ready with exponential backoff"""

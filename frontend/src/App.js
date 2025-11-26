@@ -7,6 +7,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 
 // Component imports
 const Header = lazy(() => import('./components/Header'));
+const Footer = lazy(() => import('./components/Footer'));
 const PrivateRoute = lazy(() => import ('./components/PrivateRoute'));
 
 // Page imports
@@ -14,7 +15,8 @@ const Home = lazy(() => import ('./pages/Home'));
 const Login = lazy(() => import ('./pages/Login'));
 const Register = lazy(() => import ('./pages/Register'));
 const NotFound = lazy(() => import ('./pages/NotFound'));
-const AdminDashboard = lazy(() => import ('./pages/AdminDashboard'));
+const AdminDashboard = lazy(() => import ('./pages/Monitoring'));
+const UsersList = lazy(() => import ('./pages/UsersList'));
 const ManageUser = lazy(() => import ('./pages/ManageUser'));
 
 function App() {
@@ -52,9 +54,9 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <div>
+      <div className="d-flex flex-column min-vh-100">
         <Header user={user} setUser={setUser}/>
-        <div className='container mt-4'>
+        <div className='container mt-4 flex-grow-1'>
           <Suspense fallback={<LoadingSpinner text="Chargement de la page..." />}>
             <Routes>
               <Route path="/" element={<Home user={user}/>}/>
@@ -63,6 +65,11 @@ function App() {
               <Route path="/admin/dashboard" element={
                 <PrivateRoute user={user} requiredRole={'Administrateur'}>
                   <AdminDashboard setUser={setUser}/>
+                </PrivateRoute>
+              }/>
+              <Route path="/admin/users" element={
+                <PrivateRoute user={user} requiredRole={'Administrateur'}>
+                  <UsersList/>
                 </PrivateRoute>
               }/>
               <Route path="/admin/manage-user/:id" element={
@@ -74,6 +81,7 @@ function App() {
             </Routes>
           </Suspense>
         </div>
+        <Footer />
       </div>
     </ErrorBoundary>
   );
