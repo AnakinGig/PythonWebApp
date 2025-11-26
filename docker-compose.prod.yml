@@ -8,26 +8,38 @@ services:
     environment:
       FLASK_ENV: production
       DATABASE_URL: postgresql://user:password@db:5432/users_db
-      FRONTEND_URL: http://your-production-domain.com
     secrets:
       - SECRET_KEY
       - ADMIN_MAIL
       - ADMIN_PASSWORD
+      - FRONTEND_URL
     expose:
       - "5000"
     depends_on:
-      - redis
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - main
     volumes:
       - db_data:/app/instance
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile.prod
+      args:
+        - REACT_APP_BACKEND_URL_FILE=/run/secrets/REACT_APP_BACKEND_URL
+    secrets:
+      - REACT_APP_BACKEND_URL
     ports:
       - "80:80"
     depends_on:
@@ -57,6 +69,11 @@ services:
     networks:
       - main
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d users_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   db_data:
@@ -73,3 +90,7 @@ secrets:
     file: ./.env_prod_secrets/ADMIN_MAIL
   ADMIN_PASSWORD:
     file: ./.env_prod_secrets/ADMIN_PASSWORD
+  FRONTEND_URL:
+    file: ./.env_prod_secrets/FRONTEND_URL
+  REACT_APP_BACKEND_URL:
+    file: ./.env_prod_secrets/REACT_APP_BACKEND_URL

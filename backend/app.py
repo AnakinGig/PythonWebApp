@@ -21,13 +21,14 @@ from monitoring import metrics_collector, monitor_request, record_request_metric
 
 # CONSTANTS
 load_dotenv()
-ADMIN_MAIL = open("/run/secrets/ADMIN_MAIL").read() if os.path.exists("/run/secrets/ADMIN_MAIL") else os.getenv('ADMIN_MAIL')
-ADMIN_PASSWORD = open("/run/secrets/ADMIN_PASSWORD").read() if os.path.exists("/run/secrets/ADMIN_PASSWORD") else os.getenv('ADMIN_PASSWORD')
+ADMIN_MAIL = open("/run/secrets/ADMIN_MAIL").read().strip() if os.path.exists("/run/secrets/ADMIN_MAIL") else os.getenv('ADMIN_MAIL')
+ADMIN_PASSWORD = open("/run/secrets/ADMIN_PASSWORD").read().strip() if os.path.exists("/run/secrets/ADMIN_PASSWORD") else os.getenv('ADMIN_PASSWORD')
+FRONTEND_URL = open("/run/secrets/FRONTEND_URL").read().strip() if os.path.exists("/run/secrets/FRONTEND_URL") else os.getenv('FRONTEND_URL', 'http://localhost:3000')
 
 # Config App
 app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
-CORS(app, origins=os.environ.get("FRONTEND_URL"), supports_credentials=True)
+CORS(app, origins=FRONTEND_URL, supports_credentials=True)
 bcrypt = Bcrypt()
 bcrypt.init_app(app)
 server_session = Session(app)

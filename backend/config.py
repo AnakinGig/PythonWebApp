@@ -5,7 +5,7 @@ import redis
 load_dotenv()
 
 class ApplicationConfig:
-    SECRET_KEY = open("/run/secrets/SECRET_KEY").read() if os.path.exists("/run/secrets/SECRET_KEY") else os.environ["SECRET_KEY"]
+    SECRET_KEY = open("/run/secrets/SECRET_KEY").read().strip() if os.path.exists("/run/secrets/SECRET_KEY") else os.environ["SECRET_KEY"]
     
     # Database config
     SQLALCHEMY_TRACK_MODIFICATIONS = False

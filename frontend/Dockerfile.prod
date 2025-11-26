@@ -2,12 +2,21 @@ FROM node:18-alpine as builder
 
 WORKDIR /app
 
+# Build argument for backend URL
+ARG REACT_APP_BACKEND_URL_FILE
+
 COPY frontend/package.json ./
 COPY frontend/package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY frontend/ ./ 
-RUN npm run build
+COPY frontend/ ./
+
+# Read the backend URL from secrets file if provided, otherwise use default
+RUN --mount=type=secret,id=REACT_APP_BACKEND_URL \
+    if [ -f /run/secrets/REACT_APP_BACKEND_URL ]; then \
+        export REACT_APP_BACKEND_URL=$(cat /run/secrets/REACT_APP_BACKEND_URL); \
+    fi && \
+    npm run build
 
 # Stage 2: Serve the app with Nginx
 FROM nginx:stable-alpine
