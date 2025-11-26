@@ -111,7 +111,6 @@ function AdminDashboard() {
           role: new_role,
         })
         .then((resp) => {
-          console.log(resp);
           getAllUsersInfo(currentPage);
           handleClose();
           setToast({ message: 'Utilisateur créé avec succès', type: 'success' });

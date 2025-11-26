@@ -1,6 +1,7 @@
 import { useState } from "react";
 import httpClient from "../components/httpClient";
 import { useNavigate } from "react-router-dom";
+import Toast from "../components/Toast";
 
 const Register = ({ setUser }) => {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ const Register = ({ setUser }) => {
   const [first_name, setFirstName] = useState("");
   const [last_name, setLastName] = useState("");
   const [password, setPassword] = useState("");
+  const [toast, setToast] = useState(null);
 
   const [form_submited, setFormSubmited] = useState(false);
   const [first_name_error, setFirstNameError] = useState("");
@@ -89,21 +91,18 @@ const Register = ({ setUser }) => {
         })
         .then((resp) => {
           setUser(resp.data);
-          console.log(resp.data);
           navigate("/");
         })
         .catch((error) => {
-          if (error.response && error.response.data && error.response.data.error) {
-            alert(error.response.data.error);
-          } else {
-            alert("Une erreur est survenue.");
-          }
+          const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
+          setToast({ message: errorMsg, type: 'error' });
         });
     }
   };
 
   return (
     <div className="vh-100 d-flex justify-content-center align-items-center">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div className="row d-flex justify-content-center align-items-center h-100">
         <div className="col-md-9 col-lg-6 col-xl-5">
           <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.webp" className="img-fluid" alt="Sample"/>

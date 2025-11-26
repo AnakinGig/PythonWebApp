@@ -97,8 +97,8 @@ function ManageUser() {
           headers: {"Content-Type": "application/json"},
         })
         .then((resp) => {
-          navigate("/admin/dashboard");
-          console.log(resp.data);
+          setToast({ message: 'Utilisateur modifié avec succès', type: 'success' });
+          setTimeout(() => navigate("/admin/dashboard"), 1500);
         })
         .catch((error) => {
           const errorMsg = error.response?.data?.error || "Une erreur est survenue.";
@@ -116,8 +116,8 @@ function ManageUser() {
     httpClient
       .post(`${process.env.REACT_APP_BACKEND_URL}/admin/delete-user/${user_id.id}`)
       .then((resp) => {
-        navigate("/admin/dashboard");
-        console.log(resp.data);
+        setToast({ message: 'Utilisateur supprimé avec succès', type: 'success' });
+        setTimeout(() => navigate("/admin/dashboard"), 1500);
       })
       .catch((error) => {
         const errorMsg = error.response?.data?.error || "Une erreur est survenue.";

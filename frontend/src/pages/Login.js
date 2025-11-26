@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../components/httpClient";
+import Toast from "../components/Toast";
 
 function Login({ setUser }) {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [toast, setToast] = useState(null);
 
   const [form_submited, setFormSubmited] = useState(false);
   const [email_error, setEmailError] = useState("");
@@ -47,18 +49,19 @@ function Login({ setUser }) {
       })
       .then(function (response) {
         setUser(response.data);
-        console.log(response.data);
         navigate("/");
       })
       .catch((error) => {
         if (error.response && error.response.data && error.response.data.error) {
           if (error.response.data.error === "Email invalide") {
             setEmailError("Email invalide");
-          }if(error.response.data.error === "Mot de passe invalide"){
+          } else if(error.response.data.error === "Mot de passe invalide"){
             setPasswordError("Mot de passe invalide");
+          } else {
+            setToast({ message: error.response.data.error, type: 'error' });
           }
         } else {
-          alert("Une erreur est survenue.");
+          setToast({ message: "Une erreur est survenue.", type: 'error' });
         }
       });
     }
@@ -66,6 +69,7 @@ function Login({ setUser }) {
 
   return (
     <div className="vh-100 d-flex justify-content-center align-items-center">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div className="row d-flex justify-content-center align-items-center h-100">
         <div className="col-md-9 col-lg-6 col-xl-5">
           <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.webp" className="img-fluid" alt="Sample"/>
