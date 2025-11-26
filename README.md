@@ -315,8 +315,8 @@ chmod 600 .env_prod_secrets/*
 ```yaml
 db:
   environment:
-    POSTGRES_USER: votre_utilisateur_secure  # ⚠️ À CHANGER
-    POSTGRES_PASSWORD: votre_mot_de_passe_secure  # ⚠️ À CHANGER
+    POSTGRES_USER: votre_utilisateur_secure  # À CHANGER
+    POSTGRES_PASSWORD: votre_mot_de_passe_secure  # À CHANGER
 ```
 
 Et mettez à jour `DATABASE_URL` dans la section backend :
@@ -404,8 +404,8 @@ sudo docker inspect --format='{{json .State.Health}}' pythonwebapp-backend-1 | p
 db:
   environment:
     POSTGRES_DB: users_db
-    POSTGRES_USER: votre_utilisateur_secure  # ⚠️ NE PAS UTILISER "user"
-    POSTGRES_PASSWORD: votre_mot_de_passe_secure  # ⚠️ NE PAS UTILISER "password"
+    POSTGRES_USER: votre_utilisateur_secure  # NE PAS UTILISER "user"
+    POSTGRES_PASSWORD: votre_mot_de_passe_secure  # NE PAS UTILISER "password"
 ```
 
 #### 2. Configuration SSL/TLS
@@ -502,7 +502,7 @@ docker compose -f $COMPOSE_FILE exec -T db \
 # Compresser
 gzip "$BACKUP_DIR/db_backup_$DATE.sql"
 
-echo "✅ Backup créé : db_backup_$DATE.sql.gz"
+echo "Backup créé : db_backup_$DATE.sql.gz"
 
 # Archiver les backups de plus de 60 jours dans un fichier tar par mois
 find $BACKUP_DIR -maxdepth 1 -name "*.sql.gz" -mtime +60 | while read backup; do
@@ -519,7 +519,7 @@ find $BACKUP_DIR -maxdepth 1 -name "*.sql.gz" -mtime +60 | while read backup; do
             tar -czf "$ARCHIVE_FILE" -C "$(dirname "$backup")" "$(basename "$backup")"
         fi
         
-        echo "📦 Archivé : $(basename "$backup") -> archive_${BACKUP_MONTH}.tar.gz"
+        echo "Archivé : $(basename "$backup") -> archive_${BACKUP_MONTH}.tar.gz"
         rm "$backup"
     fi
 done
@@ -527,7 +527,7 @@ done
 # Garder seulement les 60 derniers jours de backups non-archivés
 find $BACKUP_DIR -maxdepth 1 -name "*.sql.gz" -mtime +60 -delete
 
-echo "✅ Nettoyage terminé - Backups récents conservés (60 jours), anciens archivés"
+echo "Nettoyage terminé - Backups récents conservés (60 jours), anciens archivés"
 ```
 
 **Rendre le script exécutable** :
