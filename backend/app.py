@@ -8,9 +8,10 @@ from config import ApplicationConfig
 from models import db, ma, User, UserSchema
 from dotenv import load_dotenv
 from functools import wraps
-import os, logging
+import os, logging, time
 from routes.admin import admin_bp
 from routes.auth import auth_bp
+from sqlalchemy import text
 
 # CONSTANTS
 load_dotenv()
@@ -46,16 +47,44 @@ def get_csrf_token():
     token = generate_csrf()
     return jsonify({'csrf_token': token})
 
-with app.app_context():
-    db.create_all()
-    # Créer le 1er admin si la table users est vide.
-    table_empty = User.query.filter_by(email=ADMIN_MAIL).first() is None
+def wait_for_db(max_retries=30, delay=2):
+    """Wait for database to be ready with exponential backoff"""
+    retries = 0
+    while retries < max_retries:
+        try:
+            with app.app_context():
+                # Try to execute a simple query
+                db.session.execute(text('SELECT 1'))
+                logging.info("Database connection established successfully")
+                return True
+        except Exception as e:
+            retries += 1
+            wait_time = delay * (1.5 ** (retries - 1))  # Exponential backoff
+            logging.warning(f"Database connection attempt {retries}/{max_retries} failed: {e}")
+            if retries < max_retries:
+                logging.info(f"Retrying in {wait_time:.1f} seconds...")
+                time.sleep(wait_time)
+            else:
+                logging.error("Max retries reached. Could not connect to database.")
+                return False
+    return False
 
-    if table_empty:
-        hashed_admin_password = bcrypt.generate_password_hash(ADMIN_PASSWORD)
-        admin_user = User(first_name='Admin',last_name='Admin',email=ADMIN_MAIL,password=hashed_admin_password,role='Administrateur')
-        db.session.add(admin_user)
-        db.session.commit()
+# Wait for database to be ready
+if wait_for_db():
+    with app.app_context():
+        db.create_all()
+        # Créer le 1er admin si la table users est vide.
+        table_empty = User.query.filter_by(email=ADMIN_MAIL).first() is None
+
+        if table_empty:
+            hashed_admin_password = bcrypt.generate_password_hash(ADMIN_PASSWORD).decode('utf-8')
+            admin_user = User(first_name='Admin',last_name='Admin',email=ADMIN_MAIL,password=hashed_admin_password,role='Administrateur')
+            db.session.add(admin_user)
+            db.session.commit()
+            logging.info("Admin user created successfully")
+else:
+    logging.error("Failed to initialize database. Exiting...")
+    exit(1)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -41,7 +41,7 @@ def register():
     if error:
         return jsonify({"error": error}), 400
     
-    hashed_password = bcrypt.generate_password_hash(password)
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     new_user = User(email=email,first_name=first_name,last_name=last_name,password=hashed_password)
     db.session.add(new_user)
     db.session.commit()

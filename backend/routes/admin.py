@@ -57,7 +57,7 @@ def add_user():
         return jsonify({"error": error}), 400
     
     # Création du nouvel utilisateur du mot de passe.
-    hashed_password = bcrypt.generate_password_hash(password)
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     new_user = User(email=email,first_name=first_name,last_name=last_name,password=hashed_password,role=role)
     db.session.add(new_user)
     db.session.commit()
@@ -106,7 +106,7 @@ def modify_user(user_id):
     user.role = new_role
     
     if new_password:
-        new_hashed_password = bcrypt.generate_password_hash(new_password)
+        new_hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
         user.password = new_hashed_password
     
     db.session.commit()
