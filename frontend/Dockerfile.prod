@@ -2,9 +2,6 @@ FROM node:18-alpine as builder
 
 WORKDIR /app
 
-# Build argument for backend URL
-ARG REACT_APP_BACKEND_URL_FILE
-
 RUN apk add --no-cache python3 make g++
 
 COPY frontend/package.json .
@@ -13,12 +10,12 @@ RUN npm ci --omit=dev
 
 COPY frontend/ .
 
-# Read the backend URL from secrets file if provided, otherwise use default
-RUN --mount=type=secret,id=REACT_APP_BACKEND_URL \
-    if [ -f /run/secrets/REACT_APP_BACKEND_URL ]; then \
-        export REACT_APP_BACKEND_URL=$(cat /run/secrets/REACT_APP_BACKEND_URL); \
-    fi && \
-    npm run build
+# Set the environment variable for the build process
+# The value will be passed from docker-compose.prod.yml as a build argument
+ARG REACT_APP_BACKEND_URL
+ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
+
+RUN npm run build
 
 # Stage 2: Serve the app with Nginx
 FROM nginx:stable-alpine

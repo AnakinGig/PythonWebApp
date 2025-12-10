@@ -6,11 +6,11 @@ services:
     environment:
       FLASK_ENV: production
       DATABASE_URL: postgresql://user:password@db:5432/users_db
+      FRONTEND_URL: http://localhost
     secrets:
       - SECRET_KEY
       - ADMIN_MAIL
       - ADMIN_PASSWORD
-      - FRONTEND_URL
     expose:
       - "5000"
     depends_on:
@@ -34,10 +34,8 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile.prod
-      args:
-        - REACT_APP_BACKEND_URL_FILE=/run/secrets/REACT_APP_BACKEND_URL
-    secrets:
-      - REACT_APP_BACKEND_URL
+    environment:
+      REACT_APP_BACKEND_URL: "http://localhost:5000"
     ports:
       - "80:80"
     depends_on:
@@ -88,7 +86,3 @@ secrets:
     file: ./.env_prod_secrets/ADMIN_MAIL
   ADMIN_PASSWORD:
     file: ./.env_prod_secrets/ADMIN_PASSWORD
-  FRONTEND_URL:
-    file: ./.env_prod_secrets/FRONTEND_URL
-  REACT_APP_BACKEND_URL:
-    file: ./.env_prod_secrets/REACT_APP_BACKEND_URL

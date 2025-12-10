@@ -60,10 +60,10 @@ def check_dependencies():
     return len(missing) == 0
 
 def main():
-    print("🔍 PythonWebApp - Environment Setup Checker\n")
+    print("PythonWebApp - Environment Setup Checker\n")
     
     # Check environment variables
-    print("🔧 Checking environment variables...")
+    print("Checking environment variables...")
     all_good = True
     
     required_vars = [
