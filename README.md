@@ -21,60 +21,20 @@ Application web fullstack moderne avec système de gestion d'utilisateurs, monit
 
 ### 🎨 Interface Utilisateur
 - ✅ Design moderne et responsive avec Bootstrap 5
-- ✅ **Mode sombre/clair** avec persistance localStorage
-- ✅ Skeleton loaders pour une meilleure UX
-- ✅ Notifications toast élégantes
-- ✅ Modals animés avec backdrop
-- ✅ Navigation intuitive avec indicateurs visuels
-- ✅ Page d'accueil moderne avec cards et hero section
 
 ### 👥 Gestion des Utilisateurs
 - ✅ Système complet CRUD (Create, Read, Update, Delete)
-- ✅ **Recherche en temps réel** (nom, prénom, email)
-- ✅ **Filtres par rôle** (Utilisateur/Administrateur)
-- ✅ **Export CSV** des utilisateurs avec headers
-- ✅ Pagination côté serveur (20 utilisateurs par page)
-- ✅ Statistiques utilisateurs (total, admins, utilisateurs réguliers)
-- ✅ Validation en temps réel des formulaires
 
 ### 📊 Monitoring & Métriques
 - ✅ **Tableau de bord administrateur** avec métriques en temps réel
-- ✅ **Auto-refresh** des métriques (configurable, 5s par défaut)
-- ✅ Métriques système (CPU, RAM, Disque)
-- ✅ Métriques applicatives (requêtes, erreurs, temps de réponse)
-- ✅ **Métriques par endpoint** avec recherche/filtrage
-- ✅ **Export JSON** des métriques avec timestamp
-- ✅ Endpoint `/health` pour health checks
-- ✅ Endpoint `/metrics` pour Prometheus/monitoring tools
 
 ### 📝 Logs d'Activité
 - ✅ **Système de logs complet** avec tracking des actions utilisateur
-- ✅ Enregistrement automatique des connexions/déconnexions
-- ✅ Logs des opérations CRUD (création, modification, suppression)
-- ✅ Stockage des IP et User-Agent
-- ✅ **Interface de consultation** avec pagination (50 logs/page)
-- ✅ Filtrage par utilisateur possible
-- ✅ Badges colorés par type d'action
-
+- 
 ### 🔒 Sécurité
-- ✅ **Protection CSRF** (Cross-Site Request Forgery)
-- ✅ **Hachage bcrypt** des mots de passe
-- ✅ **Validation forte** des mots de passe (8+ caractères, maj/min/chiffre/spécial)
-- ✅ **Sanitisation XSS** des entrées utilisateur
-- ✅ **Rate limiting** anti brute-force (100 req/min globalement)
-- ✅ Rate limiting spécifique login (5 req/min) et register (3 req/min)
-- ✅ En-têtes de sécurité HTTP (X-Frame-Options, CSP, etc.)
-- ✅ **Gestion des rôles** (Utilisateur/Administrateur)
-- ✅ **Sessions sécurisées** avec Redis
-- ✅ Protection contre la suppression du dernier admin
-- ✅ Protection contre la modification de son propre rôle admin
 
 ### 📚 Documentation API
-- ✅ **Documentation Swagger/OpenAPI** complète
-- ✅ Interface interactive à `/api/docs`
-- ✅ Documentation de tous les endpoints
-- ✅ Exemples de requêtes/réponses
-- ✅ Spécifications de sécurité (Session, CSRF)
+- ✅ **Documentation Swagger/OpenAPI** complète à `/api/docs`
 
 ---
 
