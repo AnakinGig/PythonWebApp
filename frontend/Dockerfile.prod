@@ -1,4 +1,7 @@
-FROM node:18-alpine as builder
+FROM node:18-alpine AS builder
+
+ARG REACT_APP_BACKEND_URL
+ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 
 WORKDIR /app
 
@@ -9,11 +12,6 @@ COPY frontend/package-lock.json .
 RUN npm ci --omit=dev
 
 COPY frontend/ .
-
-# Set the environment variable for the build process
-# The value will be passed from docker-compose.prod.yml as a build argument
-ARG REACT_APP_BACKEND_URL
-ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 
 RUN npm run build
 

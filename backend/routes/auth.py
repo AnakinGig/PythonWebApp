@@ -7,7 +7,7 @@ from middleware import log_activity_with_details
 import logging
 
 # Create a Blueprint for authentication-related routes
-auth_bp = Blueprint('auth_bp', __name__)
+auth_bp = Blueprint('auth_bp', __name__, url_prefix='/api/auth')
 
 bcrypt = Bcrypt()
 

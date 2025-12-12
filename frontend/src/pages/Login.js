@@ -48,7 +48,7 @@ function Login({ setUser }) {
 
     if (isFormValid){
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/login`, {
+        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/auth/login`, {
           email: email,
           password: password,
         })

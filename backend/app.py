@@ -1,17 +1,15 @@
-from flask import Flask, request, jsonify, session, redirect, url_for
+from flask import Flask, jsonify
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_cors import CORS
 from flask_session import Session
-from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flasgger import Swagger
 from core import ApplicationConfig, UserRole
-from models import db, ma, User, UserSchema
+from models import db, ma, User
 from dotenv import load_dotenv
-from functools import wraps
 import os, logging, time
 from routes import admin_bp, auth_bp
 from sqlalchemy import text
@@ -21,7 +19,7 @@ from middleware import metrics_collector, monitor_request, record_request_metric
 load_dotenv()
 ADMIN_MAIL = open("/run/secrets/ADMIN_MAIL").read().strip() if os.path.exists("/run/secrets/ADMIN_MAIL") else os.getenv('ADMIN_MAIL')
 ADMIN_PASSWORD = open("/run/secrets/ADMIN_PASSWORD").read().strip() if os.path.exists("/run/secrets/ADMIN_PASSWORD") else os.getenv('ADMIN_PASSWORD')
-FRONTEND_URL = open("/run/secrets/FRONTEND_URL").read().strip() if os.path.exists("/run/secrets/FRONTEND_URL") else os.getenv('FRONTEND_URL', 'http://localhost:3000')
+FRONTEND_URL = os.getenv('FRONTEND_URL')
 
 # Config App
 app = Flask(__name__)
@@ -116,7 +114,7 @@ def before_request():
 def after_request(response):
     return record_request_metrics(response)
 
-@app.route('/get_csrf_token', methods=['GET'])
+@app.route('/api/get_csrf_token', methods=['GET'])
 def get_csrf_token():
     """
     Get CSRF Token
@@ -136,7 +134,7 @@ def get_csrf_token():
     token = generate_csrf()
     return jsonify({'csrf_token': token})
 
-@app.route('/health', methods=['GET'])
+@app.route('/api/health', methods=['GET'])
 def health_check():
     """
     Health Check
@@ -192,7 +190,7 @@ def health_check():
             'error': str(e)
         }), 503
 
-@app.route('/metrics', methods=['GET'])
+@app.route('/api/metrics', methods=['GET'])
 def get_metrics():
     """
     Application Metrics

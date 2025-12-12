@@ -253,12 +253,6 @@ echo "admin@votredomaine.com" > ADMIN_MAIL
 
 # Mot de passe admin (8+ caractères, maj/min/chiffre/spécial)
 echo "VotreMotDePasseSecure123!" > ADMIN_PASSWORD
-
-# URL du frontend (changez selon votre domaine)
-echo "https://votredomaine.com" > FRONTEND_URL
-
-# URL du backend pour le frontend (changez selon votre domaine)
-echo "https://api.votredomaine.com" > REACT_APP_BACKEND_URL
 ```
 
 **Note**: Les secrets sont automatiquement lus par Docker depuis `/run/secrets/` dans les conteneurs.
@@ -270,20 +264,32 @@ chmod 600 .env_prod_secrets/*
 
 #### 3. Configurer les Variables d'Environnement
 
+Changer les urls frontend et backend dans `docker-compose.prod.yml` :
+
+```yaml
+backend:
+  environment:
+    FRONTEND_URL: http://localhost # À CHANGER
+
+frontend:
+  environment:
+    - REACT_APP_BACKEND_URL=http://localhost:5000/api # À CHANGER
+```
+
 ⚠️ **Important**: Changez les identifiants de base de données dans `docker-compose.prod.yml` :
 
 ```yaml
 db:
   environment:
-    POSTGRES_USER: votre_utilisateur_secure  # À CHANGER
-    POSTGRES_PASSWORD: votre_mot_de_passe_secure  # À CHANGER
+    POSTGRES_USER: user  # À CHANGER
+    POSTGRES_PASSWORD: password  # À CHANGER
 ```
 
 Et mettez à jour `DATABASE_URL` dans la section backend :
 ```yaml
 backend:
   environment:
-    DATABASE_URL: postgresql://votre_utilisateur_secure:votre_mot_de_passe_secure@db:5432/users_db
+    DATABASE_URL: postgresql://user:password@db:5432/users_db
 ```
 
 #### 4. Déployer en Production

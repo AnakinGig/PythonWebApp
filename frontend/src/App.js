@@ -38,7 +38,7 @@ function App() {
         const isLoggedIn = localStorage.getItem('isLoggedIn');
         if (isLoggedIn) {
           try {
-            const userResponse = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/current-user`);
+            const userResponse = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/auth/current-user`);
             if (isMounted) setUser(userResponse.data);
           } catch (userError) {
             // Session expired or invalid, clear the flag

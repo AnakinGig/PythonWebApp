@@ -10,7 +10,7 @@ function Header({ user, setUser }) {
   const { theme, toggleTheme } = useTheme();
 
   const logUserOut = async () => {
-    await httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/logout`);
+    await httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/auth/logout`);
     localStorage.removeItem('isLoggedIn');
     setUser(null);
     navigate("/");
@@ -59,7 +59,7 @@ function Header({ user, setUser }) {
                 <li className="nav-item">
                   <a 
                     className="nav-link" 
-                    href={`${process.env.REACT_APP_BACKEND_URL}/api/docs`}
+                    href={`${process.env.REACT_APP_BACKEND_URL}/docs`}
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
