@@ -1,0 +1,82 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.prod
+    environment:
+      FLASK_ENV: production
+      FRONTEND_URL: http://localhost
+      DATABASE_URL: postgresql://user:password@db:5432/users_db
+    secrets:
+      - SECRET_KEY
+      - ADMIN_MAIL
+      - ADMIN_PASSWORD
+    expose:
+      - "5000"
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - db_data:/app/instance
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.prod
+      args:
+        - REACT_APP_BACKEND_URL=http://localhost:5000/api
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    expose:
+      - "6379"
+    restart: always
+
+  db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d users_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data:
+  postgres_data:
+
+networks:
+  default:
+    driver: bridge
+
+secrets:
+  SECRET_KEY:
+    file: ./.env_prod_secrets/SECRET_KEY
+  ADMIN_MAIL:
+    file: ./.env_prod_secrets/ADMIN_MAIL
+  ADMIN_PASSWORD:
+    file: ./.env_prod_secrets/ADMIN_PASSWORD

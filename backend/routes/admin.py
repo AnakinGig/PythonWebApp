@@ -1,0 +1,539 @@
+from flask import Blueprint, request, jsonify, session
+from flask_bcrypt import Bcrypt
+from models import db, User, UserSchema, ActivityLog
+from functools import wraps
+import logging
+from utils import validate_user_fields, sanitize_input, success_response, error_response, paginated_response
+from core import UserRole, ErrorMessages, SuccessMessages
+from middleware import log_activity_with_details
+
+# Create a Blueprint for admin-related routes
+admin_bp = Blueprint('admin_bp', __name__, url_prefix='/api/admin')
+
+bcrypt = Bcrypt()
+        
+# Admin role required decorator           
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user_id = session.get("user_id")
+        if not user_id:
+            return error_response(ErrorMessages.UNAUTHORIZED, status=401)
+        
+        user = User.query.filter_by(id=user_id).first()
+        if user.role != UserRole.ADMIN:
+            return error_response(ErrorMessages.FORBIDDEN, status=403)
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+### ADMIN ROUTES ###
+
+# Get all users info route with pagination
+@admin_bp.route("/users", methods=['GET'])
+@admin_required
+def get_all_users():
+    """
+    Get All Users
+    ---
+    tags:
+      - Admin
+    security:
+      - SessionAuth: []
+    parameters:
+      - in: query
+        name: page
+        type: integer
+        default: 1
+        description: Page number
+      - in: query
+        name: per_page
+        type: integer
+        default: 20
+        description: Number of items per page (max 100)
+    responses:
+      200:
+        description: List of users with pagination
+        schema:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  email:
+                    type: string
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  role:
+                    type: string
+            pagination:
+              type: object
+              properties:
+                page:
+                  type: integer
+                per_page:
+                  type: integer
+                total:
+                  type: integer
+                pages:
+                  type: integer
+                has_next:
+                  type: boolean
+                has_prev:
+                  type: boolean
+      401:
+        description: Unauthorized
+      403:
+        description: Forbidden - Admin role required
+    """
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    
+    # Limit per page to prevent abuse
+    per_page = min(per_page, 100)
+    
+    pagination = User.query.paginate(page=page, per_page=per_page, error_out=False)
+    user_schema = UserSchema(many=True)
+    user_data = user_schema.dump(pagination.items)
+    
+    return paginated_response(
+        items=user_data,
+        pagination={
+            'page': page,
+            'per_page': per_page,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
+    )
+
+# Add new user route
+@admin_bp.route("/users", methods=["POST"])
+@admin_required
+def add_user():
+    """
+    Add New User
+    ---
+    tags:
+      - Admin
+    security:
+      - SessionAuth: []
+      - CSRF: []
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - email
+            - first_name
+            - last_name
+            - password
+            - role
+          properties:
+            email:
+              type: string
+              format: email
+            first_name:
+              type: string
+            last_name:
+              type: string
+            password:
+              type: string
+              format: password
+            role:
+              type: string
+              enum: [user, admin]
+    responses:
+      201:
+        description: User created successfully
+        schema:
+          type: object
+          properties:
+            id:
+              type: string
+            message:
+              type: string
+      400:
+        description: Invalid input
+      401:
+        description: Unauthorized
+      403:
+        description: Forbidden - Admin role required
+      409:
+        description: User already exists
+    """
+    email = sanitize_input(request.json["email"])
+    first_name = sanitize_input(request.json["first_name"])
+    last_name = sanitize_input(request.json["last_name"])
+    password = request.json["password"]  # Don't sanitize passwords
+    role = request.json["role"]
+    
+    # Verify if the username already exists.
+    user_already_exists = User.query.filter_by(email=email).first() is not None
+
+    if user_already_exists:
+        return error_response(ErrorMessages.USER_EXISTS, status=409)
+    
+    error = validate_user_fields(email, first_name, last_name, password, role)
+    if error:
+        return error_response(error, status=400)
+    
+    # Create the new user with the hashed password.
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    new_user = User(email=email,first_name=first_name,last_name=last_name,password=hashed_password,role=role)
+    db.session.add(new_user)
+    db.session.commit()
+    logging.info(f"Admin {session.get('user_id')} a créé un nouvel utilisateur: {new_user.email} (id: {new_user.id}, rôle: {new_user.role})")
+    
+    # Log activity
+    log_activity_with_details("Création d'utilisateur", f"Créé utilisateur: {email} (rôle: {role})")
+    
+    return success_response(data={"id": new_user.id}, message=SuccessMessages.USER_CREATED, status=201)
+
+# Modify user route
+@admin_bp.route("/users/<user_id>", methods=['PUT', 'PATCH'])
+@admin_required
+def modify_user(user_id):
+    """
+    Modify User
+    ---
+    tags:
+      - Admin
+    security:
+      - SessionAuth: []
+      - CSRF: []
+    parameters:
+      - in: path
+        name: user_id
+        type: string
+        required: true
+        description: User ID
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - email
+            - first_name
+            - last_name
+            - role
+          properties:
+            email:
+              type: string
+              format: email
+            first_name:
+              type: string
+            last_name:
+              type: string
+            password:
+              type: string
+              format: password
+              description: Optional - only provide if changing password
+            role:
+              type: string
+              enum: [user, admin]
+    responses:
+      200:
+        description: User modified successfully
+        schema:
+          type: object
+          properties:
+            id:
+              type: string
+            message:
+              type: string
+      400:
+        description: Invalid input
+      401:
+        description: Unauthorized
+      403:
+        description: Forbidden - Cannot modify last admin or own role
+      404:
+        description: User not found
+      409:
+        description: Email already exists
+    """
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return error_response(ErrorMessages.USER_NOT_FOUND, status=404)
+    
+    new_email = sanitize_input(request.json["email"])
+    new_first_name = sanitize_input(request.json["first_name"])
+    new_last_name = sanitize_input(request.json["last_name"])
+    new_password = request.json.get("password")  # Don't sanitize passwords
+    new_role = request.json["role"]
+    
+    # Prevent modification of the last admin's role
+    if user.role == UserRole.ADMIN:
+        admin_count = User.query.filter_by(role=UserRole.ADMIN).count()
+        if admin_count <= 1 and new_role != UserRole.ADMIN:
+            return error_response(ErrorMessages.CANNOT_MODIFY_LAST_ADMIN_ROLE, status=403)
+
+    # Prevent modification of own admin role
+    if user.id == session.get("user_id") and new_role != UserRole.ADMIN:
+        return error_response(ErrorMessages.CANNOT_MODIFY_SELF_ROLE, status=403)
+    
+    if new_email != user.email: 
+        email_already_exists = User.query.filter_by(email=new_email).first() is not None
+        if email_already_exists:
+            return error_response(ErrorMessages.USER_EXISTS, status=409)
+        
+    error = validate_user_fields(new_email, new_first_name, new_last_name, new_password, new_role)
+    if error:
+        return error_response(error, status=400)
+    
+    user.email = new_email
+    user.first_name = new_first_name
+    user.last_name = new_last_name
+    user.role = new_role
+    
+    if new_password:
+        new_hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        user.password = new_hashed_password
+    
+    db.session.commit()
+    logging.info(f"Admin {session.get('user_id')} a modifié l'utilisateur: {user.email} (id: {user.id}, rôle: {user.role})")
+    
+    # Log activity
+    log_activity_with_details("Modification d'utilisateur", f"Modifié utilisateur: {new_email} (ID: {user_id})")
+    
+    return success_response(data={"id": user.id}, message=SuccessMessages.USER_MODIFIED)
+    
+# Delete user route
+@admin_bp.route("/users/<user_id>", methods=['DELETE'])
+@admin_required
+def delete_user(user_id):
+    """
+    Delete User
+    ---
+    tags:
+      - Admin
+    security:
+      - SessionAuth: []
+      - CSRF: []
+    parameters:
+      - in: path
+        name: user_id
+        type: string
+        required: true
+        description: User ID
+    responses:
+      200:
+        description: User deleted successfully
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+      401:
+        description: Unauthorized
+      403:
+        description: Forbidden - Cannot delete self or last admin
+      404:
+        description: User not found
+    """
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return error_response(ErrorMessages.USER_NOT_FOUND, status=404)
+    
+    # Prevent deletion of own admin account
+    current_user_id = session.get("user_id")
+    if user.id == current_user_id:
+        return error_response(ErrorMessages.CANNOT_DELETE_SELF, status=403)
+
+    # Prevent deletion of the last admin
+    if user.role == UserRole.ADMIN:
+        admin_count = User.query.filter_by(role=UserRole.ADMIN).count()
+        if admin_count <= 1:
+            return error_response(ErrorMessages.CANNOT_DELETE_LAST_ADMIN, status=403)
+    
+    # Log activity before deletion
+    user_email = user.email
+    log_activity_with_details("Suppression d'utilisateur", f"Supprimé utilisateur: {user_email} (ID: {user_id})")
+    
+    User.query.filter_by(id=user_id).delete()
+    db.session.commit()
+    logging.info(f"Admin {session.get('user_id')} a supprimé l'utilisateur: {user_email} (id: {user_id})")
+    
+    return success_response(message=SuccessMessages.USER_DELETED)
+
+# Get user info route
+@admin_bp.route('/users/<user_id>', methods=['GET'])
+@admin_required
+def get_user_info(user_id):
+    """
+    Get User Info
+    ---
+    tags:
+      - Admin
+    security:
+      - SessionAuth: []
+    parameters:
+      - in: path
+        name: user_id
+        type: string
+        required: true
+        description: User ID
+    responses:
+      200:
+        description: User information
+        schema:
+          type: object
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+            first_name:
+              type: string
+            last_name:
+              type: string
+            role:
+              type: string
+      401:
+        description: Unauthorized
+      403:
+        description: Forbidden - Admin role required
+      404:
+        description: User not found
+    """
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return error_response(ErrorMessages.USER_NOT_FOUND, status=404)
+    return success_response(data={
+        "id": user.id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "role": user.role
+    })
+
+# Get activity logs route with pagination
+@admin_bp.route('/activity-logs', methods=['GET'])
+@admin_required
+def get_activity_logs():
+    """
+    Get Activity Logs
+    ---
+    tags:
+      - Admin
+    security:
+      - SessionAuth: []
+    parameters:
+      - in: query
+        name: page
+        type: integer
+        default: 1
+        description: Page number
+      - in: query
+        name: per_page
+        type: integer
+        default: 50
+        description: Number of items per page (max 100)
+      - in: query
+        name: user_id
+        type: string
+        required: false
+        description: Filter logs by user ID
+    responses:
+      200:
+        description: Activity logs with pagination
+        schema:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  user_id:
+                    type: string
+                  user_name:
+                    type: string
+                  user_email:
+                    type: string
+                  action:
+                    type: string
+                  details:
+                    type: string
+                  ip_address:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+            pagination:
+              type: object
+              properties:
+                page:
+                  type: integer
+                per_page:
+                  type: integer
+                total:
+                  type: integer
+                pages:
+                  type: integer
+                has_next:
+                  type: boolean
+                has_prev:
+                  type: boolean
+      401:
+        description: Unauthorized
+      403:
+        description: Forbidden - Admin role required
+    """
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 50, type=int)
+    user_id = request.args.get('user_id', None, type=str)
+    
+    # Limit per page to prevent abuse
+    per_page = min(per_page, 100)
+    
+    # Build query
+    query = ActivityLog.query
+    if user_id:
+        query = query.filter_by(user_id=user_id)
+    
+    # Order by most recent first
+    query = query.order_by(ActivityLog.timestamp.desc())
+    
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Include user information with each log
+    logs_with_users = []
+    for log in pagination.items:
+        user = User.query.get(log.user_id)
+        log_data = {
+            'id': log.id,
+            'user_id': log.user_id,
+            'user_name': f"{user.first_name} {user.last_name}" if user else "Utilisateur supprimé",
+            'user_email': user.email if user else "N/A",
+            'action': log.action,
+            'details': log.details,
+            'ip_address': log.ip_address,
+            'timestamp': log.timestamp.isoformat()
+        }
+        logs_with_users.append(log_data)
+    
+    return paginated_response(
+        items=logs_with_users,
+        pagination={
+            'page': page,
+            'per_page': per_page,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev
+        }
+    )

@@ -1,25 +1,42 @@
-from flask import Flask, request, jsonify, session, redirect, url_for
+from flask import Flask, jsonify
 from flask_bcrypt import Bcrypt
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_cors import CORS
 from flask_session import Session
-from flask_marshmallow import Marshmallow
-from config import ApplicationConfig
-from models import db, ma, User, UserSchema
+from flask_migrate import Migrate
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flasgger import Swagger
+from core import ApplicationConfig, UserRole
+from models import db, ma, User
 from dotenv import load_dotenv
-from functools import wraps
-import os, re, logging
+import os, logging, time
+from routes import admin_bp, auth_bp
+from sqlalchemy import text
+from middleware import metrics_collector, monitor_request, record_request_metrics, get_uptime
 
 # CONSTANTS
 load_dotenv()
-ADMIN_MAIL = os.getenv('ADMIN_MAIL')
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
+ADMIN_MAIL = open("/run/secrets/ADMIN_MAIL").read().strip() if os.path.exists("/run/secrets/ADMIN_MAIL") else os.getenv('ADMIN_MAIL')
+ADMIN_PASSWORD = open("/run/secrets/ADMIN_PASSWORD").read().strip() if os.path.exists("/run/secrets/ADMIN_PASSWORD") else os.getenv('ADMIN_PASSWORD')
+FRONTEND_URL = os.getenv('FRONTEND_URL')
 
 # Config App
 app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
-CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
-bcrypt = Bcrypt(app)
+CORS(app, origins=FRONTEND_URL, supports_credentials=True)
+bcrypt = Bcrypt()
+bcrypt.init_app(app)
 server_session = Session(app)
+csrf = CSRFProtect(app)
+
+# Rate Limiter
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["100 per minute"],
+    storage_uri="redis://redis:6379"
+)
 
 # Config logging
 logging.basicConfig(
@@ -28,270 +45,247 @@ logging.basicConfig(
     handlers=[logging.FileHandler("app.log"),logging.StreamHandler()]
 )
 
+# Track application start time for uptime monitoring
+APP_START_TIME = time.time()
+
 # Config BDD
 db.init_app(app)
 ma.init_app(app)
+migrate = Migrate(app, db)
 
-with app.app_context():
-    db.create_all()
-    # Créer le 1er admin si la table users est vide.
-    table_empty = User.query.filter_by(email=ADMIN_MAIL).first() is None
+# Swagger API Documentation
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": 'apispec',
+            "route": '/apispec.json',
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/api/docs"
+}
 
-    if table_empty:
-        hashed_admin_password = bcrypt.generate_password_hash(ADMIN_PASSWORD)
-        admin_user = User(first_name='Admin',last_name='Admin',email=ADMIN_MAIL,password=hashed_admin_password,role='Administrateur')
-        db.session.add(admin_user)
-        db.session.commit()
+swagger_template = {
+    "swagger": "2.0",
+    "info": {
+        "title": "PythonWebApp API",
+        "description": "API Documentation for PythonWebApp - Flask & React Application",
+        "version": "1.0.0",
+        "contact": {
+            "name": "Python Web App",
+            "url": "https://github.com"
+        }
+    },
+    "host": os.environ.get("API_HOST", "localhost:5000"),
+    "basePath": "/",
+    "schemes": ["http", "https"],
+    "securityDefinitions": {
+        "SessionAuth": {
+            "type": "apiKey",
+            "name": "session",
+            "in": "cookie",
+            "description": "Session-based authentication using Flask-Session"
+        },
+        "CSRF": {
+            "type": "apiKey",
+            "name": "X-CSRFToken",
+            "in": "header",
+            "description": "CSRF token for state-changing requests"
+        }
+    }
+}
 
-### USEFULL FUNCTIONS ###
+swagger = Swagger(app, config=swagger_config, template=swagger_template)
 
-# Validate user fields for database entry
-VALID_ROLES = {"Utilisateur", "Administrateur"}
+# Register Blueprints
+app.register_blueprint(admin_bp)
+app.register_blueprint(auth_bp)
 
-def validate_user_fields(email, first_name, last_name, password=None, role=None):
-    if not is_valid_email(email) or len(email) > 345:
-        return "Format d'email invalide ou trop long."
-    if len(first_name) < 1 or len(first_name) > 50:
-        return "Le prénom doit contenir entre 1 et 50 caractères."
-    if len(last_name) < 1 or len(last_name) > 50:
-        return "Le nom doit contenir entre 1 et 50 caractères."
-    if role and role not in VALID_ROLES:
-        return "Rôle invalide."
-    if password is not None:
-        if not is_strong_password(password):
-            return "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial."
-    return None
+# Register monitoring middleware
+@app.before_request
+def before_request():
+    monitor_request()
 
-# Email validation function
-def is_valid_email(email):
-    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(email_regex, email)
+@app.after_request
+def after_request(response):
+    return record_request_metrics(response)
 
-# Password strength validation function
-def is_strong_password(password):
-    # Au moins 8 caractères, une majuscule, une minuscule, un chiffre, un caractère spécial
-    regex = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$'
-    return re.match(regex, password)
+@app.route('/api/get_csrf_token', methods=['GET'])
+def get_csrf_token():
+    """
+    Get CSRF Token
+    ---
+    tags:
+      - Authentication
+    responses:
+      200:
+        description: CSRF token generated successfully
+        schema:
+          type: object
+          properties:
+            csrf_token:
+              type: string
+              description: CSRF token for secure requests
+    """
+    token = generate_csrf()
+    return jsonify({'csrf_token': token})
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """
+    Health Check
+    ---
+    tags:
+      - Monitoring
+    responses:
+      200:
+        description: Application is healthy
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: healthy
+            database:
+              type: string
+              example: connected
+            redis:
+              type: string
+              example: connected
+            uptime:
+              type: object
+              properties:
+                seconds:
+                  type: number
+                formatted:
+                  type: string
+      503:
+        description: Application is unhealthy
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: unhealthy
+            error:
+              type: string
+    """
+    try:
+        # Check database connection
+        db.session.execute(text('SELECT 1'))
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'redis': 'connected',
+            'uptime': get_uptime(APP_START_TIME)
+        }), 200
+    except Exception as e:
+        logging.error(f"Health check failed: {e}")
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e)
+        }), 503
+
+@app.route('/api/metrics', methods=['GET'])
+def get_metrics():
+    """
+    Application Metrics
+    ---
+    tags:
+      - Monitoring
+    responses:
+      200:
+        description: Application and system metrics
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: success
+            timestamp:
+              type: string
+              format: date-time
+            uptime:
+              type: object
+            application:
+              type: object
+              properties:
+                requests:
+                  type: object
+                performance:
+                  type: object
+                endpoints:
+                  type: object
+            system:
+              type: object
+              properties:
+                cpu:
+                  type: object
+                memory:
+                  type: object
+                disk:
+                  type: object
+    """
+    try:
+        app_metrics = metrics_collector.get_metrics()
+        system_metrics = metrics_collector.get_system_metrics()
         
-### ADMIN ROUTES ###
-# Admin role required decorator           
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        user_id = session.get("user_id")
-        if not user_id:
-            return jsonify({"error": "Unauthorized"}), 401
-        
-        user = User.query.filter_by(id=user_id).first()
-        if user.role != 'Administrateur':
-            return jsonify({"error": "Forbidden"}), 403
-        
-        return f(*args, **kwargs)
-    return decorated_function
+        return jsonify({
+            'status': 'success',
+            'timestamp': time.time(),
+            'uptime': get_uptime(APP_START_TIME),
+            'application': app_metrics,
+            'system': system_metrics
+        }), 200
+    except Exception as e:
+        logging.error(f"Error retrieving metrics: {e}")
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
 
-# Get all users info route
-@app.route("/@all", methods=['GET'])
-@admin_required
-def get_all_users():
-    users = User.query.all()
-    user_schema = UserSchema(many=True)
-    user_data = user_schema.dump(users)
-    return jsonify(data=user_data)
+def wait_for_db(max_retries=30, delay=2):
+    """Wait for database to be ready with exponential backoff"""
+    retries = 0
+    while retries < max_retries:
+        try:
+            with app.app_context():
+                # Try to execute a simple query
+                db.session.execute(text('SELECT 1'))
+                logging.info("Database connection established successfully")
+                return True
+        except Exception as e:
+            retries += 1
+            wait_time = delay * (1.5 ** (retries - 1))  # Exponential backoff
+            logging.warning(f"Database connection attempt {retries}/{max_retries} failed: {e}")
+            if retries < max_retries:
+                logging.info(f"Retrying in {wait_time:.1f} seconds...")
+                time.sleep(wait_time)
+            else:
+                logging.error("Max retries reached. Could not connect to database.")
+                return False
+    return False
 
-# Add new user route
-@app.route("/add-user", methods=["POST"])
-@admin_required
-def add_user():
-    email = request.json["email"]
-    first_name = request.json["first_name"]
-    last_name = request.json["last_name"]
-    password = request.json["password"]
-    role = request.json["role"]
-    
-    # Vérification si le nom d'utilisateur existe déjà.
-    user_already_exists = User.query.filter_by(email=email).first() is not None
+# Wait for database to be ready
+if wait_for_db():
+    with app.app_context():
+        db.create_all()
+        # Create admin user if not exists
+        table_empty = User.query.filter_by(email=ADMIN_MAIL).first() is None
 
-    if user_already_exists:
-        return jsonify({"error": "Cette addresse email est déjà utilisée."}), 409
-    
-    error = validate_user_fields(email, first_name, last_name, password, role)
-    if error:
-        return jsonify({"error": error}), 400
-    
-    # Création du nouvel utilisateur du mot de passe.
-    hashed_password = bcrypt.generate_password_hash(password)
-    new_user = User(email=email,first_name=first_name,last_name=last_name,password=hashed_password,role=role)
-    db.session.add(new_user)
-    db.session.commit()
-    logging.info(f"Admin {session.get('user_id')} a créé un nouvel utilisateur: {new_user.email} (id: {new_user.id}, rôle: {new_user.role})")
-    
-    return jsonify({
-        "id": new_user.id
-    })
-
-# Modify user route
-@app.route("/modify-user/<user_id>", methods=['POST'])
-@admin_required
-def modify_user(user_id):
-    user = User.query.filter_by(id=user_id).first()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    
-    new_email = request.json["email"]
-    new_first_name = request.json["first_name"]
-    new_last_name = request.json["last_name"]
-    new_password = request.json.get("password")
-    new_role = request.json["role"]
-    
-    # Empêcher la modification du rôle du dernier admin
-    if user.role == "Administrateur":
-        admin_count = User.query.filter_by(role="Administrateur").count()
-        if admin_count <= 1 and new_role != "Administrateur":
-            return jsonify({"error": "Impossible de modifier le rôle du dernier compte administrateur."}), 403
-
-    # Empêcher la modification de son propre rôle admin
-    if user.role == "Administrateur":
-        current_user_id = session.get("user_id")
-        if user.id == current_user_id and new_role != "Administrateur":
-            return jsonify({"error": "Impossible de modifier votre propre rôle administrateur."}), 403
-    
-    if new_email != user.email: 
-        email_already_exists = User.query.filter_by(email=new_email).first() is not None
-        if email_already_exists:
-            return jsonify({"error": "Cette addresse email est déjà utilisée."}), 409
-        
-    error = validate_user_fields(new_email, new_first_name, new_last_name, new_password, new_role)
-    if error:
-        return jsonify({"error": error}), 400
-    
-    user.email = new_email
-    user.first_name = new_first_name
-    user.last_name = new_last_name
-    user.role = new_role
-    
-    if new_password:
-        new_hashed_password = bcrypt.generate_password_hash(new_password)
-        user.password = new_hashed_password
-    
-    db.session.commit()
-    logging.info(f"Admin {session.get('user_id')} a modifié l'utilisateur: {user.email} (id: {user.id}, rôle: {user.role})")
-    
-    return jsonify({
-        "id": user.id
-    })
-    
-# Delete user route
-@app.route("/delete-user/<user_id>", methods=['POST'])
-@admin_required
-def delete_user(user_id):
-    user = User.query.filter_by(id=user_id).first()
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-    
-    # Empêcher la suppression de son propre compte admin
-    current_user_id = session.get("user_id")
-    if user.id == current_user_id:
-        return jsonify({"error": "Vous ne pouvez pas supprimer votre propre compte admin."}), 403
-
-    # Empêcher la suppression du dernier admin
-    if user.role == "Administrateur":
-        admin_count = User.query.filter_by(role="Administrateur").count()
-        if admin_count <= 1:
-            return jsonify({"error": "Impossible de supprimer le dernier compte administrateur."}), 403
-    
-    User.query.filter_by(id=user_id).delete()
-    db.session.commit()
-    logging.info(f"Admin {session.get('user_id')} a supprimé l'utilisateur: {user.email} (id: {user.id})")
-    
-    return jsonify({
-        "200": "User successfully deleted."
-    })
-
-# Get user info route
-@app.route('/user-info/<user_id>', methods=['POST'])
-@admin_required
-def get_user_info(user_id):
-    user = User.query.filter_by(id=user_id).first()
-    return jsonify({
-        "id": user.id,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "email": user.email,
-        "role": user.role
-    })
-
-### User routes ###
-
-# Get current user info
-@app.route("/@me", methods=['GET'])
-def get_current_user():
-    user_id = session.get("user_id")
-    
-    if not user_id:
-        return jsonify({"user": None}), 401
-    
-    user = User.query.filter_by(id=user_id).first()
-    if not user:
-        return jsonify({"user": None}), 401
-    
-    user_schema = UserSchema()
-    return user_schema.jsonify(user)
-
-# Register route
-@app.route("/register", methods=["POST"])
-def register():
-    email = request.json["email"]
-    first_name = request.json["first_name"]
-    last_name = request.json["last_name"]
-    password = request.json["password"]
-    
-    # Vérification si le nom d'utilisateur existe déjà.
-    user_already_exists = User.query.filter_by(email=email).first() is not None
-
-    if user_already_exists:
-        return jsonify({"error": "User already exists"}), 409
-    
-    error = validate_user_fields(email, first_name, last_name, password, role=None)
-    if error:
-        return jsonify({"error": error}), 400
-    
-    # Création du nouvel utilisateur du mot de passe.
-    hashed_password = bcrypt.generate_password_hash(password)
-    new_user = User(email=email,first_name=first_name,last_name=last_name,password=hashed_password)
-    db.session.add(new_user)
-    db.session.commit()
-    logging.info(f"Nouvel utilisateur enregistré: {new_user.email} (id: {new_user.id})")
-    
-    # Connexion automatique après l'inscription
-    session["user_id"] = new_user.id
-    
-    user_schema = UserSchema()
-    return user_schema.jsonify(new_user)
-
-# Login route
-@app.route("/login", methods=["POST"])
-def login_user():
-    email = request.json["email"]
-    password = request.json["password"]
-    
-    user = User.query.filter_by(email=email).first()
-
-    if user is None:
-        return jsonify({"error": "Email invalide"}), 401
-    
-    if not bcrypt.check_password_hash(user.password, password):
-        return jsonify({"error": "Mot de passe invalide"}), 401
-    
-    session["user_id"] = user.id
-    
-    user_schema = UserSchema()
-    return user_schema.jsonify(user)
-
-# Logout route
-@app.route("/logout", methods=['POST'])
-def logout():
-    session.pop('user_id', None)
-    return jsonify({"message": "Successfully logged out."}), 200
+        if table_empty:
+            hashed_admin_password = bcrypt.generate_password_hash(ADMIN_PASSWORD).decode('utf-8')
+            admin_user = User(first_name='Admin',last_name='Admin',email=ADMIN_MAIL,password=hashed_admin_password,role=UserRole.ADMIN)
+            db.session.add(admin_user)
+            db.session.commit()
+            logging.info("Admin user created successfully")
+else:
+    logging.error("Failed to initialize database. Exiting...")
+    exit(1)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

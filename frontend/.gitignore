@@ -1,14 +1,14 @@
-### react ###
-.DS_*
-logs
-**/*.backup.*
-**/*.back.*
+# Frontend-specific ignores (common patterns handled by root .gitignore)
 
-node_modules
-bower_components
-
+# Design files
 *.sublime*
-
 psd
 thumb
 sketch
+
+# Backup files
+**/*.backup.*
+**/*.back.*
+
+# Legacy dependency manager
+bower_components
