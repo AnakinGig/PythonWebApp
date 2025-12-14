@@ -470,39 +470,161 @@ The app collects:
 
 ---
 
-## 🎯 Roadmap Items (from PROJECT_REVIEW.md)
+## ✅ TODO List (Priority Order)
 
-### Priority 1 - Critical (Template Improvements)
-- [ ] Change default DB credentials in production
-- [ ] Create `.env.example` template
-- [ ] Initialize database migrations
+> **⚠️ IMPORTANT**: When conducting a new project review, always update this TODO list with new items and check off completed items. This is the single source of truth for what needs to be done.
 
-### Priority 2 - Testing (Client Confidence)
-- [ ] Add backend unit tests (pytest)
-- [ ] Add frontend unit tests (React Testing Library)
+### 🔴 CRITICAL PRIORITY (Must Fix Before Client Sales)
 
-### Priority 3 - Client-Requested Features (Common Needs)
-- [ ] **Password Reset Functionality** - Self-service password recovery
-- [ ] **Email Verification** - Verify user email addresses on registration
-- [ ] **User Profile Page** - Allow users to edit their own profiles
-- [ ] **2FA Authentication** - Two-factor authentication for enhanced security
-- [ ] **Email Notifications** - System notifications and alerts
-- [ ] **File Upload System** - Document/image upload capabilities
-- [ ] **Search Functionality** - Global search across entities
-- [ ] **Data Export** - PDF/Excel report generation
+#### Security & Configuration
+- [ ] **Fix Database Credentials** - Change weak `user:password` to strong credentials in docker-compose files
+- [ ] **Create `.env.example`** - Template file for environment variables
+- [ ] **Add LICENSE File** - MIT License for white-label distribution
+- [ ] **Initialize Database Migrations** - Run `flask db init` and commit migrations folder
+- [ ] **Test Migration System** - Ensure migrations work in dev and prod
+
+#### Branding & Customization
+- [ ] **Remove Hardcoded "PythonWebApp"** - Replace with environment variable in all files
+- [ ] **Create Branding Config** - Central configuration for app name, logo, colors
+- [ ] **Build Setup Script** - Automated script to customize branding for clients
+- [ ] **Document Branding Process** - Client-friendly customization guide
+
+---
+
+### 🟡 HIGH PRIORITY (Before First Client)
+
+#### Testing & Quality Assurance
+- [ ] **Backend Unit Tests** - pytest setup with auth, admin, models tests
+- [ ] **Frontend Unit Tests** - React Testing Library for key components
+- [ ] **Integration Tests** - End-to-end user flows
+- [ ] **Security Tests** - Test CSRF, rate limiting, admin protections
+- [ ] **CI/CD Pipeline** - GitHub Actions for automated testing
+
+#### Essential Features
+- [ ] **Password Reset** - Email-based password recovery system
+- [ ] **Email Verification** - Verify user emails on registration
+- [ ] **User Profile Page** - Allow users to edit their own information
+- [ ] **Email Notifications** - Transactional emails (welcome, password reset, etc.)
+- [ ] **File Upload System** - Avatar uploads, document management
+
+#### Documentation
+- [ ] **Client Onboarding Guide** - Step-by-step setup for clients
+- [ ] **Deployment Guide** - Production deployment instructions
+- [ ] **Customization Guide** - How to modify and extend features
+- [ ] **Troubleshooting Guide** - Common issues and solutions
+
+---
+
+### 🟢 MEDIUM PRIORITY (Quality Improvements)
+
+#### Performance & Optimization
+- [ ] **Redis Caching** - Cache frequently accessed data
+- [ ] **Database Indexes** - Optimize query performance
+- [ ] **API Response Caching** - Cache GET endpoints
+- [ ] **Image Optimization** - Compress and resize images
+- [ ] **Code Splitting** - Further optimize React bundles
+
+#### Error Handling & Logging
+- [ ] **Consistent Error Responses** - Standardize all error formats
+- [ ] **Better Error Messages** - User-friendly French translations
+- [ ] **Contextual Logging** - Include user ID, request info in logs
+- [ ] **Error Tracking** - Sentry or similar integration
+- [ ] **Network Error Handling** - Offline scenarios
+
+#### Security Enhancements
+- [ ] **Security Headers** - Add CSP, HSTS, Permissions-Policy
+- [ ] **Password History** - Prevent password reuse
+- [ ] **Account Lockout** - After failed login attempts
+- [ ] **Password Strength Meter** - Visual feedback in UI
+- [ ] **Failed Login Logging** - Track suspicious activity
+
+#### Advanced Features
+- [ ] **Search Functionality** - Global search in admin panel
+- [ ] **Data Export (PDF/Excel)** - Business reporting
 - [ ] **API Key Management** - For client integrations
-- [ ] **Multi-language Support** - i18n for international clients
-- [ ] **Company Settings Page** - Configurable application settings
-- [ ] **User Groups/Teams** - Organize users into departments
-- [ ] **Notification System** - In-app notifications and alerts
-- [ ] **Audit Trail Export** - Compliance reporting
+- [ ] **Bulk User Operations** - Admin bulk actions
+- [ ] **Advanced Filters** - Enhanced data filtering
 
-### Priority 4 - White-Label Enhancements
-- [ ] **Theme Customization Panel** - Easy branding without code changes
-- [ ] **Logo Upload System** - Client can upload their own logo
-- [ ] **Custom Email Templates** - Branded email notifications
-- [ ] **Terms of Service / Privacy Policy Pages** - Customizable legal pages
-- [ ] **Multi-tenant Support** - Run multiple clients on same instance
+---
+
+### 🔵 LOW PRIORITY (Nice to Have)
+
+#### Internationalization
+- [ ] **Multi-language Support** - react-i18next implementation
+- [ ] **Language Selector** - UI to switch languages
+- [ ] **Translation Files** - English, Spanish, etc.
+
+#### Advanced Admin Features
+- [ ] **User Import/Export** - CSV bulk operations
+- [ ] **Scheduled Reports** - Automated report generation
+- [ ] **Admin Notifications** - System alerts
+- [ ] **System Settings Page** - Configurable app settings
+
+#### White-Label Enhancements
+- [ ] **Theme Customization Panel** - GUI for branding changes
+- [ ] **Logo Upload System** - Client uploads their logo
+- [ ] **Custom Email Templates** - Branded email designs
+- [ ] **Terms of Service Page** - Customizable legal pages
+- [ ] **Privacy Policy Page** - GDPR-compliant template
+
+#### Progressive Web App
+- [ ] **PWA Manifest** - App installation support
+- [ ] **Service Worker** - Offline functionality
+- [ ] **Push Notifications** - Browser notifications
+- [ ] **Install Prompt** - Encourage app installation
+
+#### Monitoring & Analytics
+- [ ] **User Analytics** - Track user behavior
+- [ ] **Performance Monitoring** - APM integration
+- [ ] **Alerting System** - Email/Slack alerts
+- [ ] **Database Monitoring** - Query performance tracking
+
+#### Enterprise Features
+- [ ] **Multi-tenancy** - Multiple clients on one instance
+- [ ] **User Groups/Teams** - Department organization
+- [ ] **Advanced Permissions** - Granular access control
+- [ ] **Audit Trail Export** - Compliance reporting
+- [ ] **OAuth2 Integration** - Third-party auth
+
+#### Deployment & Infrastructure
+- [ ] **Kubernetes Manifests** - K8s deployment configs
+- [ ] **Automated Backups** - Daily database backups
+- [ ] **SSL/HTTPS Setup** - Let's Encrypt automation
+- [ ] **Staging Environment** - Separate staging config
+- [ ] **Load Balancing** - Multi-instance support
+
+---
+
+## 🎯 Current Sprint Focus
+
+**Active Sprint**: Phase 1 - Foundation (Week 1-2)  
+**Goal**: Fix all critical issues before first client pilot
+
+**This Week's Tasks**:
+1. Fix database credentials
+2. Create .env.example
+3. Add LICENSE
+4. Initialize migrations
+5. Document branding customization
+
+**Next Week's Tasks**:
+1. Password reset feature
+2. Backend tests
+3. Client onboarding guide
+
+---
+
+## 📝 Completed Items
+
+> Move items here when completed, with completion date
+
+- None yet - Starting fresh!
+
+---
+
+## 🎯 Old Roadmap Reference (from PROJECT_REVIEW.md)
+
+This section is kept for reference but the TODO list above is the active tracking system.
 
 ---
 
