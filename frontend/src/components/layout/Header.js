@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import httpClient from "../../utils/httpClient";
 import logo from "../../assets/basic-logo.png";
 import { useTheme } from "../../context/ThemeContext";
+import BrandingConfig from "../../config/branding";
 
 function Header({ user, setUser }) {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ function Header({ user, setUser }) {
       <div className="container-fluid">
         <a className="navbar-brand d-flex align-items-center" href="/">
           <img src={logo} height="32" alt="Logo" className="me-2" />
-          <span className="fw-bold d-none d-md-inline">PythonWebApp</span>
+          <span className="fw-bold d-none d-md-inline">{BrandingConfig.appName}</span>
         </a>
 
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">

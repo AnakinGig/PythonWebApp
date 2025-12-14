@@ -1,4 +1,5 @@
 import React from "react";
+import BrandingConfig from "../config/branding";
 
 const Home = ({ user }) => {
   return (
@@ -8,10 +9,10 @@ const Home = ({ user }) => {
           {/* Hero Section */}
           <div className="text-center mb-5">
             <h1 className="display-4 fw-bold mb-3">
-              Bienvenue sur PythonWebApp
+              {BrandingConfig.appTagline}
             </h1>
             <p className="lead text-muted">
-              Application moderne de gestion d'utilisateurs avec React & Flask
+              {BrandingConfig.appDescription}
             </p>
           </div>
 
