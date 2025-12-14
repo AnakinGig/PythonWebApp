@@ -68,27 +68,143 @@ Copiez la clé générée (ex: `0rnd5wsmCJYz9wucw4OCl3uOP3FxbRC+nV6pptA07KE=`)
 
 #### 3. Configurer les Variables d'Environnement
 
-Créez un fichier `.env` à la racine du projet :
+Créez un fichier `.env` à la racine du projet à partir du template fourni :
+
+```bash
+cp .env.example .env
+```
+
+Éditez le fichier `.env` et configurez les variables essentielles :
 
 ```env
-# Sécurité
+# Sécurité (OBLIGATOIRE - utilisez la clé générée à l'étape 2)
 SECRET_KEY=your_secret_key_here
 
-# Authentification Admin
+# Authentification Admin (OBLIGATOIRE)
 ADMIN_MAIL=admin@example.com
 ADMIN_PASSWORD=SecurePassword123!
 
-# URLs
+# URLs (OBLIGATOIRE)
 REACT_APP_BACKEND_URL=http://localhost:5000
 FRONTEND_URL=http://localhost:3000
 
-# Base de données
-DATABASE_URL=postgresql://user:password@db:5432/users_db
+# Base de données (OBLIGATOIRE)
+DB_USER=your_db_user
+DB_PASSWORD=your_secure_db_password
+DB_NAME=users_db
+DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+
+# Branding Backend (OPTIONNEL - voir section Personnalisation du Branding)
+APP_NAME=PythonWebApp
+COMPANY_NAME=Your Company
+API_TITLE=PythonWebApp API
+API_DESCRIPTION=API REST pour la gestion des utilisateurs
+API_VERSION=1.0.0
+SUPPORT_EMAIL=support@example.com
+SUPPORT_URL=https://example.com/support
+
+# Branding Frontend (OPTIONNEL - voir section Personnalisation du Branding)
+REACT_APP_NAME=PythonWebApp
+REACT_APP_COMPANY_NAME=Your Company
+REACT_APP_TAGLINE=Modern Fullstack Web Application
+REACT_APP_DESCRIPTION=Application web avec système de gestion d'utilisateurs
+REACT_APP_VERSION=1.0.0
+REACT_APP_SUPPORT_EMAIL=support@example.com
+REACT_APP_SUPPORT_URL=https://example.com/support
+REACT_APP_PRIMARY_COLOR=#0d6efd
+REACT_APP_LOGO_URL=/logo.png
 ```
 
-Remplacez les valeurs `your_...` par vos propres identifiants et la clé générée.
+**Variables obligatoires** :
+- `SECRET_KEY` : Clé générée à l'étape 2 (pour sécuriser les sessions)
+- `ADMIN_MAIL` et `ADMIN_PASSWORD` : Identifiants du compte administrateur
+- `DB_USER` et `DB_PASSWORD` : Identifiants PostgreSQL (⚠️ Ne jamais utiliser user/password en production)
+- URLs backend/frontend
 
-#### 4. Lancer l'Application
+**Variables optionnelles** :
+- Variables de branding (APP_NAME, COMPANY_NAME, etc.) : voir section suivante
+
+⚠️ **Important** : Le fichier `.env` contient des secrets. Ne le committez jamais dans Git !
+
+#### 4. Personnalisation du Branding (Optionnel)
+
+Pour personnaliser l'application selon votre marque ou celle de votre client :
+
+**Option 1 : Script automatique** (recommandé)
+
+```bash
+chmod +x setup-client-branding.sh
+./setup-client-branding.sh
+```
+
+Le script vous demandera interactivement :
+- Nom de l'application
+- Nom de l'entreprise
+- Slogan/tagline
+- Email de support
+- URL du support
+- Couleur principale
+- Etc.
+
+Tous les fichiers seront automatiquement mis à jour.
+
+**Option 2 : Configuration manuelle**
+
+Éditez directement le fichier `.env` et modifiez les variables de branding :
+
+```env
+# Backend
+APP_NAME=MonApp                    # Nom affiché dans l'API
+COMPANY_NAME=Ma Société            # Nom de votre entreprise
+API_TITLE=MonApp API               # Titre de l'API Swagger
+SUPPORT_EMAIL=contact@masociete.com
+
+# Frontend
+REACT_APP_NAME=MonApp              # Nom dans l'interface
+REACT_APP_COMPANY_NAME=Ma Société
+REACT_APP_TAGLINE=Votre nouveau slogan
+REACT_APP_PRIMARY_COLOR=#ff6b6b   # Couleur principale (hex)
+```
+
+📖 **Documentation complète** : Voir [BRANDING_GUIDE.md](BRANDING_GUIDE.md) pour tous les détails.
+
+#### 5. Initialiser les Migrations de Base de Données
+
+Avant le premier lancement, initialisez le système de migrations Flask-Migrate :
+
+```bash
+# Démarrer uniquement la base de données
+docker compose up -d db
+
+# Attendre que PostgreSQL soit prêt (quelques secondes)
+sleep 5
+
+# Démarrer le backend
+docker compose up -d backend
+
+# Initialiser les migrations
+docker compose exec backend python init_migrations.py
+```
+
+Cette commande va :
+1. Créer le dossier `backend/migrations/` avec la structure Flask-Migrate
+2. Générer la migration initiale basée sur vos modèles
+3. Appliquer la migration pour créer les tables
+
+**Vérification** :
+
+```bash
+# Voir l'historique des migrations
+docker compose exec backend flask db history
+
+# Vous devriez voir : "Initial migration" avec un hash
+```
+
+📖 **Documentation complète** : Voir [MIGRATIONS_GUIDE.md](MIGRATIONS_GUIDE.md) pour gérer les migrations futures.
+
+⚠️ **Note** : Cette étape n'est nécessaire qu'une seule fois lors de l'installation initiale. Les migrations futures se feront avec `flask db migrate` et `flask db upgrade`.
+
+#### 6. Lancer l'Application
 
 ```bash
 # Build les images Docker
@@ -131,19 +247,50 @@ docker compose logs --tail=100 frontend
 
 #### Migrations de Base de Données
 
-```bash
-# Créer une nouvelle migration
-docker compose exec backend flask db migrate -m "description"
+**Créer une migration après modification des modèles** :
 
-# Appliquer les migrations
+```bash
+# Générer automatiquement une migration basée sur les changements
+docker compose exec backend flask db migrate -m "description du changement"
+
+# Exemple : après avoir ajouté un champ 'phone' au modèle User
+docker compose exec backend flask db migrate -m "add phone field to user"
+```
+
+**Appliquer les migrations** :
+
+```bash
+# Appliquer toutes les migrations en attente
 docker compose exec backend flask db upgrade
 
-# Revenir en arrière
+# Appliquer jusqu'à une migration spécifique
+docker compose exec backend flask db upgrade <revision_id>
+```
+
+**Revenir en arrière** :
+
+```bash
+# Annuler la dernière migration
 docker compose exec backend flask db downgrade
 
-# Historique des migrations
-docker compose exec backend flask db history
+# Revenir à une migration spécifique
+docker compose exec backend flask db downgrade <revision_id>
 ```
+
+**Utilitaires** :
+
+```bash
+# Voir l'historique complet des migrations
+docker compose exec backend flask db history
+
+# Voir la migration actuelle
+docker compose exec backend flask db current
+
+# Voir les détails d'une migration
+docker compose exec backend flask db show <revision_id>
+```
+
+📖 **Guide complet** : Voir [MIGRATIONS_GUIDE.md](MIGRATIONS_GUIDE.md) pour des exemples détaillés et bonnes pratiques.
 
 #### Accès aux Conteneurs
 
@@ -282,9 +429,51 @@ echo "VotreMotDePasseSecure123!" > ADMIN_PASSWORD
 chmod 600 .env_prod_secrets/*
 ```
 
-#### 3. Configurer les Variables d'Environnement de production
+#### 3. Configurer les Variables d'Environnement de Production
 
-Changer les urls frontend et backend dans `docker-compose.prod.yml` :
+**Créer le fichier `.env` pour la production** :
+
+```bash
+cp .env.example .env
+```
+
+**Éditer `.env` avec les valeurs de production** :
+
+```env
+# Sécurité (OBLIGATOIRE)
+SECRET_KEY=votre_cle_secrete_production_tres_longue_et_complexe
+
+# Admin (OBLIGATOIRE)
+ADMIN_MAIL=admin@votredomaine.com
+ADMIN_PASSWORD=MotDePasseSecure123!@#
+
+# Base de données (OBLIGATOIRE - Identifiants forts !)
+DB_USER=prod_user
+DB_PASSWORD=VotreMotDePasseDBTresSecure123!@#
+DB_NAME=users_db
+DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+
+# URLs (OBLIGATOIRE - Votre domaine)
+REACT_APP_BACKEND_URL=https://api.votredomaine.com
+FRONTEND_URL=https://votredomaine.com
+
+# Branding (OPTIONNEL - Personnalisez pour votre client)
+APP_NAME=VotreApp
+COMPANY_NAME=Votre Société
+REACT_APP_NAME=VotreApp
+REACT_APP_COMPANY_NAME=Votre Société
+REACT_APP_PRIMARY_COLOR=#0d6efd
+# ... autres variables de branding
+```
+
+⚠️ **Sécurité Critique** :
+- Utilisez des mots de passe forts (16+ caractères)
+- Ne réutilisez jamais les identifiants de développement
+- Le fichier `.env` ne doit JAMAIS être dans Git
+
+**Si nécessaire, ajuster les URLs dans `docker-compose.prod.yml`** :
+
+Les variables du fichier `.env` sont automatiquement chargées, mais vous pouvez surcharger dans `docker-compose.prod.yml` :
 
 ```yaml
 backend:
@@ -296,24 +485,30 @@ frontend:
     - REACT_APP_BACKEND_URL=http://localhost:5000/api # À CHANGER
 ```
 
-⚠️ **Important**: Changez les identifiants de base de données dans `docker-compose.prod.yml` :
+⚠️ **Note** : Les identifiants de base de données sont maintenant gérés via le fichier `.env`. Assurez-vous d'avoir configuré `DB_USER`, `DB_PASSWORD` et `DB_NAME` dans votre `.env` avant de déployer.
 
-```yaml
-db:
-  environment:
-    POSTGRES_USER: user  # À CHANGER
-    POSTGRES_PASSWORD: password  # À CHANGER
+#### 4. Personnaliser le Branding pour le Client (Optionnel)
+
+Si vous déployez pour un client spécifique, personnalisez le branding :
+
+```bash
+# Utiliser le script automatique
+./setup-client-branding.sh
+
+# Ou modifier manuellement le .env
+nano .env
 ```
 
-Et mettez à jour `DATABASE_URL` dans la section backend :
+Modifiez les variables :
+- `APP_NAME` / `REACT_APP_NAME` : Nom de l'application du client
+- `COMPANY_NAME` / `REACT_APP_COMPANY_NAME` : Nom de l'entreprise du client
+- `REACT_APP_PRIMARY_COLOR` : Couleur principale de la charte graphique
+- `SUPPORT_EMAIL` / `REACT_APP_SUPPORT_EMAIL` : Email de support du client
+- Etc.
 
-```yaml
-backend:
-  environment:
-    DATABASE_URL: postgresql://user:password@db:5432/users_db
-```
+📖 Voir [BRANDING_GUIDE.md](BRANDING_GUIDE.md) pour la liste complète des options.
 
-#### 4. Déployer en Production
+#### 5. Déployer en Production
 
 ```bash
 # Build les images de production
@@ -326,8 +521,11 @@ sudo docker compose -f docker-compose.prod.yml up -d
 sudo docker compose -f docker-compose.prod.yml ps
 sudo docker compose -f docker-compose.prod.yml logs -f
 
-# Initialiser la base de données (première fois uniquement)
-sudo docker compose -f docker-compose.prod.yml exec backend flask db upgrade
+# Initialiser les migrations (PREMIÈRE FOIS UNIQUEMENT)
+sudo docker compose -f docker-compose.prod.yml exec backend python init_migrations.py
+
+# Pour les mises à jour ultérieures, utiliser :
+# sudo docker compose -f docker-compose.prod.yml exec backend flask db upgrade
 ```
 
 **Vérifications importantes** :
