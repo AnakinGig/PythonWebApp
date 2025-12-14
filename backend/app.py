@@ -7,7 +7,7 @@ from flask_migrate import Migrate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flasgger import Swagger
-from core import ApplicationConfig, UserRole
+from core import ApplicationConfig, UserRole, BrandingConfig
 from models import db, ma, User
 from dotenv import load_dotenv
 import os, logging, time
@@ -72,12 +72,13 @@ swagger_config = {
 swagger_template = {
     "swagger": "2.0",
     "info": {
-        "title": "PythonWebApp API",
-        "description": "API Documentation for PythonWebApp - Flask & React Application",
-        "version": "1.0.0",
+        "title": BrandingConfig.API_TITLE,
+        "description": BrandingConfig.API_DESCRIPTION,
+        "version": BrandingConfig.API_VERSION,
         "contact": {
-            "name": "Python Web App",
-            "url": "https://github.com"
+            "name": BrandingConfig.CONTACT_NAME,
+            "url": BrandingConfig.CONTACT_URL,
+            "email": BrandingConfig.CONTACT_EMAIL
         }
     },
     "host": os.environ.get("API_HOST", "localhost:5000"),
