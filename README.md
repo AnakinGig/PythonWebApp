@@ -20,20 +20,23 @@ Application web fullstack moderne avec système de gestion d'utilisateurs, monit
 ## 🚀 Fonctionnalités Principales
 
 ### 🎨 Interface Utilisateur
+
 - ✅ Design moderne et responsive avec Bootstrap 5
 
 ### 👥 Gestion des Utilisateurs
+
 - ✅ Système complet CRUD (Create, Read, Update, Delete)
 
 ### 📊 Monitoring & Métriques
+
 - ✅ **Tableau de bord administrateur** avec métriques en temps réel
 
 ### 📝 Logs d'Activité
+
 - ✅ **Système de logs complet** avec tracking des actions utilisateur
-- 
-### 🔒 Sécurité
 
 ### 📚 Documentation API
+
 - ✅ **Documentation Swagger/OpenAPI** complète à `/api/docs`
 
 ---
@@ -41,6 +44,7 @@ Application web fullstack moderne avec système de gestion d'utilisateurs, monit
 ## 🔧 Développement (Mode Dev)
 
 ### Prérequis
+
 - Docker 20.10+
 - Docker Compose 2.0+
 - (Optionnel) Node.js 18+ et Python 3.12+ pour développement local
@@ -48,15 +52,18 @@ Application web fullstack moderne avec système de gestion d'utilisateurs, monit
 ### Installation Initiale
 
 #### 1. Cloner le Projet
+
 ```bash
 git clone https://github.com/AnakinGig/PythonWebApp.git
 cd PythonWebApp
 ```
 
 #### 2. Générer une Clé Secrète
+
 ```bash
 openssl rand -base64 32
 ```
+
 Copiez la clé générée (ex: `0rnd5wsmCJYz9wucw4OCl3uOP3FxbRC+nV6pptA07KE=`)
 
 #### 3. Configurer les Variables d'Environnement
@@ -82,6 +89,7 @@ DATABASE_URL=postgresql://user:password@db:5432/users_db
 Remplacez les valeurs `your_...` par vos propres identifiants et la clé générée.
 
 #### 4. Lancer l'Application
+
 ```bash
 # Build les images Docker
 docker compose build
@@ -94,15 +102,17 @@ docker compose logs -f
 ```
 
 ### URLs de Développement
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
-- **Swagger Docs**: http://localhost:5000/api/docs
-- **Health Check**: http://localhost:5000/health
-- **Metrics**: http://localhost:5000/metrics
+
+- **Frontend**: <http://localhost:3000>
+- **Backend API**: <http://localhost:5000>
+- **Swagger Docs**: <http://localhost:5000/api/docs>
+- **Health Check**: <http://localhost:5000/health>
+- **Metrics**: <http://localhost:5000/metrics>
 
 ### Commandes de Développement
 
 #### Gestion des Services
+
 ```bash
 # Démarrer avec rebuild
 docker compose up -d --build
@@ -120,6 +130,7 @@ docker compose logs --tail=100 frontend
 ```
 
 #### Migrations de Base de Données
+
 ```bash
 # Créer une nouvelle migration
 docker compose exec backend flask db migrate -m "description"
@@ -135,6 +146,7 @@ docker compose exec backend flask db history
 ```
 
 #### Accès aux Conteneurs
+
 ```bash
 # Shell backend (Python)
 docker compose exec backend /bin/bash
@@ -150,6 +162,7 @@ docker compose exec redis redis-cli
 ```
 
 #### Installation de Dépendances
+
 ```bash
 # Backend (Python)
 docker compose exec backend pip install package_name
@@ -161,6 +174,7 @@ docker compose exec frontend npm install package_name
 ```
 
 ### Debugging et Tests
+
 ```bash
 # Vérifier la santé de l'application
 curl http://localhost:5000/health
@@ -181,6 +195,7 @@ docker stats
 ## 🚀 Production (Mode Prod)
 
 ### Prérequis Serveur
+
 - Ubuntu 20.04+ ou Debian 11+
 - Docker et Docker Compose installés
 - Nom de domaine configuré (optionnel mais recommandé)
@@ -189,11 +204,13 @@ docker stats
 ### Installation de Docker sur Ubuntu/Debian
 
 #### 1. Mettre à Jour le Système
+
 ```bash
 sudo apt update && sudo apt upgrade -y
 ```
 
 #### 2. Installer Docker
+
 ```bash
 # Installer les dépendances
 sudo apt-get install ca-certificates curl
@@ -215,6 +232,7 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 ```
 
 #### 3. Vérifier l'Installation
+
 ```bash
 # Vérifier le statut de Docker
 sudo systemctl status docker
@@ -229,6 +247,7 @@ sudo docker run hello-world
 ### Configuration de Production
 
 #### 1. Générer une Clé Secrète Forte
+
 ```bash
 openssl rand -base64 32
 ```
@@ -258,11 +277,12 @@ echo "VotreMotDePasseSecure123!" > ADMIN_PASSWORD
 **Note**: Les secrets sont automatiquement lus par Docker depuis `/run/secrets/` dans les conteneurs.
 
 **Important**: Sécurisez ces fichiers !
+
 ```bash
 chmod 600 .env_prod_secrets/*
 ```
 
-#### 3. Configurer les Variables d'Environnement
+#### 3. Configurer les Variables d'Environnement de production
 
 Changer les urls frontend et backend dans `docker-compose.prod.yml` :
 
@@ -286,6 +306,7 @@ db:
 ```
 
 Et mettez à jour `DATABASE_URL` dans la section backend :
+
 ```yaml
 backend:
   environment:
@@ -310,6 +331,7 @@ sudo docker compose -f docker-compose.prod.yml exec backend flask db upgrade
 ```
 
 **Vérifications importantes** :
+
 - ✅ Backend accessible et sain : `curl http://localhost:5000/health`
 - ✅ Frontend accessible : `curl http://localhost:80`
 - ✅ Pas d'erreurs dans les logs
@@ -317,7 +339,8 @@ sudo docker compose -f docker-compose.prod.yml exec backend flask db upgrade
 
 ### Commandes de Production
 
-#### Gestion des Services
+#### Gestion des Services docker
+
 ```bash
 # Redémarrer l'application
 sudo docker compose -f docker-compose.prod.yml restart
@@ -334,6 +357,7 @@ sudo docker compose -f docker-compose.prod.yml logs --tail=100 backend
 ```
 
 #### Backup et Restauration
+
 ```bash
 # Backup de la base de données
 sudo docker compose -f docker-compose.prod.yml exec db pg_dump -U user users_db > backup_$(date +%Y%m%d_%H%M%S).sql
@@ -343,6 +367,7 @@ sudo docker compose -f docker-compose.prod.yml exec -T db psql -U user users_db 
 ```
 
 #### Health Checks et Monitoring
+
 ```bash
 # Vérifier la santé du backend
 curl http://localhost:5000/health
@@ -424,6 +449,7 @@ server {
 ```
 
 Activez la configuration :
+
 ```bash
 sudo ln -s /etc/nginx/sites-available/pythonwebapp /etc/nginx/sites-enabled/
 sudo nginx -t
@@ -431,6 +457,7 @@ sudo systemctl reload nginx
 ```
 
 #### 3. Configuration du Firewall
+
 ```bash
 # Autoriser HTTP/HTTPS
 sudo ufw allow 80/tcp
@@ -497,17 +524,18 @@ echo "Nettoyage terminé - Backups récents conservés (60 jours), anciens archi
 ```
 
 **Rendre le script exécutable** :
+
 ```bash
 sudo chmod +x /opt/backup_pythonwebapp.sh
 ```
 
 **Ajouter au crontab** (sauvegarde quotidienne à 2h du matin) :
+
 ```bash
 sudo crontab -e
 # Ajouter cette ligne :
 0 2 * * * /opt/backup_pythonwebapp.sh >> /var/log/pythonwebapp_backup.log 2>&1
 ```
-
 
 ---
 
@@ -516,6 +544,7 @@ sudo crontab -e
 ### 🏗️ Architecture Technique
 
 ### Backend (Flask)
+
 - ✅ **API REST RESTful** avec conventions HTTP (GET/POST/PUT/DELETE)
 - ✅ **PostgreSQL 13** pour la persistance
 - ✅ **Redis 7** pour les sessions et le cache
@@ -530,6 +559,7 @@ sudo crontab -e
 - ✅ Gestion centralisée des erreurs et constantes
 
 ### Frontend (React)
+
 - ✅ **React 18.2.0** avec Hooks modernes
 - ✅ **React Router 6** pour le routing
 - ✅ **Bootstrap 5.3+** avec support dark mode
@@ -542,6 +572,7 @@ sudo crontab -e
 - ✅ Routes protégées par rôle avec PrivateRoute
 
 ### DevOps
+
 - ✅ Docker Compose pour dev et production
 - ✅ Dockerignore pour optimiser les images
 - ✅ Politiques de redémarrage automatique des conteneurs
@@ -552,6 +583,7 @@ sudo crontab -e
 ### 🌐 Endpoints API Principaux
 
 #### Authentification
+
 - `POST /register` - Inscription
 - `POST /login` - Connexion
 - `POST /logout` - Déconnexion
@@ -559,6 +591,7 @@ sudo crontab -e
 - `GET /get_csrf_token` - Obtenir le token CSRF
 
 #### Administration (Admin requis)
+
 - `GET /admin/users` - Liste des utilisateurs (paginée)
 - `POST /admin/users` - Créer un utilisateur
 - `GET /admin/users/<id>` - Détails d'un utilisateur
@@ -568,7 +601,7 @@ sudo crontab -e
 
 ### 📦 Structure du Projet
 
-```
+```text
 PythonWebApp/
 ├── backend/
 │   ├── app.py                      # Application Flask principale
@@ -626,6 +659,7 @@ PythonWebApp/
 ### 🎯 Roadmap Future
 
 #### Fonctionnalités Potentielles
+
 - [ ] Authentification OAuth2 (Google, GitHub)
 - [ ] Authentification à deux facteurs (2FA)
 - [ ] Notifications par email
@@ -647,6 +681,7 @@ Ce projet est sous licence MIT.
 ## 🤝 Contribution
 
 Les contributions sont les bienvenues ! N'hésitez pas à :
+
 1. Fork le projet
 2. Créer une branche (`git checkout -b feature/AmazingFeature`)
 3. Commit vos changements (`git commit -m 'Add AmazingFeature'`)
@@ -659,4 +694,4 @@ Pour toute question ou problème, ouvrez une issue sur GitHub.
 
 ---
 
-**Développé avec ❤ par Gigant Anakin**
+## Développé avec ❤ par Gigant Anakin
