@@ -1,10 +1,3 @@
-/**
- * Branding Configuration
- * 
- * Centralizes all branding-related configuration for easy client customization.
- * Modify these values to rebrand the application for your clients.
- */
-
 const BrandingConfig = {
   // Application Name
   appName: process.env.REACT_APP_NAME || 'PythonWebApp',
