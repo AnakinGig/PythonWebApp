@@ -15,6 +15,12 @@ from .email import (
     send_email_verification,
     send_welcome_email
 )
+from .file_upload import (
+    save_avatar,
+    delete_avatar,
+    ALLOWED_IMAGE_EXTENSIONS,
+    MAX_IMAGE_SIZE
+)
 
 __all__ = [
     'sanitize_input',
@@ -25,5 +31,9 @@ __all__ = [
     'send_email',
     'send_password_reset_email',
     'send_email_verification',
-    'send_welcome_email'
+    'send_welcome_email',
+    'save_avatar',
+    'delete_avatar',
+    'ALLOWED_IMAGE_EXTENSIONS',
+    'MAX_IMAGE_SIZE'
 ]

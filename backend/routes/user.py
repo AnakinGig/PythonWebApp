@@ -2,18 +2,20 @@
 User profile and account management routes
 Includes password reset, email verification, and profile management
 """
-from flask import Blueprint, request, session
+from flask import Blueprint, request, session, current_app
 from flask_wtf import FlaskForm
 from models import db, User, UserSchema
 from utils import (
     success_response, error_response, sanitize_input, validate_user_fields,
-    send_password_reset_email, send_email_verification, send_welcome_email
+    send_password_reset_email, send_email_verification, send_welcome_email,
+    save_avatar, delete_avatar
 )
 from middleware import log_activity_with_details
 from core import ErrorMessages, SuccessMessages
 from datetime import datetime, timedelta
 import secrets
 import bcrypt
+import os
 
 user_bp = Blueprint('user', __name__, url_prefix='/api/user')
 user_schema = UserSchema()
@@ -447,3 +449,131 @@ def update_profile():
         
     except Exception as e:
         return error_response(str(e), status=500)
+
+
+@user_bp.route('/avatar', methods=['POST'])
+def upload_avatar():
+    """
+    Upload user avatar image
+    ---
+    tags:
+      - User
+    consumes:
+      - multipart/form-data
+    parameters:
+      - name: avatar
+        in: formData
+        type: file
+        required: true
+        description: Avatar image file (max 5MB, PNG/JPG/GIF/WEBP)
+    responses:
+      200:
+        description: Avatar uploaded successfully
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            message:
+              type: string
+            data:
+              type: object
+              properties:
+                avatar:
+                  type: string
+                  description: Relative path to avatar
+      400:
+        description: Invalid file or validation error
+      401:
+        description: Not authenticated
+    """
+    # Check authentication
+    if 'user_id' not in session:
+        return error_response("Non authentifié", status=401)
+    
+    user_id = session['user_id']
+    user = User.query.get(user_id)
+    
+    if not user:
+        return error_response("Utilisateur non trouvé", status=404)
+    
+    # Check if file was uploaded
+    if 'avatar' not in request.files:
+        return error_response("Aucun fichier fourni", status=400)
+    
+    file = request.files['avatar']
+    
+    # Get upload folder
+    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+    
+    # Save avatar
+    success, result = save_avatar(file, user_id, upload_folder)
+    
+    if not success:
+        return error_response(result, status=400)
+    
+    # Delete old avatar if exists
+    if user.avatar:
+        delete_avatar(user.avatar, upload_folder)
+    
+    # Update user avatar path
+    user.avatar = result
+    db.session.commit()
+    
+    # Log activity
+    log_activity_with_details(
+        action="Avatar mis à jour",
+        details=f"Nouvelle photo de profil uploadée"
+    )
+    
+    return success_response(
+        data={"avatar": result},
+        message="Avatar mis à jour avec succès"
+    )
+
+
+@user_bp.route('/avatar', methods=['DELETE'])
+def delete_avatar_endpoint():
+    """
+    Delete user avatar image
+    ---
+    tags:
+      - User
+    responses:
+      200:
+        description: Avatar deleted successfully
+      401:
+        description: Not authenticated
+      404:
+        description: No avatar to delete
+    """
+    # Check authentication
+    if 'user_id' not in session:
+        return error_response("Non authentifié", status=401)
+    
+    user_id = session['user_id']
+    user = User.query.get(user_id)
+    
+    if not user:
+        return error_response("Utilisateur non trouvé", status=404)
+    
+    if not user.avatar:
+        return error_response("Aucun avatar à supprimer", status=404)
+    
+    # Get upload folder
+    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+    
+    # Delete avatar file
+    delete_avatar(user.avatar, upload_folder)
+    
+    # Remove avatar from database
+    user.avatar = None
+    db.session.commit()
+    
+    # Log activity
+    log_activity_with_details(
+        action="Avatar supprimé",
+        details="Photo de profil supprimée"
+    )
+    
+    return success_response(message="Avatar supprimé avec succès")

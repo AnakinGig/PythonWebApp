@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_cors import CORS
@@ -25,6 +25,8 @@ FRONTEND_URL = os.getenv('FRONTEND_URL')
 # Config App
 app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'uploads')
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max file size
 CORS(app, origins=FRONTEND_URL, supports_credentials=True)
 bcrypt = Bcrypt()
 bcrypt.init_app(app)
@@ -293,6 +295,30 @@ if wait_for_db():
 else:
     logging.error("Failed to initialize database. Exiting...")
     exit(1)
+
+
+# Serve uploaded files (avatars, documents)
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    """
+    Serve uploaded files
+    ---
+    tags:
+      - Static Files
+    parameters:
+      - name: filename
+        in: path
+        type: string
+        required: true
+        description: Relative path to uploaded file
+    responses:
+      200:
+        description: File served successfully
+      404:
+        description: File not found
+    """
+    upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
+    return send_from_directory(upload_folder, filename)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

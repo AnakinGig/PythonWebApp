@@ -27,6 +27,9 @@ class User(db.Model):
     reset_token = db.Column(db.String(100), nullable=True, unique=True, index=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
     
+    # Avatar
+    avatar = db.Column(db.String(255), nullable=True)
+    
     # Relationship with activity logs
     activity_logs = db.relationship('ActivityLog', backref='user', lazy=True, cascade='all, delete-orphan')
 
