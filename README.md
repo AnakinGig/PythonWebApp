@@ -412,13 +412,13 @@ Créez des fichiers séparés pour chaque secret :
 
 ```bash
 # Clé secrète (remplacez par votre clé générée)
-echo "votre_cle_secrete_generee" > SECRET_KEY
+echo "votre_cle_secrete_generee" > SECRET_KEY.txt
 
 # Email admin
-echo "admin@votredomaine.com" > ADMIN_MAIL
+echo "admin@votredomaine.com" > ADMIN_MAIL.txt
 
 # Mot de passe admin (8+ caractères, maj/min/chiffre/spécial)
-echo "VotreMotDePasseSecure123!" > ADMIN_PASSWORD
+echo "VotreMotDePasseSecure123!" > ADMIN_PASSWORD.txt
 ```
 
 **Note**: Les secrets sont automatiquement lus par Docker depuis `/run/secrets/` dans les conteneurs.
@@ -426,6 +426,7 @@ echo "VotreMotDePasseSecure123!" > ADMIN_PASSWORD
 **Important**: Sécurisez ces fichiers !
 
 ```bash
+cd ..
 chmod 600 .env_prod_secrets/*
 ```
 
@@ -440,13 +441,6 @@ cp .env.example .env
 **Éditer `.env` avec les valeurs de production** :
 
 ```env
-# Sécurité (OBLIGATOIRE)
-SECRET_KEY=votre_cle_secrete_production_tres_longue_et_complexe
-
-# Admin (OBLIGATOIRE)
-ADMIN_MAIL=admin@votredomaine.com
-ADMIN_PASSWORD=MotDePasseSecure123!@#
-
 # Base de données (OBLIGATOIRE - Identifiants forts !)
 DB_USER=prod_user
 DB_PASSWORD=VotreMotDePasseDBTresSecure123!@#
@@ -467,7 +461,8 @@ REACT_APP_PRIMARY_COLOR=#0d6efd
 ```
 
 ⚠️ **Sécurité Critique** :
-- Utilisez des mots de passe forts (16+ caractères)
+
+- Utilisez des mots de passe forts (8+ caractères)
 - Ne réutilisez jamais les identifiants de développement
 - Le fichier `.env` ne doit JAMAIS être dans Git
 
@@ -492,21 +487,16 @@ frontend:
 Si vous déployez pour un client spécifique, personnalisez le branding :
 
 ```bash
-# Utiliser le script automatique
-./setup-client-branding.sh
-
-# Ou modifier manuellement le .env
 nano .env
 ```
 
 Modifiez les variables :
+
 - `APP_NAME` / `REACT_APP_NAME` : Nom de l'application du client
 - `COMPANY_NAME` / `REACT_APP_COMPANY_NAME` : Nom de l'entreprise du client
 - `REACT_APP_PRIMARY_COLOR` : Couleur principale de la charte graphique
 - `SUPPORT_EMAIL` / `REACT_APP_SUPPORT_EMAIL` : Email de support du client
 - Etc.
-
-📖 Voir [BRANDING_GUIDE.md](BRANDING_GUIDE.md) pour la liste complète des options.
 
 #### 5. Déployer en Production
 
@@ -522,10 +512,31 @@ sudo docker compose -f docker-compose.prod.yml ps
 sudo docker compose -f docker-compose.prod.yml logs -f
 
 # Initialiser les migrations (PREMIÈRE FOIS UNIQUEMENT)
-sudo docker compose -f docker-compose.prod.yml exec backend python init_migrations.py
+sudo docker compose -f docker-compose.prod.yml exec backend bash
 
-# Pour les mises à jour ultérieures, utiliser :
-# sudo docker compose -f docker-compose.prod.yml exec backend flask db upgrade
+# Crée le dossier migrations/
+flask db init
+
+# Créer la première migration
+flask db migrate -m "Initial migration"
+
+# Appliquer la migration
+flask db upgrade
+
+exit
+
+### Pour les mises à jour ultérieures ###
+# Entrer dans le conteneur backend
+sudo docker compose -f docker-compose.prod.yml exec backend bash
+
+# Créer une migration automatique
+flask db migrate -m "Description de vos changements"
+
+# Vérifier la migration générée dans migrations/versions/
+# Puis appliquer la migration
+flask db upgrade
+
+exit
 ```
 
 **Vérifications importantes** :
@@ -551,7 +562,6 @@ sudo docker compose -f docker-compose.prod.yml up -d --build
 
 # Voir les logs
 sudo docker compose -f docker-compose.prod.yml logs -f
-sudo docker compose -f docker-compose.prod.yml logs --tail=100 backend
 ```
 
 #### Backup et Restauration
@@ -578,9 +588,6 @@ sudo docker compose -f docker-compose.prod.yml ps
 
 # Statistiques de ressources
 docker stats
-
-# Vérifier les health checks
-sudo docker inspect --format='{{json .State.Health}}' pythonwebapp-backend-1 | python3 -m json.tool
 ```
 
 ### Sécurité en Production
