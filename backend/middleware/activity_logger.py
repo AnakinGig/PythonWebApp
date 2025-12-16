@@ -41,16 +41,23 @@ def log_activity(action):
         return decorated_function
     return decorator
 
-def log_activity_with_details(action, details):
+def log_activity_with_details(action, details, user_id=None):
     """
     Log activity with custom details.
     
     Usage:
         log_activity_with_details("User updated", f"Updated user {user_id}")
+        log_activity_with_details("Action", "Details", user_id=specific_user_id)
+    
+    Args:
+        action: The action being logged
+        details: Additional details about the action
+        user_id: Optional user ID. If not provided, uses session user_id
     """
     try:
         from flask import session
-        user_id = session.get('user_id')
+        if user_id is None:
+            user_id = session.get('user_id')
         if user_id:
             log = ActivityLog(
                 user_id=user_id,
