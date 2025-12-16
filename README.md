@@ -116,12 +116,14 @@ REACT_APP_LOGO_URL=/logo.png
 ```
 
 **Variables obligatoires** :
+
 - `SECRET_KEY` : Clé générée à l'étape 2 (pour sécuriser les sessions)
 - `ADMIN_MAIL` et `ADMIN_PASSWORD` : Identifiants du compte administrateur
 - `DB_USER` et `DB_PASSWORD` : Identifiants PostgreSQL (⚠️ Ne jamais utiliser user/password en production)
 - URLs backend/frontend
 
 **Variables optionnelles** :
+
 - Variables de branding (APP_NAME, COMPANY_NAME, etc.) : voir section suivante
 
 ⚠️ **Important** : Le fichier `.env` contient des secrets. Ne le committez jamais dans Git !
@@ -138,6 +140,7 @@ chmod +x setup-client-branding.sh
 ```
 
 Le script vous demandera interactivement :
+
 - Nom de l'application
 - Nom de l'entreprise
 - Slogan/tagline

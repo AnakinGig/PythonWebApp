@@ -27,6 +27,8 @@ services:
         condition: service_started
     volumes:
       - db_data:/app/instance
+      - ./backend/migrations:/app/migrations  # Persist migrations across rebuilds
+      - ./backend/uploads:/app/uploads  # Persist uploaded files (avatars, documents)
     restart: unless-stopped
 
   frontend:

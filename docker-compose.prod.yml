@@ -39,6 +39,7 @@ services:
     volumes:
       - db_data:/app/instance
       - ./backend/migrations:/app/migrations  # Persist migrations across rebuilds
+      - ./backend/uploads:/app/uploads  # Persist uploaded files (avatars, documents)
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
