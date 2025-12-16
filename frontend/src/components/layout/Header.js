@@ -90,26 +90,54 @@ function Header({ user, setUser }) {
               </>
             ) : (
               <>
-                <div className="d-none d-lg-flex align-items-center border-start ps-3 ms-2">
-                  <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
-                       style={{width: '32px', height: '32px', fontSize: '12px', fontWeight: 'bold'}}>
-                    {user.first_name?.charAt(0) || ''}{user.last_name?.charAt(0) || ''}
-                  </div>
-                  <div className="text-start">
-                    <div className="fw-semibold" style={{fontSize: '0.875rem', lineHeight: '1.2'}}>
-                      {user.first_name} {user.last_name}
+                <div className="dropdown d-none d-lg-flex">
+                  <button 
+                    className="btn btn-link text-decoration-none d-flex align-items-center gap-2 p-0"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    style={{color: 'inherit'}}
+                  >
+                    <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                         style={{width: '40px', height: '40px', fontSize: '14px', fontWeight: 'bold', flexShrink: 0}}>
+                      {user.first_name?.charAt(0) || ''}{user.last_name?.charAt(0) || ''}
                     </div>
-                    <div className="text-muted" style={{fontSize: '0.75rem', lineHeight: '1'}}>
-                      {user.role}
+                    <div className="text-start">
+                      <div className="fw-semibold" style={{fontSize: '0.875rem', lineHeight: '1.2'}}>
+                        {user.first_name} {user.last_name}
+                      </div>
+                      <div className="text-muted" style={{fontSize: '0.75rem', lineHeight: '1'}}>
+                        {user.role}
+                      </div>
                     </div>
-                  </div>
+                  </button>
+                  <ul className="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <a className="dropdown-item" href="/profile">
+                        <i className="bi bi-person-circle me-2"></i>Mon Profil
+                      </a>
+                    </li>
+                    <li><hr className="dropdown-divider" /></li>
+                    <li>
+                      <button 
+                        type="button" 
+                        onClick={logUserOut} 
+                        className="dropdown-item text-danger"
+                      >
+                        <i className="bi bi-box-arrow-right me-2"></i>Se déconnecter
+                      </button>
+                    </li>
+                  </ul>
                 </div>
-                <a href="/profile" className="btn btn-outline-secondary btn-sm">
-                  <i className="bi bi-person"></i> Profil
-                </a>
-                <button type="button" onClick={logUserOut} className="btn btn-danger btn-sm">
-                  Se déconnecter
-                </button>
+
+                {/* Mobile view */}
+                <div className="d-flex d-lg-none gap-2">
+                  <a href="/profile" className="btn btn-outline-secondary btn-sm">
+                    <i className="bi bi-person"></i>
+                  </a>
+                  <button type="button" onClick={logUserOut} className="btn btn-danger btn-sm">
+                    <i className="bi bi-box-arrow-right"></i>
+                  </button>
+                </div>
               </>
             )}
           </div>

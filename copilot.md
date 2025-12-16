@@ -503,10 +503,10 @@ The app collects:
 - [ ] **CI/CD Pipeline** - GitHub Actions for automated testing
 
 #### Essential Features
-- [ ] **Password Reset** - Email-based password recovery system
-- [ ] **Email Verification** - Verify user emails on registration
-- [ ] **User Profile Page** - Allow users to edit their own information
-- [ ] **Email Notifications** - Transactional emails (welcome, password reset, etc.)
+- [x] **Password Reset** - Email-based password recovery system ✅ Dec 16
+- [x] **Email Verification** - Verify user emails on registration ✅ Dec 16
+- [x] **User Profile Page** - Allow users to edit their own information ✅ Dec 16
+- [x] **Email Notifications** - Transactional emails (welcome, password reset, etc.) ✅ Dec 16
 - [ ] **File Upload System** - Avatar uploads, document management
 
 #### Documentation
@@ -621,6 +621,41 @@ The app collects:
 > Move items here when completed, with completion date
 
 ### December 16, 2025
+- ✅ **Email Verification Workflow Complete** - Full end-to-end implementation:
+  - Registration generates 24h verification token
+  - Email verification endpoint (GET /user/verify-email/<token>)
+  - Resend verification endpoint (POST /user/resend-verification, session-only)
+  - Email change triggers new verification flow
+  - Verification banner on home page with resend button
+  - Email verification page with auto-redirect to profile
+  - Welcome email sent after verification
+- ✅ **Password Management Complete** - Full password recovery and change:
+  - Forgot password page with email form
+  - Password reset with 1h token expiry
+  - Profile page with password change (requires current password)
+  - Prevents same password reuse
+- ✅ **User Profile Management** - Complete profile editing:
+  - Edit first name, last name
+  - View/edit email (only when verified)
+  - Email verification status badge
+  - Change password with validation
+  - Activity logging for all updates
+- ✅ **Frontend Error Handling Refactored** - Login/Register consistency:
+  - Cleaned up validation error display patterns
+  - Only show errors when form submitted AND error exists
+  - Removed is-valid styling, only show is-invalid
+  - Added proper loading states to all inputs
+  - Enhanced button UX with icons and loading text
+- ✅ **16 Organized Git Commits** - Clean commit history:
+  - Infrastructure & configuration (4 commits)
+  - Backend API implementation (2 commits)
+  - Frontend setup & routing (3 commits)
+  - UI/UX improvements (2 commits)
+  - Feature pages (5 commits)
+- ✅ **Production Build Verified** - All containers running:
+  - Frontend build successful with no errors
+  - All services (backend, frontend, db, redis) healthy
+  - Production configuration working correctly
 - ✅ **Testing Complete** - All recent changes validated:
   - .env file setup working correctly with all environment variables
   - Database migrations system tested and functional (dev & prod)
