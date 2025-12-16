@@ -9,9 +9,10 @@ from flask_limiter.util import get_remote_address
 from flasgger import Swagger
 from core import ApplicationConfig, UserRole, BrandingConfig
 from models import db, ma, User
+from utils.email import mail
 from dotenv import load_dotenv
 import os, logging, time
-from routes import admin_bp, auth_bp
+from routes import admin_bp, auth_bp, user_bp
 from sqlalchemy import text
 from middleware import metrics_collector, monitor_request, record_request_metrics, get_uptime
 
@@ -29,6 +30,7 @@ bcrypt = Bcrypt()
 bcrypt.init_app(app)
 server_session = Session(app)
 csrf = CSRFProtect(app)
+mail.init_app(app)
 
 # Rate Limiter
 limiter = Limiter(
@@ -105,6 +107,7 @@ swagger = Swagger(app, config=swagger_config, template=swagger_template)
 # Register Blueprints
 app.register_blueprint(admin_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(user_bp)
 
 # Register monitoring middleware
 @app.before_request
@@ -276,14 +279,17 @@ if wait_for_db():
     with app.app_context():
         db.create_all()
         # Create admin user if not exists
-        table_empty = User.query.filter_by(email=ADMIN_MAIL).first() is None
+        try:
+            table_empty = User.query.filter_by(email=ADMIN_MAIL).first() is None
 
-        if table_empty:
-            hashed_admin_password = bcrypt.generate_password_hash(ADMIN_PASSWORD).decode('utf-8')
-            admin_user = User(first_name='Admin',last_name='Admin',email=ADMIN_MAIL,password=hashed_admin_password,role=UserRole.ADMIN)
-            db.session.add(admin_user)
-            db.session.commit()
-            logging.info("Admin user created successfully")
+            if table_empty:
+                hashed_admin_password = bcrypt.generate_password_hash(ADMIN_PASSWORD).decode('utf-8')
+                admin_user = User(first_name='Admin',last_name='Admin',email=ADMIN_MAIL,password=hashed_admin_password,role=UserRole.ADMIN)
+                db.session.add(admin_user)
+                db.session.commit()
+                logging.info("Admin user created successfully")
+        except Exception as e:
+            logging.warning(f"Could not check/create admin user (run migrations): {e}")
 else:
     logging.error("Failed to initialize database. Exiting...")
     exit(1)

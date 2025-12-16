@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify, session
 from flask_bcrypt import Bcrypt
 from models import db, User, UserSchema
-from utils import validate_user_fields, sanitize_input, success_response, error_response
+from utils import validate_user_fields, sanitize_input, success_response, error_response, send_email_verification
 from core import UserRole, ErrorMessages, SuccessMessages, RateLimits
 from middleware import log_activity_with_details
+from datetime import datetime, timedelta
+import secrets
 import logging
 
 # Create a Blueprint for authentication-related routes
@@ -111,10 +113,27 @@ def register():
         return error_response(error, status=400)
     
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    new_user = User(email=email,first_name=first_name,last_name=last_name,password=hashed_password,role=UserRole.USER)
+    
+    # Generate email verification token
+    verification_token = secrets.token_urlsafe(32)
+    verification_expiry = datetime.utcnow() + timedelta(hours=24)
+    
+    new_user = User(
+        email=email,
+        first_name=first_name,
+        last_name=last_name,
+        password=hashed_password,
+        role=UserRole.USER,
+        email_verified=False,
+        verification_token=verification_token,
+        verification_token_expiry=verification_expiry
+    )
     db.session.add(new_user)
     db.session.commit()
     logging.info(f"Nouvel utilisateur enregistré: {new_user.email} (id: {new_user.id})")
+    
+    # Send verification email
+    send_email_verification(new_user, verification_token)
     
     session["user_id"] = new_user.id
     
@@ -122,7 +141,10 @@ def register():
     log_activity_with_details("Inscription", f"Nouvel utilisateur: {email}")
     
     user_schema = UserSchema()
-    return user_schema.jsonify(new_user)
+    return success_response(
+        data=user_schema.dump(new_user),
+        message="Inscription réussie ! Vérifiez votre email pour activer votre compte."
+    )
 
 # Login route
 @auth_bp.route("/login", methods=["POST"])
