@@ -38,7 +38,8 @@ function Login({ setUser }) {
   };
 
   // ### Log user in ###
-  const logUserIn = async () => {
+  const logUserIn = async (e) => {
+    e.preventDefault();
     setFormSubmited(true);
 
     const isEmailValid = emailVerif(email);
@@ -46,7 +47,7 @@ function Login({ setUser }) {
 
     const isFormValid = isEmailValid && isPasswordValid;
 
-    if (isFormValid){
+    if (isFormValid) {
       const { data: result, error: apiError } = await callApi(() =>
         httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/auth/login`, {
           email: email,
@@ -59,13 +60,8 @@ function Login({ setUser }) {
         setUser(result);
         navigate("/");
       } else {
-        if (apiError === "Email invalide") {
-          setEmailError("Email invalide");
-        } else if(apiError === "Mot de passe invalide"){
-          setPasswordError("Mot de passe invalide");
-        } else {
-          setToast({ message: apiError || "Une erreur est survenue.", type: 'error' });
-        }
+        const errorMsg = apiError || "Une erreur est survenue.";
+        setToast({ message: errorMsg, type: 'error' });
       }
     }
   };
@@ -82,18 +78,26 @@ function Login({ setUser }) {
                 <p className="text-body-secondary">Connectez-vous à votre compte</p>
               </div>
               
-              <form>
+              <form onSubmit={logUserIn}>
                 <div className="mb-4">
                   <label className="form-label fw-semibold">Adresse mail</label>
                   <input 
                     type="email" 
                     id="email" 
                     value={email} 
-                    onChange={(e) => {setEmail(e.target.value);emailVerif(e.target.value)}}
-                    className={`form-control form-control-lg ${email_error ? "is-invalid" : form_submited ? "is-valid" : ""}`} 
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (form_submited) emailVerif(e.target.value);
+                    }}
+                    className={`form-control form-control-lg ${
+                      form_submited && email_error ? "is-invalid" : ""
+                    }`} 
                     placeholder="exemple@email.com"
+                    disabled={loading}
                   />
-                  <div className="invalid-feedback">{email_error}</div>
+                  {form_submited && email_error && (
+                    <div className="invalid-feedback">{email_error}</div>
+                  )}
                 </div>
 
                 <div className="mb-4">
@@ -103,9 +107,15 @@ function Login({ setUser }) {
                       type={showPassword ? "text" : "password"}
                       id="password" 
                       value={password} 
-                      onChange={(e) => {setPassword(e.target.value);passwordVerif(e.target.value)}} 
-                      className={`form-control form-control-lg ${password_error ? "is-invalid" : form_submited ? "is-valid" : ""}`} 
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (form_submited) passwordVerif(e.target.value);
+                      }} 
+                      className={`form-control form-control-lg ${
+                        form_submited && password_error ? "is-invalid" : ""
+                      }`} 
                       placeholder="Entrer votre mot de passe"
+                      disabled={loading}
                     />
                     <button
                       className="btn btn-outline-secondary"
@@ -115,18 +125,27 @@ function Login({ setUser }) {
                     >
                       <i className={`bi bi-eye${showPassword ? '-slash' : ''}`}></i>
                     </button>
-                    <div className="invalid-feedback">{password_error}</div>
+                    {form_submited && password_error && (
+                      <div className="invalid-feedback">{password_error}</div>
+                    )}
                   </div>
                 </div>
 
                 <div className="d-grid mb-4">
                   <button 
-                    type="button" 
-                    onClick={logUserIn} 
+                    type="submit" 
                     disabled={loading} 
                     className="btn btn-primary btn-lg"
                   >
-                    {loading ? <ButtonSpinner /> : "Se connecter"}
+                    {loading ? (
+                      <>
+                        <ButtonSpinner /> Connexion...
+                      </>
+                    ) : (
+                      <>
+                        <i className="bi bi-box-arrow-in-right me-2"></i>Se connecter
+                      </>
+                    )}
                   </button>
                 </div>
 
