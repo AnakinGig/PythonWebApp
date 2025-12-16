@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import httpClient from "../utils/httpClient";
 import Toast from "../components/common/Toast";
 import LoadingSpinner, { ButtonSpinner } from "../components/common/LoadingSpinner";
@@ -13,11 +13,18 @@ function UserProfile({ user, setUser }) {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
+  const [avatar, setAvatar] = useState(null);
   
   // Store initial values to detect changes
   const [initialFirstName, setInitialFirstName] = useState("");
   const [initialLastName, setInitialLastName] = useState("");
   const [initialEmail, setInitialEmail] = useState("");
+  
+  // Avatar upload
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef(null);
   
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -48,6 +55,7 @@ function UserProfile({ user, setUser }) {
         setLastName(userData.last_name || "");
         setEmail(userData.email || "");
         setEmailVerified(userData.email_verified === true);
+        setAvatar(userData.avatar || null);
         
         // Store initial values
         setInitialFirstName(userData.first_name || "");
@@ -229,6 +237,109 @@ function UserProfile({ user, setUser }) {
     }
   };
 
+  // Avatar upload handlers
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setToast({ message: "L'image est trop volumineuse. Maximum 5MB.", type: 'error' });
+        return;
+      }
+
+      // Validate file type
+      const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setToast({ message: "Format non supporté. Utilisez PNG, JPG, GIF ou WEBP.", type: 'error' });
+        return;
+      }
+
+      setAvatarFile(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) return;
+
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', avatarFile);
+
+      const response = await httpClient.post(
+        `${process.env.REACT_APP_BACKEND_URL}/user/avatar`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setAvatar(response.data.data.avatar);
+        setAvatarFile(null);
+        setAvatarPreview(null);
+        setToast({ message: "Avatar mis à jour avec succès", type: 'success' });
+        
+        // Update user context if needed
+        if (setUser) {
+          setUser(prev => ({ ...prev, avatar: response.data.data.avatar }));
+        }
+      }
+    } catch (error) {
+      setToast({ 
+        message: error.response?.data?.error || "Erreur lors de l'upload de l'avatar", 
+        type: 'error' 
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    if (!avatar) return;
+
+    setUploadingAvatar(true);
+    try {
+      const response = await httpClient.delete(
+        `${process.env.REACT_APP_BACKEND_URL}/user/avatar`
+      );
+
+      if (response.data.success) {
+        setAvatar(null);
+        setAvatarPreview(null);
+        setToast({ message: "Avatar supprimé avec succès", type: 'success' });
+        
+        // Update user context if needed
+        if (setUser) {
+          setUser(prev => ({ ...prev, avatar: null }));
+        }
+      }
+    } catch (error) {
+      setToast({ 
+        message: error.response?.data?.error || "Erreur lors de la suppression de l'avatar", 
+        type: 'error' 
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const cancelAvatarPreview = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   if (loadingProfile) {
     return (
       <div className="container py-5">
@@ -247,9 +358,37 @@ function UserProfile({ user, setUser }) {
             <div className="card-body p-5">
               <div className="d-flex align-items-center mb-4">
                 <div className="flex-shrink-0">
-                  <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
-                       style={{ width: '80px', height: '80px', fontSize: '2rem' }}>
-                    <i className="bi bi-person-fill"></i>
+                  <div className="position-relative">
+                    {avatarPreview || avatar ? (
+                      <img 
+                        src={avatarPreview || `${process.env.REACT_APP_BACKEND_URL.replace('/api', '')}/uploads/${avatar}`}
+                        alt="Avatar"
+                        className="rounded-circle"
+                        style={{ width: '80px', height: '80px', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                           style={{ width: '80px', height: '80px', fontSize: '2rem' }}>
+                        <i className="bi bi-person-fill"></i>
+                      </div>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="d-none"
+                      accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                      onChange={handleAvatarChange}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0"
+                      style={{ width: '30px', height: '30px', padding: '0' }}
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingAvatar}
+                      title="Changer l'avatar"
+                    >
+                      <i className="bi bi-camera-fill"></i>
+                    </button>
                   </div>
                 </div>
                 <div className="flex-grow-1 ms-4">
@@ -266,6 +405,41 @@ function UserProfile({ user, setUser }) {
                       </span>
                     )}
                   </p>
+                  {avatarPreview && (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-success me-2"
+                        onClick={handleAvatarUpload}
+                        disabled={uploadingAvatar}
+                      >
+                        {uploadingAvatar ? <ButtonSpinner /> : <i className="bi bi-check me-1"></i>}
+                        Confirmer
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-secondary"
+                        onClick={cancelAvatarPreview}
+                        disabled={uploadingAvatar}
+                      >
+                        <i className="bi bi-x me-1"></i>
+                        Annuler
+                      </button>
+                    </div>
+                  )}
+                  {avatar && !avatarPreview && (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={handleAvatarDelete}
+                        disabled={uploadingAvatar}
+                      >
+                        {uploadingAvatar ? <ButtonSpinner /> : <i className="bi bi-trash me-1"></i>}
+                        Supprimer l'avatar
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

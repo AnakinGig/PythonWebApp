@@ -97,10 +97,19 @@ function Header({ user, setUser }) {
                     aria-expanded="false"
                     style={{color: 'inherit'}}
                   >
-                    <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
-                         style={{width: '40px', height: '40px', fontSize: '14px', fontWeight: 'bold', flexShrink: 0}}>
-                      {user.first_name?.charAt(0) || ''}{user.last_name?.charAt(0) || ''}
-                    </div>
+                    {user.avatar ? (
+                      <img 
+                        src={`${process.env.REACT_APP_BACKEND_URL.replace('/api', '')}/uploads/${user.avatar}`}
+                        alt="Avatar"
+                        className="rounded-circle"
+                        style={{width: '40px', height: '40px', objectFit: 'cover', flexShrink: 0}}
+                      />
+                    ) : (
+                      <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                           style={{width: '40px', height: '40px', fontSize: '14px', fontWeight: 'bold', flexShrink: 0}}>
+                        {user.first_name?.charAt(0) || ''}{user.last_name?.charAt(0) || ''}
+                      </div>
+                    )}
                     <div className="text-start">
                       <div className="fw-semibold" style={{fontSize: '0.875rem', lineHeight: '1.2'}}>
                         {user.first_name} {user.last_name}
