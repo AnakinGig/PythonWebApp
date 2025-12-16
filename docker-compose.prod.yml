@@ -15,6 +15,14 @@ services:
       API_TITLE: ${API_TITLE:-PythonWebApp API}
       API_DESCRIPTION: ${API_DESCRIPTION:-API Documentation for PythonWebApp}
       CONTACT_EMAIL: ${CONTACT_EMAIL:-contact@example.com}
+      # Email Configuration
+      MAIL_SERVER: ${MAIL_SERVER}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USE_TLS: ${MAIL_USE_TLS}
+      MAIL_USE_SSL: ${MAIL_USE_SSL}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_DEFAULT_SENDER: ${MAIL_DEFAULT_SENDER}
     secrets:
       - SECRET_KEY
       - ADMIN_MAIL
@@ -30,6 +38,7 @@ services:
         condition: service_started
     volumes:
       - db_data:/app/instance
+      - ./backend/migrations:/app/migrations  # Persist migrations across rebuilds
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]

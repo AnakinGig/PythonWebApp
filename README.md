@@ -247,13 +247,28 @@ docker compose logs --tail=100 frontend
 
 #### Migrations de Base de Données
 
-**Créer une migration après modification des modèles** :
+⚠️ **IMPORTANT** : Toujours créer et appliquer les migrations **AVANT** de redémarrer l'application après avoir modifié les modèles !
 
 ```bash
-# Générer automatiquement une migration basée sur les changements
+# 1. Modifier le modèle dans backend/models/models.py
+
+# 2. Créer la migration (sans redémarrer l'app)
 docker compose exec backend flask db migrate -m "description du changement"
 
-# Exemple : après avoir ajouté un champ 'phone' au modèle User
+# 3. Vérifier et ajuster le fichier de migration si nécessaire
+# (backend/migrations/versions/XXXXX_description.py)
+
+# 4. Appliquer la migration
+docker compose exec backend flask db upgrade
+
+# 5. Redémarrer le backend
+docker compose restart backend
+```
+
+**Exemples** :
+
+```bash
+# Ajouter un champ au modèle User
 docker compose exec backend flask db migrate -m "add phone field to user"
 ```
 
@@ -289,8 +304,6 @@ docker compose exec backend flask db current
 # Voir les détails d'une migration
 docker compose exec backend flask db show <revision_id>
 ```
-
-📖 **Guide complet** : Voir [MIGRATIONS_GUIDE.md](MIGRATIONS_GUIDE.md) pour des exemples détaillés et bonnes pratiques.
 
 #### Accès aux Conteneurs
 
