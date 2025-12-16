@@ -118,9 +118,9 @@ def reset_password(token):
             return error_response("Le mot de passe est requis.", status=400)
         
         # Validate password strength
-        validation_error = validate_user_fields(password=new_password)
-        if validation_error:
-            return error_response(validation_error, status=400)
+        from utils.helpers import is_strong_password
+        if not is_strong_password(new_password):
+            return error_response(ErrorMessages.WEAK_PASSWORD, status=400)
         
         # Find user by reset token
         user = User.query.filter_by(reset_token=token).first()
