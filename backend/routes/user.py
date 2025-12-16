@@ -132,6 +132,10 @@ def reset_password(token):
         if datetime.utcnow() > user.reset_token_expiry:
             return error_response("Ce lien de réinitialisation a expiré.", status=400)
         
+        # Check if new password is the same as current password
+        if bcrypt.checkpw(new_password.encode('utf-8'), user.password.encode('utf-8')):
+            return error_response("Le nouveau mot de passe doit être différent de votre mot de passe actuel.", status=400)
+        
         # Hash new password
         hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
         user.password = hashed_password.decode('utf-8')
