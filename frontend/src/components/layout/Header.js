@@ -93,7 +93,7 @@ function Header({ user, setUser }) {
                 <div className="d-none d-lg-flex align-items-center border-start ps-3 ms-2">
                   <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
                        style={{width: '32px', height: '32px', fontSize: '12px', fontWeight: 'bold'}}>
-                    {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+                    {user.first_name?.charAt(0) || ''}{user.last_name?.charAt(0) || ''}
                   </div>
                   <div className="text-start">
                     <div className="fw-semibold" style={{fontSize: '0.875rem', lineHeight: '1.2'}}>
@@ -104,6 +104,9 @@ function Header({ user, setUser }) {
                     </div>
                   </div>
                 </div>
+                <a href="/profile" className="btn btn-outline-secondary btn-sm">
+                  <i className="bi bi-person"></i> Profil
+                </a>
                 <button type="button" onClick={logUserOut} className="btn btn-danger btn-sm">
                   Se déconnecter
                 </button>
