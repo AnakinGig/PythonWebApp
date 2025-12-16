@@ -81,7 +81,7 @@ def send_password_reset_email(user, reset_token):
             </div>
             <div class="footer">
                 <p>&copy; 2025 {BrandingConfig.COMPANY_NAME}. Tous droits réservés.</p>
-                <p>Besoin d'aide ? Contactez-nous à <a href="mailto:{BrandingConfig.SUPPORT_EMAIL}">{BrandingConfig.SUPPORT_EMAIL}</a></p>
+                <p>Besoin d'aide ? Contactez-nous à <a href="mailto:{BrandingConfig.CONTACT_EMAIL}">{BrandingConfig.CONTACT_EMAIL}</a></p>
             </div>
         </div>
     </body>
@@ -120,7 +120,7 @@ def send_email_verification(user, verification_token):
         verification_token: Email verification token
     """
     from core import BrandingConfig
-    frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+    frontend_url = os.getenv('FRONTEND_URL')
     verify_url = f"{frontend_url}/verify-email/{verification_token}"
     
     html_body = f"""
@@ -154,7 +154,7 @@ def send_email_verification(user, verification_token):
             </div>
             <div class="footer">
                 <p>&copy; 2025 {BrandingConfig.COMPANY_NAME}. Tous droits réservés.</p>
-                <p>Besoin d'aide ? Contactez-nous à <a href="mailto:{BrandingConfig.SUPPORT_EMAIL}">{BrandingConfig.SUPPORT_EMAIL}</a></p>
+                <p>Besoin d'aide ? Contactez-nous à <a href="mailto:{BrandingConfig.CONTACT_EMAIL}">{BrandingConfig.CONTACT_EMAIL}</a></p>
             </div>
         </div>
     </body>
@@ -218,7 +218,7 @@ def send_welcome_email(user):
                 <p style="text-align: center;">
                     <a href="{frontend_url}/login" class="button">Se connecter</a>
                 </p>
-                <p>Si vous avez des questions, n'hésitez pas à nous contacter à <a href="mailto:{BrandingConfig.SUPPORT_EMAIL}">{BrandingConfig.SUPPORT_EMAIL}</a></p>
+                <p>Si vous avez des questions, n'hésitez pas à nous contacter à <a href="mailto:{BrandingConfig.CONTACT_EMAIL}">{BrandingConfig.CONTACT_EMAIL}</a></p>
             </div>
             <div class="footer">
                 <p>&copy; 2025 {BrandingConfig.COMPANY_NAME}. Tous droits réservés.</p>
