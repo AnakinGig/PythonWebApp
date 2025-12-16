@@ -56,6 +56,7 @@
    - User CRUD operations (Create, Read, Update, Delete)
    - Profile management with email verification
    - Password reset with token expiry
+  - Avatar upload with processing (200x200, optimized)
 
 2. **Admin Dashboard**
    - Real-time system metrics and monitoring
@@ -425,7 +426,6 @@ docker compose -f docker-compose.prod.yml logs -f
 ### Next Priority Items
 - [ ] Backend Unit Tests
 - [ ] Frontend Unit Tests
-- [ ] File Upload System (avatars)
 - [ ] Client Onboarding Guide
 - [ ] Deployment Guide
 

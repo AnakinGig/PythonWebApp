@@ -57,6 +57,7 @@ This template includes essential features that any business would need:
    - Role-based access control (Admin/User)
    - User CRUD operations (Create, Read, Update, Delete)
    - Profile management
+  - Avatar upload and management
 
 2. **Admin Dashboard**
    - Real-time system metrics and monitoring
@@ -533,7 +534,7 @@ The app collects:
 - [x] **Email Verification** - Verify user emails on registration ✅ Dec 16
 - [x] **User Profile Page** - Allow users to edit their own information ✅ Dec 16
 - [x] **Email Notifications** - Transactional emails (welcome, password reset, etc.) ✅ Dec 16
-- [ ] **File Upload System** - Avatar uploads, document management
+- [x] **File Upload System** - Avatar uploads ✅ Dec 16
 
 #### Documentation
 - [ ] **Client Onboarding Guide** - Step-by-step setup for clients
@@ -647,6 +648,12 @@ The app collects:
 > Move items here when completed, with completion date
 
 ### December 16, 2025 (Final Session)
+- ✅ **Avatar Uploads**:
+  - Added `avatar` column to User model with migration
+  - Image validation and processing (resize to 200x200, center crop, optimize)
+  - Endpoints: `POST /api/user/avatar`, `DELETE /api/user/avatar`
+  - Static serving via `/uploads/<path>` with persisted uploads volume
+  - Frontend profile UI: preview/confirm/cancel/delete; header displays avatar
 - ✅ **Password Reset Security Enhanced**:
   - Fixed validation error in password reset endpoint
   - Replaced validate_user_fields with is_strong_password check
