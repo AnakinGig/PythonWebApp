@@ -20,6 +20,11 @@ const AdminDashboard = lazy(() => import ('./pages/AdminDashboard'));
 const UsersList = lazy(() => import ('./pages/UsersList'));
 const ManageUser = lazy(() => import ('./pages/ManageUser'));
 const ActivityLogs = lazy(() => import ('./pages/ActivityLogs'));
+const ForgotPassword = lazy(() => import ('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import ('./pages/ResetPassword'));
+const VerifyEmail = lazy(() => import ('./pages/VerifyEmail'));
+const ResendVerification = lazy(() => import ('./pages/ResendVerification'));
+const UserProfile = lazy(() => import ('./pages/UserProfile'));
 
 function App() {
   const [user, setUser] = useState(null);
@@ -77,6 +82,19 @@ function App() {
                 <Route path="/" element={<Home user={user}/>}/>
                 <Route path="/login" element={<Login setUser={setUser}/>}/>
                 <Route path="/register" element={<Register setUser={setUser}/>}/>
+                <Route path="/forgot-password" element={<ForgotPassword/>}/>
+                <Route path="/reset-password/:token" element={<ResetPassword/>}/>
+                <Route path="/verify-email/:token" element={<VerifyEmail user={user}/>}/>
+                <Route path="/resend-verification" element={
+                  <PrivateRoute user={user} requiredRole={null} requireUnverified>
+                    <ResendVerification user={user}/>
+                  </PrivateRoute>
+                }/>
+                <Route path="/profile" element={
+                  <PrivateRoute user={user} requiredRole={null}>
+                    <UserProfile user={user} setUser={setUser}/>
+                  </PrivateRoute>
+                }/>
                 <Route path="/admin/dashboard" element={
                   <PrivateRoute user={user} requiredRole={'Administrateur'}>
                     <AdminDashboard setUser={setUser}/>
