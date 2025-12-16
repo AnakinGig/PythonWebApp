@@ -1,9 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import BrandingConfig from "../config/branding";
+import httpClient from "../utils/httpClient";
+import Toast from "../components/common/Toast";
+import { ButtonSpinner } from "../components/common/LoadingSpinner";
+import useApi from "../hooks/useApi";
 
 const Home = ({ user }) => {
+  const { loading, callApi } = useApi();
+  const [toast, setToast] = useState(null);
+
+  const handleResendVerification = async () => {
+    const { data: result, error: apiError } = await callApi(() =>
+      httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/user/resend-verification`)
+    );
+
+    if (result) {
+      setToast({ 
+        message: "Un nouveau lien de vérification a été envoyé.", 
+        type: 'success' 
+      });
+    } else {
+      setToast({ message: apiError || "Une erreur est survenue.", type: 'error' });
+    }
+  };
+
   return (
     <div className="container py-5">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div className="row justify-content-center">
         <div className="col-lg-10">
           {/* Hero Section */}
@@ -51,12 +74,43 @@ const Home = ({ user }) => {
           ) : (
             /* Logged In */
             <div>
+              {/* Email Verification Alert */}
+              {user && !user.email_verified && (
+                <div className="alert alert-warning border-0 shadow-sm mb-4" role="alert">
+                  <div className="d-flex align-items-center">
+                    <i className="bi bi-exclamation-triangle-fill me-2" style={{fontSize: '1.5rem'}}></i>
+                    <div className="flex-grow-1">
+                      <h5 className="alert-heading mb-1">Email non vérifié</h5>
+                      <p className="mb-0">
+                        Veuillez vérifier votre adresse email pour accéder à toutes les fonctionnalités. 
+                        Vérifiez votre boîte de réception et vos spams.
+                      </p>
+                    </div>
+                    <button 
+                      onClick={handleResendVerification} 
+                      disabled={loading}
+                      className="btn btn-warning ms-3"
+                    >
+                      {loading ? (
+                        <>
+                          <ButtonSpinner /> Envoi...
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-send me-2"></i>Renvoyer l'email
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="card border-0 shadow-sm">
                 <div className="card-body p-4">
                   <div className="d-flex align-items-center mb-4">
                     <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
                          style={{width: '60px', height: '60px', fontSize: '24px'}}>
-                      {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+                      {user.first_name?.charAt(0) || ''}{user.last_name?.charAt(0) || ''}
                     </div>
                     <div>
                       <h3 className="mb-1">Bonjour, {user.first_name} {user.last_name}</h3>
