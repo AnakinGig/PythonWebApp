@@ -1,7 +1,7 @@
 # 🤖 Copilot Project Memory - PythonWebApp
 
 > **Purpose**: This file helps GitHub Copilot remember the project context, architecture, and conventions.
-> **Last Updated**: December 15, 2025
+> **Last Updated**: December 16, 2025
 > **Repository**: AnakinGig/PythonWebApp
 > **Branch**: Dev
 
@@ -225,7 +225,8 @@ return paginated_response(items=user_data, pagination={...})
 ```
 
 #### Route Blueprints
-- **auth_bp**: `/api/auth/*` - Authentication routes
+- **auth_bp**: `/api/auth/*` - Authentication routes (login, register, logout, current-user)
+- **user_bp**: `/api/user/*` - User account management routes (profile, email verification, password reset)
 - **admin_bp**: `/api/admin/*` - Admin-only routes (protected by `@admin_required`)
 
 #### Decorators
@@ -281,6 +282,17 @@ class User(db.Model):
     email = db.Column(db.String(345), nullable=False, unique=True, index=True)
     password = db.Column(db.Text, nullable=False)  # Bcrypt hashed
     role = db.Column(db.String(50), default="Utilisateur", index=True)
+    
+    # Email verification
+    email_verified = db.Column(db.Boolean, default=False, nullable=False)
+    verification_token = db.Column(db.String(100), nullable=True, unique=True, index=True)
+    verification_token_expiry = db.Column(db.DateTime, nullable=True)
+    
+    # Password reset
+    reset_token = db.Column(db.String(100), nullable=True, unique=True, index=True)
+    reset_token_expiry = db.Column(db.DateTime, nullable=True)
+    
+    # Relationships
     activity_logs = db.relationship('ActivityLog', backref='user', cascade='all, delete-orphan')
 ```
 
@@ -331,6 +343,16 @@ class ActivityLog(db.Model):
 | POST | `/login` | Login user |
 | POST | `/logout` | Logout user |
 
+### User Account (`/api/user`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/profile` | Get current user profile |
+| PUT/PATCH | `/profile` | Update profile (name, email, password) |
+| GET | `/verify-email/<token>` | Verify email with token |
+| POST | `/resend-verification` | Resend verification email (session-only) |
+| POST | `/request-password-reset` | Request password reset email |
+| POST | `/reset-password/<token>` | Reset password with token |
+
 ### Admin (`/api/admin`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -357,6 +379,10 @@ class ActivityLog(db.Model):
 | `/` | Home | Public |
 | `/login` | Login | Public |
 | `/register` | Register | Public |
+| `/forgot-password` | ForgotPassword | Public |
+| `/reset-password/:token` | ResetPassword | Public |
+| `/verify-email/:token` | VerifyEmail | Public (auto-redirects if verified) |
+| `/profile` | UserProfile | Private (authenticated users only) |
 | `/admin/dashboard` | AdminDashboard | Admin only |
 | `/admin/users` | UsersList | Admin only |
 | `/admin/manage-user/:id` | ManageUser | Admin only |
@@ -620,7 +646,35 @@ The app collects:
 
 > Move items here when completed, with completion date
 
-### December 16, 2025
+### December 16, 2025 (Final Session)
+- ✅ **Password Reset Security Enhanced**:
+  - Fixed validation error in password reset endpoint
+  - Replaced validate_user_fields with is_strong_password check
+  - Added bcrypt comparison to prevent same password reuse
+  - Prevents users from resetting to their current password
+- ✅ **Header Profile Dropdown** - Enhanced user experience:
+  - Converted profile display to interactive dropdown menu
+  - Shows user avatar (initials), name, and role
+  - Dropdown menu with "Mon Profil" and "Se déconnecter" options
+  - Mobile-responsive version with icon buttons
+  - Improved visual hierarchy and UX
+- ✅ **Frontend Error Handling Refactored** - Consistency across all forms:
+  - Login form: Cleaned up validation error patterns
+  - Register form: Improved error display and validation flow
+  - Standardized onChange validation behavior
+  - Added proper loading states to all inputs
+  - Enhanced button UX with icons and loading text
+- ✅ **ResendVerification Page Removed** - Simplified routing:
+  - Removed unused ResendVerification page import
+  - Removed /resend-verification route
+  - Resend functionality integrated into Home page alert
+  - Fixed production build error
+- ✅ **Git Commits Organized** - 16 logical, focused commits:
+  - Clean commit history for easy code review
+  - Each commit addresses a specific feature/fix
+  - Proper commit messages following conventions
+
+### December 16, 2025 (Earlier)
 - ✅ **Email Verification Workflow Complete** - Full end-to-end implementation:
   - Registration generates 24h verification token
   - Email verification endpoint (GET /user/verify-email/<token>)
@@ -633,39 +687,17 @@ The app collects:
   - Forgot password page with email form
   - Password reset with 1h token expiry
   - Profile page with password change (requires current password)
-  - Prevents same password reuse
+  - Prevents same password reuse on profile update
 - ✅ **User Profile Management** - Complete profile editing:
   - Edit first name, last name
   - View/edit email (only when verified)
   - Email verification status badge
   - Change password with validation
   - Activity logging for all updates
-- ✅ **Frontend Error Handling Refactored** - Login/Register consistency:
-  - Cleaned up validation error display patterns
-  - Only show errors when form submitted AND error exists
-  - Removed is-valid styling, only show is-invalid
-  - Added proper loading states to all inputs
-  - Enhanced button UX with icons and loading text
-- ✅ **16 Organized Git Commits** - Clean commit history:
-  - Infrastructure & configuration (4 commits)
-  - Backend API implementation (2 commits)
-  - Frontend setup & routing (3 commits)
-  - UI/UX improvements (2 commits)
-  - Feature pages (5 commits)
 - ✅ **Production Build Verified** - All containers running:
   - Frontend build successful with no errors
   - All services (backend, frontend, db, redis) healthy
   - Production configuration working correctly
-- ✅ **Testing Complete** - All recent changes validated:
-  - .env file setup working correctly with all environment variables
-  - Database migrations system tested and functional (dev & prod)
-  - Branding configuration working in both backend and frontend
-  - Docker integration confirmed with .env variables (dev & prod)
-  - README setup guide verified working from scratch
-  - Database connection with .env credentials confirmed
-  - Branding variables updating the app correctly
-- ✅ **Migration System Tested** - Verified migrations work correctly in dev and prod environments
-- ✅ **Fixed CORS Issue** - Resolved production CORS error with proper frontend URL configuration
 
 ### December 15, 2025
 - ✅ **Enhanced README.md Documentation** - Added comprehensive sections for:
