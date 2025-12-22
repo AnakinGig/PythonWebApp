@@ -2,10 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
-import Header from '../../../../../components/layout/Header';
-import { ThemeProvider } from '../../../../../context/ThemeContext';
+import Header from '../../../../components/layout/Header';
+import { ThemeProvider } from '../../../../context/ThemeContext';
 
-jest.mock('../../../../../utils/httpClient');
+jest.mock('../../../../utils/httpClient');
 
 const renderWithRouter = (component) => {
   return render(

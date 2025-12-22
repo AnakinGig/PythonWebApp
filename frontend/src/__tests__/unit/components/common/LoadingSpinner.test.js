@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
-import LoadingSpinner from '../../../../../components/common/LoadingSpinner';
+import LoadingSpinner from '../../../../components/common/LoadingSpinner';
 
 describe('LoadingSpinner Component', () => {
   it('should render default spinner', () => {

@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
-import ConfirmDialog from '../../../../../components/common/ConfirmDialog';
+import ConfirmDialog from '../../../../components/common/ConfirmDialog';
 
 describe('ConfirmDialog Component', () => {
   const mockOnConfirm = jest.fn();

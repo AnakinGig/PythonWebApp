@@ -6,25 +6,42 @@
 import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
-import App from '../../App';
+import { MemoryRouter } from 'react-router-dom';
+import { App as AppInner } from '../../App';
 import httpClient from '../../utils/httpClient';
 
 jest.mock('../../utils/httpClient');
 
-const renderApp = () => {
+const renderApp = (initialRoute = '/') => {
+  // Each render triggers a CSRF fetch; seed a default response
+  if (httpClient.get && typeof httpClient.get.mockResolvedValueOnce === 'function') {
+    httpClient.get.mockResolvedValueOnce({ data: { csrf_token: 'test-csrf' } });
+  }
   return render(
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <MemoryRouter initialEntries={[initialRoute]}>
+      <AppInner />
+    </MemoryRouter>
   );
+};
+const waitAppReady = async () => {
+  // Wait for initial loading spinner to disappear
+  await waitFor(() => {
+    const spinner = screen.queryByRole('status');
+    if (spinner) {
+      expect(spinner).not.toBeInTheDocument();
+    }
+  });
 };
 
 describe('Frontend Integration Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     localStorage.clear();
+    // Default first request: CSRF token fetch on app mount
+    if (httpClient.get && typeof httpClient.get.mockResolvedValueOnce === 'function') {
+      httpClient.get.mockResolvedValueOnce({ data: { csrf_token: 'test-csrf' } });
+    }
   });
 
   describe('User Registration to Profile Access Flow', () => {
@@ -73,10 +90,10 @@ describe('Frontend Integration Tests', () => {
       });
 
       renderApp();
+      await waitAppReady();
 
-      // Navigate to register page
-      const registerLink = screen.getByRole('link', { name: /inscription/i });
-      await user.click(registerLink);
+      renderApp('/register');
+      await waitAppReady();
 
       // Fill registration form
       const firstNameInput = screen.getByPlaceholderText('Jean');
@@ -109,9 +126,8 @@ describe('Frontend Integration Tests', () => {
         }
       });
 
-      // Navigate to login
-      const loginLink = screen.getByRole('link', { name: /connexion/i });
-      await user.click(loginLink);
+      renderApp('/login');
+      await waitAppReady();
 
       // Fill login form
       const loginEmail = screen.getByPlaceholderText('exemple@email.com');
@@ -152,10 +168,10 @@ describe('Frontend Integration Tests', () => {
       });
 
       renderApp();
+      await waitAppReady();
 
-      // Navigate to login
-      const loginLink = screen.getByRole('link', { name: /connexion/i });
-      await user.click(loginLink);
+      renderApp('/login');
+      await waitAppReady();
 
       // Fill and submit login form
       const emailInput = screen.getByPlaceholderText('exemple@email.com');
@@ -202,14 +218,11 @@ describe('Frontend Integration Tests', () => {
         }
       });
 
-      renderApp();
-
-      // Navigate to forgot password
-      const forgotLink = screen.getByRole('link', { name: /mot de passe oublié/i });
-      await user.click(forgotLink);
+      renderApp('/forgot-password');
+      await waitAppReady();
 
       // Fill forgot password form
-      const emailInput = screen.getByPlaceholderText('exemple@email.com');
+      const emailInput = screen.getByPlaceholderText('votre.email@exemple.com');
       await user.type(emailInput, 'test@example.com');
 
       // Submit forgot password request
@@ -239,18 +252,24 @@ describe('Frontend Integration Tests', () => {
         }
       });
 
-      renderApp();
-
-      // Navigate to register
-      const registerLink = screen.getByRole('link', { name: /inscription/i });
-      await user.click(registerLink);
+      // Open register page directly (avoid anchor navigation in jsdom)
+      renderApp('/register');
+      await waitAppReady();
 
       // Fill registration form (minimal)
       const firstNameInput = screen.getByPlaceholderText('Jean');
+      const lastNameInput = screen.getByPlaceholderText('Dupont');
       const emailInput = screen.getByPlaceholderText('exemple@email.com');
+      const passwordInput = screen.getByPlaceholderText('Minimum 8 caractères');
 
       await user.type(firstNameInput, 'Test');
+      await user.type(lastNameInput, 'User');
       await user.type(emailInput, 'unverified@example.com');
+      await user.type(passwordInput, 'StrongPass1!');
+
+      // Submit registration
+      const submitButton = screen.getByRole('button', { name: /créer un compte/i });
+      await user.click(submitButton);
 
       // After registration, there should be a verification prompt
       // This would depend on your implementation
@@ -276,6 +295,8 @@ describe('Frontend Integration Tests', () => {
       });
 
       renderApp();
+      await waitAppReady();
+      await waitAppReady();
 
       // Try to access admin dashboard URL directly
       // Should be redirected or show access denied
@@ -372,13 +393,18 @@ describe('Frontend Integration Tests', () => {
         }
       });
 
-      renderApp();
+      renderApp('/register');
+      await waitAppReady();
 
-      const registerLink = screen.getByRole('link', { name: /inscription/i });
-      await user.click(registerLink);
-
+      const firstNameInput = screen.getByPlaceholderText('Jean');
+      const lastNameInput = screen.getByPlaceholderText('Dupont');
       const emailInput = screen.getByPlaceholderText('exemple@email.com');
+      const passwordInput = screen.getByPlaceholderText('Minimum 8 caractères');
+
+      await user.type(firstNameInput, 'Journey');
+      await user.type(lastNameInput, 'User');
       await user.type(emailInput, 'journey@example.com');
+      await user.type(passwordInput, 'JourneyPass1!');
 
       const registerButton = screen.getByRole('button', { name: /créer un compte/i });
       await user.click(registerButton);
@@ -403,11 +429,13 @@ describe('Frontend Integration Tests', () => {
         }
       });
 
-      const loginLink = screen.getByRole('link', { name: /connexion/i });
-      await user.click(loginLink);
+      renderApp('/login');
+      await waitAppReady();
 
       const loginEmail = screen.getByPlaceholderText('exemple@email.com');
+      const loginPassword = screen.getByPlaceholderText('Entrer votre mot de passe');
       await user.type(loginEmail, 'journey@example.com');
+      await user.type(loginPassword, 'JourneyPass1!');
 
       const loginButton = screen.getByRole('button', { name: /se connecter/i });
       await user.click(loginButton);
