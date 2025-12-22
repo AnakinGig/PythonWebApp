@@ -1,6 +1,6 @@
 import React from 'react';
 
-const LoadingSpinner = ({ size = 'md', text = 'Chargement...' }) => {
+const LoadingSpinner = ({ size = 'md', message, text = 'Chargement...', fullscreen = false }) => {
   const sizeClass = {
     sm: 'spinner-border-sm',
     md: '',
@@ -8,11 +8,11 @@ const LoadingSpinner = ({ size = 'md', text = 'Chargement...' }) => {
   }[size];
 
   return (
-    <div className="d-flex align-items-center justify-content-center">
+    <div className="d-flex align-items-center justify-content-center" style={fullscreen ? { minHeight: '100vh' } : undefined}>
       <div className={`spinner-border text-primary ${sizeClass}`} role="status">
         <span className="visually-hidden">Loading...</span>
       </div>
-      {text && <span className="ms-2">{text}</span>}
+      {(message || text) && <span className="ms-2">{message || text}</span>}
     </div>
   );
 };
