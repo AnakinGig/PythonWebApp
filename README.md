@@ -99,7 +99,24 @@ Tests run automatically on GitHub Actions:
 
 View status: [GitHub Actions](../../actions)
 
----
+### 🔒 Security Headers
+
+All responses include HTTP security headers to protect against common vulnerabilities:
+
+**Headers Implemented**:
+- **Content-Security-Policy**: Prevents XSS attacks by restricting script sources
+- **X-Content-Type-Options**: Prevents MIME type sniffing (`nosniff`)
+- **X-Frame-Options**: Prevents clickjacking (`SAMEORIGIN`)
+- **X-XSS-Protection**: Legacy XSS protection for older browsers
+- **Referrer-Policy**: Controls referrer information leakage
+- **Permissions-Policy**: Disables browser features (geolocation, camera, microphone, etc.)
+- **Strict-Transport-Security** (HSTS): Forces HTTPS in production (max-age: 1 year)
+
+**Backend**: Headers configured in `app.py` via `@app.after_request` middleware  
+**Frontend**: Headers mirrored in `frontend/nginx.conf` for static assets  
+**Production**: Enable HSTS by setting `FORCE_HTTPS=true` in `.env`
+
+
 
 ## 🚀 Production
 

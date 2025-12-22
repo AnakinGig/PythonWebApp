@@ -112,6 +112,34 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(user_bp)
 
+# Security Headers - Protect against XSS, clickjacking, MIME sniffing, etc.
+@app.after_request
+def add_security_headers(response):
+    """Add HTTP security headers to all responses"""
+    # Content Security Policy - Prevent XSS attacks
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'"
+    
+    # Prevent MIME type sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    
+    # Prevent clickjacking attacks
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    
+    # Legacy XSS protection header for older browsers
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    
+    # Referrer Policy - Control what referrer info is sent
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    
+    # Permissions Policy - Disable browser features
+    response.headers['Permissions-Policy'] = 'geolocation=(), camera=(), microphone=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=()'
+    
+    # HSTS (HTTP Strict Transport Security) - Force HTTPS in production
+    if app.config.get('FORCE_HTTPS', False):
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+    
+    return response
+
 # Register monitoring middleware
 @app.before_request
 def before_request():
