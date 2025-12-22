@@ -62,6 +62,33 @@ describe('Frontend Integration Tests', () => {
         }
       });
 
+      // Start at register page
+      const { unmount } = renderApp('/register');
+      await waitAppReady();
+
+      // Fill registration form using getAllByPlaceholderText and selecting first
+      const firstNameInputs = screen.getAllByPlaceholderText('Jean');
+      const lastNameInputs = screen.getAllByPlaceholderText('Dupont');
+      const emailInputs = screen.getAllByPlaceholderText('exemple@email.com');
+      const passwordInputs = screen.getAllByPlaceholderText('Minimum 8 caractères');
+
+      await user.type(firstNameInputs[0], 'Integration');
+      await user.type(lastNameInputs[0], 'Test');
+      await user.type(emailInputs[0], 'integration@example.com');
+      await user.type(passwordInputs[0], 'IntegrationTest123!');
+
+      // Submit registration
+      const submitButton = screen.getByRole('button', { name: /créer un compte/i });
+      await user.click(submitButton);
+
+      // Wait for registration to complete
+      await waitFor(() => {
+        expect(httpClient.post).toHaveBeenCalled();
+      });
+
+      // Cleanup first render
+      unmount();
+
       // Mock login response
       httpClient.post.mockResolvedValueOnce({
         data: {
@@ -76,65 +103,16 @@ describe('Frontend Integration Tests', () => {
         }
       });
 
-      // Mock profile response
-      httpClient.get.mockResolvedValueOnce({
-        data: {
-          data: {
-            id: '123',
-            email: 'integration@example.com',
-            first_name: 'Integration',
-            last_name: 'Test',
-            email_verified: true
-          }
-        }
-      });
-
-      renderApp();
-      await waitAppReady();
-
-      renderApp('/register');
-      await waitAppReady();
-
-      // Fill registration form
-      const firstNameInput = screen.getByPlaceholderText('Jean');
-      const lastNameInput = screen.getByPlaceholderText('Dupont');
-      const emailInput = screen.getByPlaceholderText('exemple@email.com');
-      const passwordInput = screen.getByPlaceholderText('Minimum 8 caractères');
-
-      await user.type(firstNameInput, 'Integration');
-      await user.type(lastNameInput, 'Test');
-      await user.type(emailInput, 'integration@example.com');
-      await user.type(passwordInput, 'IntegrationTest123!');
-
-      // Submit registration
-      const submitButton = screen.getByRole('button', { name: /créer un compte/i });
-      await user.click(submitButton);
-
-      // Wait for registration to complete
-      await waitFor(() => {
-        expect(httpClient.post).toHaveBeenCalled();
-      });
-
-      // Mock login
-      httpClient.post.mockResolvedValueOnce({
-        data: {
-          success: true,
-          data: {
-            id: '123',
-            email: 'integration@example.com'
-          }
-        }
-      });
-
+      // Render login page
       renderApp('/login');
       await waitAppReady();
 
-      // Fill login form
-      const loginEmail = screen.getByPlaceholderText('exemple@email.com');
-      const loginPassword = screen.getByPlaceholderText('Entrer votre mot de passe');
+      // Fill login form - use getAllByPlaceholderText for duplicate placeholders
+      const loginEmailInputs = screen.getAllByPlaceholderText('exemple@email.com');
+      const loginPasswordInputs = screen.getAllByPlaceholderText('Entrer votre mot de passe');
 
-      await user.type(loginEmail, 'integration@example.com');
-      await user.type(loginPassword, 'IntegrationTest123!');
+      await user.type(loginEmailInputs[0], 'integration@example.com');
+      await user.type(loginPasswordInputs[0], 'IntegrationTest123!');
 
       // Submit login
       const loginButton = screen.getByRole('button', { name: /se connecter/i });
@@ -393,18 +371,19 @@ describe('Frontend Integration Tests', () => {
         }
       });
 
-      renderApp('/register');
+      const { unmount: unmountRegister } = renderApp('/register');
       await waitAppReady();
 
-      const firstNameInput = screen.getByPlaceholderText('Jean');
-      const lastNameInput = screen.getByPlaceholderText('Dupont');
-      const emailInput = screen.getByPlaceholderText('exemple@email.com');
-      const passwordInput = screen.getByPlaceholderText('Minimum 8 caractères');
+      // Use getAllByPlaceholderText to handle duplicates
+      const firstNameInputs = screen.getAllByPlaceholderText('Jean');
+      const lastNameInputs = screen.getAllByPlaceholderText('Dupont');
+      const emailInputs = screen.getAllByPlaceholderText('exemple@email.com');
+      const passwordInputs = screen.getAllByPlaceholderText('Minimum 8 caractères');
 
-      await user.type(firstNameInput, 'Journey');
-      await user.type(lastNameInput, 'User');
-      await user.type(emailInput, 'journey@example.com');
-      await user.type(passwordInput, 'JourneyPass1!');
+      await user.type(firstNameInputs[0], 'Journey');
+      await user.type(lastNameInputs[0], 'User');
+      await user.type(emailInputs[0], 'journey@example.com');
+      await user.type(passwordInputs[0], 'JourneyPass1!');
 
       const registerButton = screen.getByRole('button', { name: /créer un compte/i });
       await user.click(registerButton);
@@ -413,6 +392,9 @@ describe('Frontend Integration Tests', () => {
       await waitFor(() => {
         expect(httpClient.post).toHaveBeenCalled();
       });
+
+      // Cleanup register
+      unmountRegister();
 
       // Step 2: Verify email (would typically be via email link)
       // Mock would simulate email verification
@@ -432,10 +414,11 @@ describe('Frontend Integration Tests', () => {
       renderApp('/login');
       await waitAppReady();
 
-      const loginEmail = screen.getByPlaceholderText('exemple@email.com');
-      const loginPassword = screen.getByPlaceholderText('Entrer votre mot de passe');
-      await user.type(loginEmail, 'journey@example.com');
-      await user.type(loginPassword, 'JourneyPass1!');
+      const loginEmailInputs = screen.getAllByPlaceholderText('exemple@email.com');
+      const loginPasswordInputs = screen.getAllByPlaceholderText('Entrer votre mot de passe');
+      
+      await user.type(loginEmailInputs[0], 'journey@example.com');
+      await user.type(loginPasswordInputs[0], 'JourneyPass1!');
 
       const loginButton = screen.getByRole('button', { name: /se connecter/i });
       await user.click(loginButton);
