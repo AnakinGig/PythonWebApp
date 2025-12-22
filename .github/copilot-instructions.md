@@ -205,14 +205,13 @@ from routes import admin_bp, auth_bp, user_bp
 **Authentication & Security**:
 - [ ] **2FA (Two-Factor Authentication)** - TOTP via authenticator app or SMS
 - [ ] **Google OAuth** - Social login integration (Firebase or oauth.py library)
-- [ ] **Password History** - Track last 3 passwords, prevent reuse
 - [ ] **Account Lockout** - Lock after 5 failed login attempts (15 min cooldown)
 - [ ] **Password Strength Meter** - Real-time visual feedback on password strength
 - [ ] **Failed Login Logging** - Track suspicious activity for admin review
 
 **POC Features (For Selling Websites)**:
 - [ ] **Commenting System** - User comments on pages with moderation, nested replies, edit/delete own
-- [ ] **Trailer System** - Video trailers showcase with metadata (title, description, duration, thumbnail, video URL)
+- [ ] **Shopping Cart System** - Product cart with add/remove items, quantity management, checkout flow, order history
 
 **Performance & Optimization**:
 - [ ] **Redis Caching** - Cache user profiles, activity logs, frequently accessed data
