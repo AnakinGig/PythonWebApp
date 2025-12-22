@@ -1,8 +1,8 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import useApi from './useApi';
-import httpClient from '../utils/httpClient';
+import useApi from '../../../hooks/useApi';
+import httpClient from '../../../utils/httpClient';
 
-jest.mock('../utils/httpClient');
+jest.mock('../../../utils/httpClient');
 
 describe('useApi Hook', () => {
   beforeEach(() => {
@@ -70,7 +70,6 @@ describe('useApi Hook', () => {
   it('should reset error', () => {
     const { result } = renderHook(() => useApi());
 
-    // Manually set error (in real scenario it would be set by callApi)
     result.current.resetError();
 
     expect(result.current.error).toBe(null);

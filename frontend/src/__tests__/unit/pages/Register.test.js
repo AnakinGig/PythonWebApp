@@ -3,10 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
-import Register from './Register';
-import httpClient from '../utils/httpClient';
+import Register from '../../../pages/Register';
+import httpClient from '../../../utils/httpClient';
 
-jest.mock('../utils/httpClient');
+jest.mock('../../../utils/httpClient');
 
 const renderWithRouter = (component) => {
   return render(
@@ -38,7 +38,6 @@ describe('Register Page', () => {
     const submitButton = screen.getByRole('button', { name: /créer un compte/i });
     await user.click(submitButton);
     
-    // Check that inputs have error state
     const inputs = screen.getAllByPlaceholderText(/dupont|jean|exemple|minimum/i);
     expect(inputs[0]).toHaveClass('is-invalid');
   });
@@ -53,7 +52,6 @@ describe('Register Page', () => {
     await user.type(emailInput, 'invalid-email');
     await user.click(submitButton);
     
-    // Invalid email should show error styling
     expect(emailInput).toHaveClass('is-invalid');
   });
 
@@ -67,7 +65,6 @@ describe('Register Page', () => {
     await user.type(passwordInput, 'weak');
     await user.click(submitButton);
     
-    // Weak password should show error styling
     expect(passwordInput).toHaveClass('is-invalid');
   });
 
@@ -89,7 +86,6 @@ describe('Register Page', () => {
     const emailInput = screen.getByPlaceholderText('exemple@email.com');
     const passwordInput = screen.getByPlaceholderText('Minimum 8 caractères');
     
-    // Verify that form inputs can be typed into
     await user.type(firstNameInput, 'Jean');
     expect(firstNameInput).toHaveValue('Jean');
     
@@ -118,7 +114,6 @@ describe('Register Page', () => {
     await user.click(submitButton);
     
     await waitFor(() => {
-      // Error should appear after failed submission
       expect(httpClient.post).toHaveBeenCalled();
     });
   });

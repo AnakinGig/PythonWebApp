@@ -2,11 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
-import Header from './Header';
-import { ThemeProvider } from '../../context/ThemeContext';
+import Header from '../../../../../components/layout/Header';
+import { ThemeProvider } from '../../../../../context/ThemeContext';
 
-// Mock httpClient
-jest.mock('../../utils/httpClient');
+jest.mock('../../../../../utils/httpClient');
 
 const renderWithRouter = (component) => {
   return render(
@@ -29,13 +28,11 @@ describe('Header Component', () => {
   it('should render navigation when not authenticated', () => {
     renderWithRouter(<Header />);
     
-    // At minimum, check for home link
     const homeLink = screen.getByRole('link', { name: /accueil/i });
     expect(homeLink).toBeInTheDocument();
   });
 
   it('should render user menu when authenticated', () => {
-    // Mock authenticated state
     const mockUser = {
       id: '1',
       first_name: 'Jean',
@@ -60,7 +57,6 @@ describe('Header Component', () => {
 
     renderWithRouter(<Header user={mockAdmin} />);
     
-    // Check that admin link exists (may be in a dropdown)
     const adminLink = screen.getAllByText(/admin/i);
     expect(adminLink.length).toBeGreaterThan(0);
   });

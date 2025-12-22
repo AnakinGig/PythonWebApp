@@ -3,10 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
-import Login from './Login';
-import httpClient from '../utils/httpClient';
+import Login from '../../../pages/Login';
+import httpClient from '../../../utils/httpClient';
 
-jest.mock('../utils/httpClient');
+jest.mock('../../../utils/httpClient');
 
 const renderWithRouter = (component) => {
   return render(
@@ -37,7 +37,6 @@ describe('Login Page', () => {
     const submitButton = screen.getByRole('button', { name: /se connecter/i });
     await user.click(submitButton);
     
-    // Form should show validation state (class is-invalid will be added)
     const emailInput = screen.getByPlaceholderText('exemple@email.com');
     expect(emailInput).toHaveClass('is-invalid');
   });
@@ -49,10 +48,8 @@ describe('Login Page', () => {
     const emailInput = screen.getByPlaceholderText('exemple@email.com');
     const submitButton = screen.getByRole('button', { name: /se connecter/i });
     
-    // Submit empty form - should trigger validation
     await user.click(submitButton);
     
-    // Email field should have error class after submit with empty field
     await waitFor(() => {
       expect(emailInput).toHaveClass('is-invalid');
     });
@@ -79,7 +76,6 @@ describe('Login Page', () => {
     const emailInput = screen.getByPlaceholderText('exemple@email.com');
     const passwordInput = screen.getByPlaceholderText('Entrer votre mot de passe');
     
-    // Verify that form inputs can be typed into
     await user.type(emailInput, 'test@example.com');
     expect(emailInput).toHaveValue('test@example.com');
     
@@ -102,7 +98,6 @@ describe('Login Page', () => {
     const emailInput = screen.getByPlaceholderText('exemple@email.com');
     const passwordInput = screen.getByPlaceholderText('Entrer votre mot de passe');
     
-    // Verify form can accept input
     await user.type(emailInput, 'test@example.com');
     await user.type(passwordInput, 'WrongPassword123!');
     

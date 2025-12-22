@@ -2,9 +2,9 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
-import Home from './Home';
+import Home from '../../../pages/Home';
 
-jest.mock('../utils/httpClient');
+jest.mock('../../../utils/httpClient');
 
 const renderWithRouter = (component) => {
   return render(
@@ -25,7 +25,7 @@ describe('Home Page', () => {
     renderWithRouter(<Home />);
     
     expect(screen.getByText(/se connecter/i)).toBeInTheDocument();
-    expect(screen.getByText(/cr\u00e9er un compte/i)).toBeInTheDocument();
+    expect(screen.getByText(/créer un compte/i)).toBeInTheDocument();
   });
 
 });
