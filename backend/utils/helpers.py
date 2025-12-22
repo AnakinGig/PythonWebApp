@@ -26,10 +26,10 @@ def sanitize_input(text):
 # Email validation function
 def is_valid_email(email):
     email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(email_regex, email)
+    return re.match(email_regex, email) is not None
 
 # Password strength validation function
 def is_strong_password(password):
     # At least 8 characters, one uppercase, one lowercase, one digit, one special character
     regex = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$'
-    return re.match(regex, password)
+    return re.match(regex, password) is not None

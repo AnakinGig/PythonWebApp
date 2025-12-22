@@ -2,7 +2,9 @@
 
 from .helpers import (
     sanitize_input,
-    validate_user_fields
+    validate_user_fields,
+    is_valid_email,
+    is_strong_password
 )
 from .api_response import (
     success_response,
