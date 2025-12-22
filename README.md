@@ -13,41 +13,40 @@ Application web fullstack moderne avec gestion d'utilisateurs, monitoring temps 
 - ✅ Tableau de bord admin avec métriques
 - ✅ Logs d'activité
 - ✅ Documentation API (Swagger à `/api/docs`)
+- ✅ HTTP security headers (CSP, HSTS, etc.)
+- ✅ CI/CD Pipeline (GitHub Actions)
 
 ---
 
-## 🔧 Développement
+## 🔧 Installation & Développement
 
-### Installation Rapide
+### Quick Start
 
 ```bash
-# 1. Cloner
+# 1. Clone
 git clone https://github.com/AnakinGig/PythonWebApp.git
 cd PythonWebApp
 
-# 2. Configuration
+# 2. Configure
 cp .env.example .env
-# Éditer .env avec vos valeurs (voir variables obligatoires ci-dessous)
+# Edit .env with your values (see Required Variables below)
 
-# 3. Lancer
-sudo docker compose -f docker-compose.prod.yml build
-sudo docker compose -f docker-compose.prod.yml up -d
+# 3. Launch
+sudo docker compose -f docker-compose.prod.yml up -d --build
 
-# 4. Initialiser la DB (première fois uniquement)
-sudo docker compose -f docker-compose.prod.yml up -d db backend
-sleep 5
+# 4. Initialize DB (first time only)
 sudo docker compose -f docker-compose.prod.yml exec backend python init_migrations.py
 ```
 
 **URLs**: Frontend <http://localhost:3000> | Backend <http://localhost:5000> | Swagger <http://localhost:5000/api/docs>
 
-### Variables Obligatoires (.env)
+### Required Environment Variables
 
 ```env
-# Sécurité
-SECRET_KEY=<générer avec: openssl rand -base64 32>
+# Security
+SECRET_KEY=<generate: openssl rand -base64 32>
 
-# Admin
+# Admin account
 ADMIN_MAIL=admin@example.com
 ADMIN_PASSWORD=SecurePass123!
 
@@ -55,293 +54,192 @@ ADMIN_PASSWORD=SecurePass123!
 REACT_APP_BACKEND_URL=http://localhost:5000
 FRONTEND_URL=http://localhost:3000
 
-# Base de données
+# Database
 DB_USER=your_user
 DB_PASSWORD=your_secure_password
 DB_NAME=users_db
 DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
 ```
 
-**Optionnel - Branding**: Utiliser `./setup-client-branding.sh` ou éditer les variables `APP_NAME`, `COMPANY_NAME`, etc. dans `.env`
+**Optional - Branding**: Use `./setup-client-branding.sh` or edit `APP_NAME`, `COMPANY_NAME` in `.env`
 
-### Commandes Utiles
+### Common Commands
 
 ```bash
 # Services
-sudo docker compose -f docker-compose.prod.yml up -d --build          # Redémarrer avec rebuild
-sudo docker compose -f docker-compose.prod.yml restart backend        # Redémarrer service
-sudo docker compose -f docker-compose.prod.yml logs -f backend        # Voir logs
+sudo docker compose -f docker-compose.prod.yml up -d --build     # Rebuild & restart
+sudo docker compose -f docker-compose.prod.yml restart backend   # Restart service
+sudo docker compose -f docker-compose.prod.yml logs -f backend   # View logs
 
-# Migrations (après modification de modèles)
+# Database migrations (after model changes)
 sudo docker compose -f docker-compose.prod.yml exec backend flask db migrate -m "description"
 sudo docker compose -f docker-compose.prod.yml exec backend flask db upgrade
-sudo docker compose -f docker-compose.prod.yml restart backend
 
-# Accès conteneurs
-sudo docker compose -f docker-compose.prod.yml exec backend /bin/bash
+# Container access
+sudo docker compose -f docker-compose.prod.yml exec backend bash
 sudo docker compose -f docker-compose.prod.yml exec db psql -U user -d users_db
 
-# Tests
+# Health check
+curl http://localhost:5000/api/health
+```
+
+### Testing
+
+```bash
 # Backend
 sudo docker compose -f docker-compose.prod.yml exec backend pip install -r requirements-dev.txt
 sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=.
+
 # Frontend
-cd frontend && npm install && npm test -- --coverage --watchAll=false
-```
-
-### 🤖 CI/CD Pipeline
-
-Tests run automatically on GitHub Actions:
-- **Backend**: Runs on every `backend/` change (pytest with coverage)
-- **Frontend**: Runs on every `frontend/` change (npm test with coverage)
-- **Branch Protection**: Merges require all tests passing
-- **Coverage**: Reports uploaded to Codecov
-
-View status: [GitHub Actions](../../actions)
-
-### 🔒 Security Headers
-
-All responses include HTTP security headers to protect against common vulnerabilities:
-
-**Headers Implemented**:
-- **Content-Security-Policy**: Prevents XSS attacks by restricting script sources
-- **X-Content-Type-Options**: Prevents MIME type sniffing (`nosniff`)
-- **X-Frame-Options**: Prevents clickjacking (`SAMEORIGIN`)
-- **X-XSS-Protection**: Legacy XSS protection for older browsers
-- **Referrer-Policy**: Controls referrer information leakage
-- **Permissions-Policy**: Disables browser features (geolocation, camera, microphone, etc.)
-- **Strict-Transport-Security** (HSTS): Forces HTTPS in production (max-age: 1 year)
-
-**Backend**: Headers configured in `app.py` via `@app.after_request` middleware  
-**Frontend**: Headers mirrored in `frontend/nginx.conf` for static assets  
-**Production**: Enable HSTS by setting `FORCE_HTTPS=true` in `.env`
-
-
-
-## 🚀 Production
-
-### Prérequis
-
-- Ubuntu/Debian avec Docker installé
-- Nom de domaine + SSL (Let's Encrypt recommandé)
-
-### Déploiement
-
-```bash
-# 1. Configuration secrets
-mkdir .env_prod_secrets
-echo "votre_cle_secrete" > .env_prod_secrets/SECRET_KEY.txt
-echo "admin@domain.com" > .env_prod_secrets/ADMIN_MAIL.txt
-echo "SecurePass123!" > .env_prod_secrets/ADMIN_PASSWORD.txt
-chmod 600 .env_prod_secrets/*
-
-# 2. Variables .env (copier .env.example et éditer)
-# Changer DB_USER, DB_PASSWORD, URLs, branding
-
-# 3. Lancer
-sudo docker compose -f docker-compose.prod.yml build
-sudo docker compose -f docker-compose.prod.yml up -d
-
-# 4. Initialiser migrations (première fois)
-sudo docker compose -f docker-compose.prod.yml exec backend flask db init
-sudo docker compose -f docker-compose.prod.yml exec backend flask db migrate -m "Initial"
-sudo docker compose -f docker-compose.prod.yml exec backend flask db upgrade
-```
-
-### Sécurité Production
-
-**SSL/TLS avec Let's Encrypt**:
-
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com
-```
-
-**Firewall**:
-
-```bash
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw allow 22/tcp
-sudo ufw enable
-```
-
-**Backups automatiques** (exemple script):
-
-```bash
-#!/bin/bash
-# /opt/backup_pythonwebapp.sh
-BACKUP_DIR="/opt/backups/pythonwebapp"
-DATE=$(date +%Y%m%d_%H%M%S)
-mkdir -p $BACKUP_DIR
-
-sudo docker compose -f docker-compose.prod.yml exec -T db \
-    pg_dump -U user users_db | gzip > "$BACKUP_DIR/db_$DATE.sql.gz"
-
-find $BACKUP_DIR -name "*.sql.gz" -mtime +30 -delete  # Garder 30 jours
-```
-
-Ajouter au crontab: `0 2 * * * /opt/backup_pythonwebapp.sh`
-
-### Commandes Production
-
-```bash
-# Gestion
-sudo docker compose -f docker-compose.prod.yml restart
-sudo docker compose -f docker-compose.prod.yml logs -f
-
-# Mise à jour (après git pull)
-sudo docker compose -f docker-compose.prod.yml up -d --build
-
-# Restaurer backup
-sudo docker compose -f docker-compose.prod.yml exec -T db \
-    psql -U user users_db < backup.sql
-
-# Health check
-curl http://localhost:5000/health
+cd frontend && npm test -- --coverage --watchAll=false
 ```
 
 ---
 
-## � Client Onboarding Guide
+## 🔒 Security
 
-### Pour Nouveaux Clients
+**HTTP Security Headers** (all responses):
+- **Content-Security-Policy**: Prevents XSS attacks
+- **X-Content-Type-Options**: Prevents MIME type sniffing
+- **X-Frame-Options**: Prevents clickjacking
+- **X-XSS-Protection**: Legacy XSS protection
+- **Referrer-Policy**: Controls referrer information
+- **Permissions-Policy**: Disables browser features
+- **HSTS**: Forces HTTPS in production (max-age: 1 year)
 
-1. **Cloner et configurer**:
-   ```bash
-   git clone https://github.com/yourdomain/pythonwebapp.git
-   cd pythonwebapp && cp .env.example .env
-   ```
+**Implementation**: Backend headers in `app.py`, frontend headers in `nginx.conf`  
+**Enable HSTS**: Set `FORCE_HTTPS=true` in `.env`
 
-2. **Éditer `.env`**: 
-   - Générer SECRET_KEY: `openssl rand -base64 32`
-   - Définir ADMIN_MAIL, ADMIN_PASSWORD
-   - Changer APP_NAME, COMPANY_NAME pour branding client
-   - Configurer URLs (REACT_APP_BACKEND_URL, FRONTEND_URL)
-
-3. **Lancer**:
-   ```bash
-   sudo docker compose -f docker-compose.prod.yml build
-   sudo docker compose -f docker-compose.prod.yml up -d
-   sudo docker compose -f docker-compose.prod.yml exec backend python init_migrations.py
-   ```
-
-4. **Accès initial**:
-   - Frontend: <http://localhost:3000>
-   - Admin: login avec ADMIN_MAIL / ADMIN_PASSWORD
-   - API Docs: <http://localhost:5000/api/docs>
-
-**Durée estimée**: 15 minutes | **Besoin d'aide?** Voir Troubleshooting Guide
+**Additional Security**:
+- Bcrypt password hashing
+- CSRF protection (Flask-WTF)
+- Rate limiting (5/min login, 100/min global)
+- XSS prevention (Bleach sanitization)
+- Admin protection (cannot delete last admin)
+- Email verification (24h token)
+- Password reset (1h token + no reuse)
 
 ---
 
-## 🚀 Deployment Guide
+## 🚀 Production Deployment
 
-### Préparation Serveur (Ubuntu 20.04+)
+### Server Setup (Ubuntu 20.04+)
 
 ```bash
-# Installer Docker et docker-compose
 curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 sudo apt install docker-compose
 ```
 
-### Étapes Déploiement
+### Deployment Steps
 
-1. **Cloner le projet**:
+1. **Clone and configure**:
    ```bash
-   cd /opt && git clone <repo-url> pythonwebapp
-   cd pythonwebapp
-   ```
-
-2. **Configuration secrets**:
-   ```bash
-   mkdir .env_prod_secrets && chmod 700 .env_prod_secrets
-   echo "$(openssl rand -base64 32)" > .env_prod_secrets/SECRET_KEY.txt
-   echo "admin@yourdomain.com" > .env_prod_secrets/ADMIN_MAIL.txt
-   echo "$(openssl rand -base64 20)" > .env_prod_secrets/ADMIN_PASSWORD.txt
-   ```
-
-3. **Fichier `.env` production**:
-   ```bash
+   cd /opt && git clone <repo-url> pythonwebapp && cd pythonwebapp
    cp .env.example .env
-   # Éditer: DB_USER, DB_PASSWORD, URLs, domaine, branding
+   # Edit: DB_USER, DB_PASSWORD, SECRET_KEY, URLs, branding
    ```
 
-4. **Lancer les services**:
+2. **Launch services**:
    ```bash
    sudo docker compose -f docker-compose.prod.yml up -d --build
    sudo docker compose -f docker-compose.prod.yml exec backend python init_migrations.py
    ```
 
-5. **SSL avec Let's Encrypt**:
+3. **SSL with Let's Encrypt**:
    ```bash
    sudo apt install certbot python3-certbot-nginx
-   sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+   sudo certbot --nginx -d yourdomain.com
    ```
 
-6. **Firewall**:
+4. **Firewall**:
    ```bash
-   sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw allow 22/tcp
-   sudo ufw enable
+   sudo ufw allow 22/tcp && sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw enable
    ```
 
-7. **Monitoring et backups** (voir section Backups automatiques ci-dessus)
+5. **Automatic backups** (add to `/opt/backup_db.sh`):
+   ```bash
+   #!/bin/bash
+   DATE=$(date +%Y%m%d_%H%M%S)
+   BACKUP_DIR="/opt/backups"
+   mkdir -p $BACKUP_DIR
+   sudo docker compose -f /opt/pythonwebapp/docker-compose.prod.yml exec -T db \
+       pg_dump -U user users_db | gzip > "$BACKUP_DIR/db_$DATE.sql.gz"
+   find $BACKUP_DIR -name "*.sql.gz" -mtime +30 -delete  # Keep 30 days
+   ```
+   Add to crontab: `0 2 * * * /opt/backup_db.sh`
 
-**Durée**: 30 minutes | **Support**: Vérifier les logs avec `docker logs -f`
+### Production Commands
+
+```bash
+sudo docker compose -f docker-compose.prod.yml up -d --build    # Update & restart
+sudo docker compose -f docker-compose.prod.yml logs -f          # View logs
+sudo docker compose -f docker-compose.prod.yml exec -T db \
+    psql -U user users_db < backup.sql                          # Restore backup
+```
+
+**Duration**: ~30 minutes
 
 ---
 
-## 🎨 Customization Guide
+## 🎨 Customization
 
 ### Branding Client
 
-**Option 1: Script automatisé**:
+**Automated approach**:
 ```bash
 ./setup-client-branding.sh
 ```
 
-**Option 2: Variables `.env`**:
+**Manual approach** (edit `.env`):
 ```env
-APP_NAME=NomDuClient
-COMPANY_NAME=Entreprise Client
+APP_NAME=Client Name
+COMPANY_NAME=Company Name
 APP_LOGO_URL=https://yourcdn.com/logo.png
 PRIMARY_COLOR=#0066cc
 SECONDARY_COLOR=#ff6600
 ```
 
-**Résultat**: App, header, emails, Swagger docs adaptés au client
-
-### Ajouter Nouvelles Fonctionnalités
+### Adding Features
 
 **Backend** (`backend/routes/`):
-- Créer route dans `auth.py`, `user.py`, ou `admin.py`
-- Utiliser: `from utils import success_response, error_response`
-- Patterns: Validation → Logique → API response
+- Create route in `auth.py`, `user.py`, or `admin.py`
+- Use: `from utils import success_response, error_response`
+- Validate → Logic → API response
 
 **Frontend** (`frontend/src/`):
-- Pages: `pages/NomPage.js` (lazy load dans `App.js`)
-- Components: `components/common/` (réutilisables)
-- Hooks: `hooks/useApi()` pour appels API
+- Pages: `pages/PageName.js` (lazy load in `App.js`)
+- Components: `components/common/` (reusable)
+- API calls: Use `useApi()` hook
 
-**Tests**: Ajouter dans `backend/tests/` et `frontend/src/__tests__/` avant livraison
+**Tests**: Add to `backend/tests/` and `frontend/src/__tests__/` before deployment
 
 ---
 
-## 🔧 Troubleshooting Guide
+## 🔧 Troubleshooting
 
-| Problème | Solution |
-|----------|----------|
-| **Port 3000/5000 en utilisation** | `sudo lsof -i :3000` + `kill -9 <PID>` |
-| **DB connexion refusée** | Vérifier `DB_USER`, `DB_PASSWORD`, `DATABASE_URL` dans `.env` |
-| **"Module not found" (backend)** | `docker compose exec backend pip install -r requirements.txt` |
-| **"npm ERR" (frontend)** | `cd frontend && npm install && npm start` |
-| **Admin account locked** | `docker compose exec db psql -U user -d users_db` → `UPDATE users SET lock_until = null WHERE email = 'admin@...';` |
-| **Tests échouent localement** | Exécuter depuis `/docker-compose.prod.yml` (voir Commandes Utiles) |
-| **"CSRF token missing"** | Navigateur → Effacer cookies + reload, ou vérifier `FRONTEND_URL` |
-| **Migrations non appliquées** | `docker compose exec backend python init_migrations.py` |
+| Problem | Solution |
+|---------|----------|
+| Port 3000/5000 in use | `sudo lsof -i :3000` + `kill -9 <PID>` |
+| DB connection refused | Check `DB_USER`, `DB_PASSWORD`, `DATABASE_URL` in `.env` |
+| "Module not found" (backend) | `docker compose exec backend pip install -r requirements.txt` |
+| "npm ERR" (frontend) | `cd frontend && npm install` |
+| CSRF token missing | Clear browser cookies and reload, or check `FRONTEND_URL` |
+| Migrations not applied | `docker compose exec backend python init_migrations.py` |
+| Tests fail locally | Run with `docker-compose.prod.yml` (see Commands section) |
 
-**Toujours vérifier logs**: `docker compose -f docker-compose.prod.yml logs -f backend`
+**Always check logs**: `sudo docker compose -f docker-compose.prod.yml logs -f backend`
+
+---
+
+## 🤖 CI/CD Pipeline
+
+Tests run automatically on GitHub Actions:
+- **Backend**: Runs on every `backend/` change (pytest with coverage)
+- **Frontend**: Runs on every `frontend/` change (npm test with coverage)
+- **Branch Protection**: Merges require all tests passing
+
+View status: [GitHub Actions](../../actions)
 
 ---
 
@@ -352,6 +250,6 @@ SECONDARY_COLOR=#ff6600
 
 ---
 
-## 📝 Licence
+## 📝 License
 
-MIT License - Voir [LICENSE](LICENSE)
+MIT License - See [LICENSE](LICENSE)

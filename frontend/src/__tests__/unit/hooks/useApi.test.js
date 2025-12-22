@@ -29,8 +29,8 @@ describe('useApi Hook', () => {
 
     expect(result.current.loading).toBe(false);
     expect(result.current.error).toBe(null);
-    // useApi extracts the nested data property from response.data.data
-    expect(response.data).toEqual(mockData.data);
+    // useApi returns full API response { success, data, ... }
+    expect(response.data).toEqual(mockData);
     expect(mockApiCall).toHaveBeenCalledTimes(1);
   });
 
