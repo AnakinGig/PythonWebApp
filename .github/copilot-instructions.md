@@ -1,9 +1,122 @@
 # 🤖 Copilot Instructions - PythonWebApp
 
 > **Purpose**: Central context file for GitHub Copilot to understand project architecture, conventions, and current state.
-> **Last Updated**: December 16, 2025
+> **Last Updated**: December 22, 2025
 > **Repository**: AnakinGig/PythonWebApp
 > **Branch**: Dev
+
+---
+
+## 🧾 Git Commit Policy
+
+**Auto-commit after green tests**
+- Trigger: When a full test run finishes with 0 failures.
+- Action: Create commits for the changes that made tests pass, grouped by feature/domain (e.g., auth, admin, user, tests, devops).
+- Message style: One concise subject line (≤ 72 chars), imperative mood; add a short body only if needed.
+- Grouping rules:
+  - One commit per coherent feature/fix area (avoid mega-commits).
+  - Separate test-only edits from application logic when practical.
+  - Don’t mix backend and frontend changes unless tightly coupled.
+- When not to commit: If any tests fail, fix first; commit only when green.
+- Verified flows:
+  - Backend:
+    - sudo docker compose -f docker-compose.prod.yml up -d --build
+    - sudo docker compose -f docker-compose.prod.yml exec backend pip install -r requirements-dev.txt
+    - sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=.
+  - Frontend:
+    - cd frontend && npm install && npm test -- --coverage --watchAll=false
+- Examples:
+  - auth: standardize responses and validate body fields
+  - tests(admin): include required fields for user updates
+  - user: return 401 on wrong current password
+  - test: disable rate limiting during tests
+
+---
+
+## 🚨 CRITICAL DOCKER COMMAND STYLE
+
+**⚠️ ALWAYS USE PRODUCTION-STYLE DOCKER COMMANDS**:
+
+When providing Docker commands, **ALWAYS** use this exact style:
+
+```bash
+# Restart project after code modifications
+sudo docker compose -f docker-compose.prod.yml up -d --build
+
+# View logs
+sudo docker compose -f docker-compose.prod.yml logs -f
+
+# Execute commands in containers
+sudo docker compose -f docker-compose.prod.yml exec backend <command>
+```
+
+**Why?**: Consistency with production environment, explicit file specification, proper permissions.
+
+---
+
+## ⚠️ CRITICAL DOCUMENTATION RULES
+
+**README-FIRST POLICY**:
+1. ✅ **ALWAYS update README.md when adding new features** - This is MANDATORY
+2. ✅ **Add documentation sections directly to README.md** - Do NOT create separate guide files
+3. ✅ **Keep README sections concise** - Brief, practical instructions only (max 10-15 lines per section)
+4. ❌ **NEVER create separate documentation files** (GUIDE.md, IMPLEMENTATION.md, etc.) unless absolutely necessary
+5. ✅ **Exception**: Only create separate files for very complex topics that would bloat README (>100 lines)
+
+**Why?**: Keep all documentation in one place, easy to find, and maintain. Avoid documentation sprawl.
+
+**README VERIFICATION & MAINTENANCE**:
+1. ✅ **ALWAYS check README.md before running commands** - Verify the command exists and is correct
+2. ✅ **If a dev/prod command is missing** - Add it to README immediately
+3. ✅ **If a command doesn't work** - Test, fix, and update README with the correct version
+4. ✅ **Test commands before documenting** - Ensure all commands in README actually work
+
+**Why?**: README is the source of truth. Keep it accurate and complete.
+
+---
+
+## 🔧 FEATURE IMPLEMENTATION WORKFLOW
+
+**COMPLETE FEATURE CHECKLIST** - Follow this workflow for EVERY new feature:
+
+1. **📍 ARCHITECTURE CHECK** - Before writing any code:
+   - Identify the correct location in the project structure
+   - Backend: Which module/route does this belong to? (`routes/`, `models/`, `utils/`, `middleware/`)
+   - Frontend: Which component category? (`pages/`, `components/common/`, `components/layout/`)
+   - Follow existing patterns and conventions
+   - Verify it doesn't duplicate existing functionality
+
+2. **💻 IMPLEMENTATION** - Write the feature:
+   - Use package-level imports (backend: `from core`, `from models`, etc.)
+   - Follow standardized patterns (API responses, form validation, etc.)
+   - Include error handling and input validation
+   - Add activity logging for security-sensitive operations
+   - Use French for user-facing text, English for code comments
+
+3. **🧪 TESTING** - Write tests ONLY if needed:
+   - ✅ **Write tests for**: Security features, authentication, data validation, critical business logic, API endpoints
+   - ❌ **Skip tests for**: Simple UI changes, minor styling updates, documentation-only changes
+   - **ALWAYS restart Docker before testing**: `sudo docker compose -f docker-compose.prod.yml up -d --build`
+   - **Use exact test commands from README.md**:
+     - Backend: `sudo docker compose -f docker-compose.prod.yml exec backend pip install -r requirements-dev.txt` then `sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=.`
+     - Frontend: `cd frontend && npm install && npm test -- --coverage --watchAll=false`
+   - Backend: Add pytest tests in `backend/tests/` matching the module structure
+   - Frontend: Add React Testing Library tests in `frontend/src/` alongside components
+
+4. **📝 DOCUMENTATION** - Document ONLY if needed:
+   - ✅ **Document in README.md**: New endpoints, new commands, new environment variables, new features users need to know
+   - ✅ **Document in code**: Complex logic, security considerations, non-obvious implementations
+   - ❌ **Skip documentation for**: Internal refactoring, minor bug fixes, self-explanatory changes
+   - Keep README sections concise (max 10-15 lines)
+
+5. **✅ VERIFICATION** - Ensure completeness:
+   - Feature works in development environment
+   - Tests pass (if tests were added)
+   - Documentation updated (if user-facing feature)
+   - No errors in console/logs
+   - Follows white-label principles (easy for clients to customize)
+
+**Why?**: Ensures consistent, high-quality implementations that are tested, documented, and properly integrated.
 
 ---
 
@@ -470,4 +583,260 @@ docker compose -f docker-compose.prod.yml logs -f
 
 ---
 
-**For detailed project history and completed items, see**: `/home/user/projects/personnal/PythonWebApp/copilot.md`
+## ✅ TODO List (Priority Order)
+
+> **⚠️ IMPORTANT**: When conducting a new project review, always update this TODO list with new items and check off completed items. This is the single source of truth for what needs to be done.
+
+### 🔴 CRITICAL PRIORITY (Must Fix Before Client Sales)
+
+#### Security & Configuration
+- [x] **Fix Database Credentials** - Changed weak `user:password` to strong credentials in docker-compose files ✅ Dec 14
+- [x] **Create `.env.example`** - Template file for environment variables ✅ Dec 14
+- [x] **Add LICENSE File** - MIT License for white-label distribution ✅ Dec 14
+- [x] **Initialize Database Migrations** - Created guide and improved init script ✅ Dec 14
+- [x] **Test Migration System** - Ensure migrations work in dev and prod ✅ Dec 16
+
+#### Branding & Customization
+- [x] **Remove Hardcoded "PythonWebApp"** - Replaced with BrandingConfig ✅ Dec 14
+- [x] **Create Branding Config** - Central configuration for app name, logo, colors ✅ Dec 14
+- [x] **Build Setup Script** - Automated script (setup-client-branding.sh) ✅ Dec 14
+- [x] **Document Branding Process** - Created BRANDING_GUIDE.md ✅ Dec 14
+
+**🎉 Status: 9/9 Critical Items Complete (100%) - Ready for HIGH PRIORITY tasks!**
+
+---
+
+### 🟡 HIGH PRIORITY (Before First Client)
+
+#### Testing & Quality Assurance
+- [x] **Backend Unit Tests** - pytest setup with auth, admin, models tests ✅ Dec 22
+- [x] **Frontend Unit Tests** - React Testing Library for key components ✅ Dec 22
+- [ ] **Integration Tests** - End-to-end user flows
+- [ ] **Security Tests** - Test CSRF, rate limiting, admin protections
+- [ ] **CI/CD Pipeline** - GitHub Actions for automated testing
+
+#### Essential Features
+- [x] **Password Reset** - Email-based password recovery system ✅ Dec 16
+- [x] **Email Verification** - Verify user emails on registration ✅ Dec 16
+- [x] **User Profile Page** - Allow users to edit their own information ✅ Dec 16
+- [x] **Email Notifications** - Transactional emails (welcome, password reset, etc.) ✅ Dec 16
+- [x] **File Upload System** - Avatar uploads ✅ Dec 16
+
+#### Documentation
+- [ ] **Client Onboarding Guide** - Step-by-step setup for clients
+- [ ] **Deployment Guide** - Production deployment instructions
+- [ ] **Customization Guide** - How to modify and extend features
+- [ ] **Troubleshooting Guide** - Common issues and solutions
+
+---
+
+### 🟢 MEDIUM PRIORITY (Quality Improvements)
+
+#### Performance & Optimization
+- [ ] **Redis Caching** - Cache frequently accessed data
+- [ ] **Database Indexes** - Optimize query performance
+- [ ] **API Response Caching** - Cache GET endpoints
+- [ ] **Image Optimization** - Compress and resize images
+- [ ] **Code Splitting** - Further optimize React bundles
+
+#### Error Handling & Logging
+- [ ] **Consistent Error Responses** - Standardize all error formats
+- [ ] **Better Error Messages** - User-friendly French translations
+- [ ] **Contextual Logging** - Include user ID, request info in logs
+- [ ] **Error Tracking** - Sentry or similar integration
+- [ ] **Network Error Handling** - Offline scenarios
+
+#### Security Enhancements
+- [ ] **Security Headers** - Add CSP, HSTS, Permissions-Policy
+- [ ] **Password History** - Prevent password reuse
+- [ ] **Account Lockout** - After failed login attempts
+- [ ] **Password Strength Meter** - Visual feedback in UI
+- [ ] **Failed Login Logging** - Track suspicious activity
+
+#### Advanced Features
+- [ ] **Search Functionality** - Global search in admin panel
+- [ ] **Data Export (PDF/Excel)** - Business reporting
+- [ ] **API Key Management** - For client integrations
+- [ ] **Bulk User Operations** - Admin bulk actions
+- [ ] **Advanced Filters** - Enhanced data filtering
+
+---
+
+### 🔵 LOW PRIORITY (Nice to Have)
+
+#### Internationalization
+- [ ] **Multi-language Support** - react-i18next implementation
+- [ ] **Language Selector** - UI to switch languages
+- [ ] **Translation Files** - English, Spanish, etc.
+
+#### Advanced Admin Features
+- [ ] **User Import/Export** - CSV bulk operations
+- [ ] **Scheduled Reports** - Automated report generation
+- [ ] **Admin Notifications** - System alerts
+- [ ] **System Settings Page** - Configurable app settings
+
+#### White-Label Enhancements
+- [ ] **Theme Customization Panel** - GUI for branding changes
+- [ ] **Logo Upload System** - Client uploads their logo
+- [ ] **Custom Email Templates** - Branded email designs
+- [ ] **Terms of Service Page** - Customizable legal pages
+- [ ] **Privacy Policy Page** - GDPR-compliant template
+
+#### Progressive Web App
+- [ ] **PWA Manifest** - App installation support
+- [ ] **Service Worker** - Offline functionality
+- [ ] **Push Notifications** - Browser notifications
+- [ ] **Install Prompt** - Encourage app installation
+
+#### Monitoring & Analytics
+- [ ] **User Analytics** - Track user behavior
+- [ ] **Performance Monitoring** - APM integration
+- [ ] **Alerting System** - Email/Slack alerts
+- [ ] **Database Monitoring** - Query performance tracking
+
+#### Enterprise Features
+- [ ] **Multi-tenancy** - Multiple clients on one instance
+- [ ] **User Groups/Teams** - Department organization
+- [ ] **Advanced Permissions** - Granular access control
+- [ ] **Audit Trail Export** - Compliance reporting
+- [ ] **OAuth2 Integration** - Third-party auth
+
+#### Deployment & Infrastructure
+- [ ] **Kubernetes Manifests** - K8s deployment configs
+- [ ] **Automated Backups** - Daily database backups
+- [ ] **SSL/HTTPS Setup** - Let's Encrypt automation
+- [ ] **Staging Environment** - Separate staging config
+- [ ] **Load Balancing** - Multi-instance support
+
+---
+
+## 🎯 Current Sprint Focus
+
+**Active Sprint**: Phase 1 - Foundation (Week 1-2)  
+**Goal**: Fix all critical issues before first client pilot
+
+**This Week's Tasks**:
+1. Fix database credentials ✅
+2. Create .env.example ✅
+3. Add LICENSE ✅
+4. Initialize migrations ✅
+5. Document branding customization ✅
+
+**Next Week's Tasks**:
+1. Password reset feature ✅
+2. Backend tests ✅
+3. Client onboarding guide
+
+---
+
+## 📝 Completed Items History
+
+> Move items here when completed, with completion date
+
+### December 22, 2025
+- ✅ **Backend Unit Testing Complete** - Comprehensive test suite:
+  - Created pytest configuration (pytest.ini, .coveragerc, conftest.py)
+  - Added requirements-dev.txt with test dependencies
+  - Implemented 6 test modules with ~68 tests total
+  - Tests for models, utils, auth routes, user routes, admin routes
+  - Fixtures for authenticated users, factories, mocks
+  - Coverage reporting (HTML + terminal)
+- ✅ **Frontend Unit Testing Complete** - React Testing Library suite:
+  - Created setupTests.js with Jest configuration
+  - Implemented 8 test modules with ~38 tests total
+  - Tests for hooks (useApi), components (LoadingSpinner, ConfirmDialog, Header)
+  - Tests for pages (Login, Register, Home)
+  - Mock configurations for axios and browser APIs
+- ✅ **Testing Documentation** - Added to README.md:
+  - Concise testing section with backend/frontend commands
+  - Quick reference for running tests
+  - Total test count: ~106 tests
+  - Estimated coverage: 60-80%
+- ✅ **Documentation Policy Established** - README-first approach:
+  - Updated copilot.md and .github/copilot-instructions.md
+  - Mandatory README.md updates for new features
+  - No separate guide files unless absolutely necessary
+  - Keep documentation concise and centralized
+
+### December 16, 2025 (Final Session)
+- ✅ **Avatar Uploads**:
+  - Added `avatar` column to User model with migration
+  - Image validation and processing (resize to 200x200, center crop, optimize)
+  - Endpoints: `POST /api/user/avatar`, `DELETE /api/user/avatar`
+  - Static serving via `/uploads/<path>` with persisted uploads volume
+  - Frontend profile UI: preview/confirm/cancel/delete; header displays avatar
+- ✅ **Password Reset Security Enhanced**:
+  - Fixed validation error in password reset endpoint
+  - Replaced validate_user_fields with is_strong_password check
+  - Added bcrypt comparison to prevent same password reuse
+  - Prevents users from resetting to their current password
+- ✅ **Header Profile Dropdown** - Enhanced user experience:
+  - Converted profile display to interactive dropdown menu
+  - Shows user avatar (initials), name, and role
+  - Dropdown menu with "Mon Profil" and "Se déconnecter" options
+  - Mobile-responsive version with icon buttons
+  - Improved visual hierarchy and UX
+- ✅ **Frontend Error Handling Refactored** - Consistency across all forms:
+  - Login form: Cleaned up validation error patterns
+  - Register form: Improved error display and validation flow
+  - Standardized onChange validation behavior
+  - Added proper loading states to all inputs
+  - Enhanced button UX with icons and loading text
+- ✅ **ResendVerification Page Removed** - Simplified routing:
+  - Removed unused ResendVerification page import
+  - Removed /resend-verification route
+  - Resend functionality integrated into Home page alert
+  - Fixed production build error
+- ✅ **Git Commits Organized** - 16 logical, focused commits:
+  - Clean commit history for easy code review
+  - Each commit addresses a specific feature/fix
+  - Proper commit messages following conventions
+
+### December 16, 2025 (Earlier)
+- ✅ **Email Verification Workflow Complete** - Full end-to-end implementation:
+  - Registration generates 24h verification token
+  - Email verification endpoint (GET /user/verify-email/<token>)
+  - Resend verification endpoint (POST /user/resend-verification, session-only)
+  - Email change triggers new verification flow
+  - Verification banner on home page with resend button
+  - Email verification page with auto-redirect to profile
+  - Welcome email sent after verification
+- ✅ **Password Management Complete** - Full password recovery and change:
+  - Forgot password page with email form
+  - Password reset with 1h token expiry
+  - Profile page with password change (requires current password)
+  - Prevents same password reuse on profile update
+- ✅ **User Profile Management** - Complete profile editing:
+  - Edit first name, last name
+  - View/edit email (only when verified)
+  - Email verification status badge
+  - Change password with validation
+  - Activity logging for all updates
+- ✅ **Production Build Verified** - All containers running:
+  - Frontend build successful with no errors
+  - All services (backend, frontend, db, redis) healthy
+  - Production configuration working correctly
+
+### December 15, 2025
+- ✅ **Enhanced README.md Documentation** - Added comprehensive sections for:
+  - Detailed .env file setup process with all required and optional variables
+  - Branding customization section (automated script + manual configuration)
+  - Database migrations initialization step-by-step guide
+  - Enhanced migrations commands with detailed examples and utilities
+  - Production .env configuration with security best practices
+  - Production branding customization for client deployments
+  - Updated production migration initialization commands
+- ✅ **README Structure Improvement** - Integrated new sections seamlessly without changing formatting or language
+- ✅ **Documentation Cross-References** - Added references to BRANDING_GUIDE.md and MIGRATIONS_GUIDE.md throughout README
+
+### December 14, 2025
+- ✅ **Fix Database Credentials** - Changed weak `user:password` to environment variables in both docker-compose files
+- ✅ **Create `.env.example`** - Complete template file with all required and optional variables
+- ✅ **Add LICENSE File** - MIT License with white-label terms for client sales
+- ✅ **Database Migrations Setup** - Created MIGRATIONS_GUIDE.md and updated init_migrations.py script
+- ✅ **Remove Hardcoded Branding** - Created BrandingConfig modules for backend and frontend
+- ✅ **Branding Configuration System** - Centralized branding config with environment variables
+- ✅ **Setup Script** - Created setup-client-branding.sh for easy client customization
+- ✅ **Docker Integration** - All Docker files now use .env variables for branding and configuration
+
+---
