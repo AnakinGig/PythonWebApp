@@ -89,6 +89,16 @@ sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=.
 cd frontend && npm install && npm test -- --coverage --watchAll=false
 ```
 
+### 🤖 CI/CD Pipeline
+
+Tests run automatically on GitHub Actions:
+- **Backend**: Runs on every `backend/` change (pytest with coverage)
+- **Frontend**: Runs on every `frontend/` change (npm test with coverage)
+- **Branch Protection**: Merges require all tests passing
+- **Coverage**: Reports uploaded to Codecov
+
+View status: [GitHub Actions](../../actions)
+
 ---
 
 ## 🚀 Production
