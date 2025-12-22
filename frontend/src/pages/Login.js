@@ -57,8 +57,7 @@ function Login({ setUser }) {
 
       if (result) {
         localStorage.setItem('isLoggedIn', 'true');
-        setUser(result);
-        navigate("/");
+        window.location.href = "/";
       } else {
         const errorMsg = apiError || "Une erreur est survenue.";
         setToast({ message: errorMsg, type: 'error' });

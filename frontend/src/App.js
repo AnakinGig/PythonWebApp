@@ -5,9 +5,9 @@ import Cookies from 'js-cookie';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import { ThemeProvider } from './context/ThemeContext';
+import Header from './components/layout/Header';
 
 // Component imports
-const Header = lazy(() => import('./components/layout/Header'));
 const Footer = lazy(() => import('./components/layout/Footer'));
 const PrivateRoute = lazy(() => import ('./components/common/PrivateRoute'));
 
@@ -43,7 +43,7 @@ function App() {
         if (isLoggedIn) {
           try {
             const userResponse = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/auth/current-user`);
-            if (isMounted) setUser(userResponse.data);
+            if (isMounted) setUser(userResponse.data.data);
           } catch (userError) {
             // Session expired or invalid, clear the flag
             localStorage.removeItem('isLoggedIn');

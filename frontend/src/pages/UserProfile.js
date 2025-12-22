@@ -206,20 +206,20 @@ function UserProfile({ user, setUser }) {
         
         // Update user context
         if (setUser) {
-          setUser(result.data);
+          setUser(result);
         }
         
         // Update email verification status based on response
-        setEmailVerified(result.data.email_verified || false);
+        setEmailVerified(result.email_verified || false);
         
         // Update initial values to new values
         setInitialFirstName(firstName);
         setInitialLastName(lastName);
-        if (result.data.email_verified) {
-          setInitialEmail(result.data.email);
+        if (result.email_verified) {
+          setInitialEmail(result.email);
         } else {
           setInitialEmail(email); // Store the new email if it needs verification
-          setEmail(result.data.email); // Sync state with response
+          setEmail(result.email); // Sync state with response
         }
         
         // Reset password fields

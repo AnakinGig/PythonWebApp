@@ -97,8 +97,7 @@ const Register = ({ setUser }) => {
 
       if (result) {
         localStorage.setItem('isLoggedIn', 'true');
-        setUser(result.data); // Use result.data to get the actual user object
-        navigate("/");
+        window.location.href = "/";
       } else {
         const errorMsg = apiError || "Une erreur est survenue.";
         setToast({ message: errorMsg, type: 'error' });

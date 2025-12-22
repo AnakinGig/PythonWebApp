@@ -43,10 +43,11 @@ class ActivityLog(db.Model):
     user_agent = db.Column(db.String(500), nullable=True)
     timestamp = db.Column(db.DateTime, nullable=False, default=db.func.now(), index=True)
 
-# Marshmallow Schema to strucuture the JSON response
+# Marshmallow Schema to structure the JSON response
 class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = User
+        exclude = ('password', 'verification_token', 'verification_token_expiry', 'reset_token', 'reset_token_expiry')
 
 class ActivityLogSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
