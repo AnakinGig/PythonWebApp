@@ -189,209 +189,141 @@ from routes import admin_bp, auth_bp, user_bp
 
 ---
 
+## 📊 Project Status (Dec 22, 2025)
+
+### ✅ Production-Ready
+- **Auth**: Register, login, email verification, password reset ✅
+- **Profiles**: Avatar upload, edit info, change password ✅
+- **Admin**: User CRUD, activity logs, metrics dashboard ✅
+- **Security**: Bcrypt, CSRF, rate limiting, XSS, HTTP headers ✅
+- **Tests**: Backend 123 tests (78%), Frontend 7 test files ✅
+- **CI/CD**: GitHub Actions on push/PR ✅
+
+### 🗄️ Current Models
+- **User**: id, email, password, role, avatar, tokens
+- **ActivityLog**: user_id, action, details, ip, timestamp
+
+---
+
 ## ✅ TODO List (Current Priority)
 
-### 🟡 HIGH PRIORITY (Before First Client)
+### � CRITICAL (Legal - Before First Client)
 
-**User Privacy & Compliance** (CRITICAL):
-- [ ] **Cookies Consent Banner** - GDPR/privacy law compliance (accept/reject, remember choice)
-- [ ] **Delete Account** - User can delete account + cascade delete all data (posts, comments, avatar, activity logs)
-- [ ] **Privacy Policy Page** - GDPR-compliant template with auto-text generation
-
----
-
-### 🟢 MEDIUM PRIORITY (Quality & POC)
-
-**Authentication & Security**:
-- [ ] **2FA (Two-Factor Authentication)** - TOTP via authenticator app or SMS
-- [ ] **Google OAuth** - Social login integration (Firebase or oauth.py library)
-- [ ] **Account Lockout** - Lock after 5 failed login attempts (15 min cooldown)
-- [ ] **Password Strength Meter** - Real-time visual feedback on password strength
-- [ ] **Failed Login Logging** - Track suspicious activity for admin review
-
-**POC Features (For Selling Websites)**:
-- [ ] **Commenting System** - User comments on pages with moderation, nested replies, edit/delete own
-- [ ] **Shopping Cart System** - Product cart with add/remove items, quantity management, checkout flow, order history
-
-**Performance & Optimization**:
-- [ ] **Redis Caching** - Cache user profiles, activity logs, frequently accessed data
-- [ ] **Database Indexes** - Add indexes on email, role, created_at, user_id foreign keys
-- [ ] **API Response Caching** - Cache GET endpoints (60s TTL for public, 30s for user-specific)
-- [ ] **Lazy Load Admin Tables** - Implement virtual scrolling for large user/activity lists
-
-**Error Handling & Monitoring**:
-- [ ] **Consistent Error Responses** - Standardize all error response formats (backend + frontend)
-- [ ] **Better Error Messages** - Localize error messages to French
-- [ ] **Error Tracking** - Sentry integration for production error monitoring
-- [ ] **Contextual Logging** - Include user_id, IP, request_id in all backend logs
+| Feature | Backend | Frontend | Tests |
+|---------|---------|----------|-------|
+| **Cookie Consent Banner** | - | CookieConsent component, localStorage | E2E |
+| **Delete Account** | `/api/user/delete-account`, cascade delete | Modal + password confirm | Unit + E2E |
+| **Privacy Policy Page** | - | Static page, configurable via env | - |
+| **Terms of Service Page** | - | Static page | - |
+| **Data Export (GDPR Art.20)** | `/api/user/export-data` → JSON/CSV | Download button in profile | Unit |
 
 ---
 
-### 🔵 LOW PRIORITY (Nice to Have)
+### 🟡 HIGH PRIORITY (Security & UX)
 
-- [ ] **Kubernetes Manifests** - K8s deployment configs for scalability
-- [ ] **Automated Backups** - Daily database backups to S3/storage
-- [ ] **Staging Environment** - Separate staging config for pre-production testing
-- [ ] **Load Balancing** - Multi-instance backend support
-- [ ] **Mobile App** - React Native companion app
-- [ ] **Advanced Analytics** - User engagement metrics, conversion funnels
-- [ ] **Webhook System** - Custom webhooks for external integrations
-- [ ] **API Rate Limiting Tiers** - Tiered rate limits based on user role
-- [ ] **Dark Mode Persistence** - Save theme preference to database
-
----
-
-## 📝 Project Review Summary (Dec 22, 2025)
-
-### ✅ Completed & Production-Ready
-
-**Core Features**:
-- User authentication (register, login, logout, email verification, password reset)
-- User profiles (edit name/email/password, avatar upload, manage account)
-- Admin dashboard (user management CRUD, activity logging, system metrics)
-- Role-based access control (Admin/Utilisateur with @admin_required decorator)
-- Security: Bcrypt hashing, CSRF protection, rate limiting, XSS sanitization, session management
-- Email system (welcome, verification, password reset, transactional emails)
-- Activity logging (user actions, IP tracking, timestamp-based audit trail)
-
-**Testing & Quality**:
-- Backend: 123 tests passing (78.23% coverage) - auth, admin, user, security, email, models, utils
-- Frontend: 35 tests passing - hooks, components, pages
-- CI/CD: GitHub Actions automated testing on push/PR
-- All tests passing ✅
-
-**Security Hardening**:
-- HTTP Security Headers (CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy)
-- Password strength validation (8+ chars, uppercase, lowercase, digit, special)
-- Admin protection (cannot delete last admin)
-- Email verification tokens (24h expiry)
-- Password reset tokens (1h expiry, no same-password reuse)
-
-**Infrastructure**:
-- Production-ready Docker Compose setup (backend, frontend, PostgreSQL, Redis)
-- Nginx reverse proxy with security headers
-- Gunicorn WSGI server
-- Environment-based configuration (.env)
-- Automated database migrations
-- Health check endpoint
-
-**Documentation**:
-- README.md (consolidated, no duplicates) - Setup, deployment, customization, troubleshooting
-- Copilot instructions (.github/copilot-instructions.md) - Patterns, workflows, architecture
-- API documentation (Swagger at /api/docs)
-- Code comments (English) + UI text (French)
-
-### 🏗️ Architecture Status
-
-**Backend Structure** ✅:
-- `app.py` - Main Flask application with middleware
-- `routes/` - Organized blueprints (auth, user, admin)
-- `models/models.py` - SQLAlchemy User model with all fields
-- `utils/` - Validation, API responses, email, file upload
-- `middleware/` - Activity logging, metrics collection
-- `tests/` - 123 comprehensive tests
-
-**Frontend Structure** ✅:
-- `App.js` - Main routing with lazy loading
-- `pages/` - All route components (Login, Register, Profile, Admin, etc.)
-- `components/` - Reusable UI components (Header, Footer, forms, dialogs)
-- `hooks/useApi.js` - Centralized API call management (FIXED: returns full response)
-- `utils/httpClient.js` - Axios with CSRF interceptor
-- `__tests__/` - 35 tests for pages, hooks, components
-
-**Data Flow** ✅:
-- API requests → useApi hook → httpClient with CSRF → Flask backend
-- Responses: `{ success: true, data: {...}, pagination: {...} }`
-- Error handling: Standardized error responses with French messages
-
-### 🔍 Recent Fixes (Dec 22)
-
-**Critical Bug Fixed**:
-- `useApi` hook was doing double data access (`response.data.data`)
-- Changed to return full API response object
-- Updated UsersList component to access correct data structure
-- Fixed frontend test to match new behavior
-
-**Test Status**:
-- All 123 backend tests passing
-- All 35 frontend tests passing (useApi test fixed)
-- All 11 security header tests passing
-- Zero regressions
-
-### ⚙️ Current System State
-
-**Services Running**:
-- Backend: ✅ Healthy (Gunicorn on 5000)
-- Frontend: ✅ Healthy (Nginx on 80)
-- Database: ✅ Connected (PostgreSQL 13)
-- Redis: ✅ Connected (cache/session store)
-- Health endpoint: ✅ Returning status
-
-**Database**:
-- User model complete (id, email, password, role, avatar, verification tokens, reset tokens)
-- Migrations system initialized and tested
-- Activity logging table tracks all user actions
-
-**Environment**:
-- .env.example template provided
-- All required variables documented
-- Branding customization available
-- Docker Compose production file optimized
-
-### 🚀 Ready for Next Phase
-
-**High Priority Items (Before First Client)**:
-1. **Cookies Consent Banner** - Legal requirement (GDPR/CCPA)
-2. **Delete Account** - Privacy compliance
-3. **Privacy Policy Page** - Legal compliance
-
-**Medium Priority Items (Quality & POC)**:
-1. **2FA** - Security enhancement
-2. **Google OAuth** - UX improvement
-3. **Commenting System** - POC feature for selling
-4. **Trailer System** - POC feature for selling
-5. **Performance optimization** - Caching, indexes
-6. **Error tracking** - Sentry integration
-
-### 📊 Project Metrics
-
-- **Lines of Code**: Backend ~2,500 | Frontend ~3,500
-- **Test Coverage**: Backend 78.23%, Frontend 35+ tests
-- **Documentation**: README + copilot instructions
-- **Git History**: Clean commits organized by feature/domain
-- **Time to Deploy**: ~15 min dev, ~30 min production
-- **Time to First Client Onboarding**: ~15 min with scripts
-
-### 💡 Next Development Session
-
-1. Start with **Cookies Consent Banner** (HIGH PRIORITY)
-   - Backend: No changes needed (headers already in place)
-   - Frontend: New component, localStorage for persistence, banner on every page
-   - Test: User acceptance (accept/reject/remember)
-
-2. Follow with **Delete Account** (HIGH PRIORITY)
-   - Backend: New endpoint `/api/user/delete-account`, cascade delete logic
-   - Frontend: New page/modal with confirmation, password verification
-   - Test: Verify all user data removed from database
-
-3. Then **Privacy Policy Page** (HIGH PRIORITY)
-   - Frontend: New page with template text, editable via .env variables
-   - No database changes
-
-This foundation is solid and ready for rapid feature development!
+| Feature | Backend | Frontend | Tests |
+|---------|---------|----------|-------|
+| **2FA (TOTP)** | pyotp, QR code endpoint, verify on login | Setup modal, 6-digit input | Unit |
+| **Google OAuth** | Flask-Dance or Authlib | Login with Google button | Integration |
+| **Account Lockout** | Track failed attempts, 15min lockout | Error message | Unit |
+| **Password Strength Meter** | - | Real-time indicator (zxcvbn) | Unit |
+| **Session Management** | List active sessions, revoke endpoint | View/revoke sessions UI | Unit |
+| **Email Change Verification** | Verify new email before switching | Two-step email change | Unit |
 
 ---
 
-## 🎯 Next Steps
+### 🟢 MEDIUM PRIORITY (Features for Client Websites)
 
-1. **Cookies Consent Banner** - GDPR compliance (HIGH PRIORITY)
-2. **Delete Account** - User privacy (HIGH PRIORITY)
-3. **2FA Implementation** - Security hardening (MEDIUM PRIORITY)
-4. **Google OAuth** - Social auth (MEDIUM PRIORITY)
+**Content & Engagement**:
+| Feature | Backend | Frontend | Tests |
+|---------|---------|----------|-------|
+| **Blog/Posts System** | Post model, CRUD endpoints, slugs | Post list, detail, admin editor | Unit |
+| **Comments System** | Comment model, nested replies, moderation | Comment thread component | Unit |
+| **Contact Form** | `/api/contact`, email notification | Contact page, captcha | Unit |
+| **Newsletter Subscription** | Subscriber model, double opt-in | Subscribe form, unsubscribe | Unit |
+| **Search** | Full-text search (PostgreSQL) | Search bar, results page | Unit |
+| **File/Media Library** | Upload, organize, serve files | Admin media manager | Unit |
 
-**Remember**:
-- Update README.md for new features (mandatory)
-- No separate doc files (exception: >100 lines)
-- Test before committing (100% pass rate)
-- Use French for UI, English for code
-- One feature per commit, group by domain
+**E-commerce Ready**:
+| Feature | Backend | Frontend | Tests |
+|---------|---------|----------|-------|
+| **Products Catalog** | Product model, categories, variants | Product list, filters | Unit |
+| **Shopping Cart** | Cart model, add/remove/update | Cart drawer, quantity | Unit |
+| **Wishlist** | Wishlist model, toggle endpoint | Heart icon, wishlist page | Unit |
+| **Order System** | Order model, status workflow | Checkout, order history | Integration |
+| **Payment Integration** | Stripe webhook handler | Stripe Elements | E2E |
+
+**Notifications & Communication**:
+| Feature | Backend | Frontend | Tests |
+|---------|---------|----------|-------|
+| **In-App Notifications** | Notification model, WebSocket | Bell icon, dropdown, mark read | Unit |
+| **Email Preferences** | User email settings | Preferences checkboxes | Unit |
+
+---
+
+### 🔵 LOW PRIORITY (Scalability & Nice-to-Have)
+
+**Performance**:
+- [ ] Redis caching (profiles, frequently accessed data)
+- [ ] Database indexes optimization
+- [ ] API response caching (ETags, Cache-Control)
+- [ ] Image optimization (WebP, lazy loading, srcset)
+- [ ] CDN integration for static assets
+
+**DevOps & Monitoring**:
+- [ ] Sentry error tracking
+- [ ] Prometheus + Grafana metrics
+- [ ] Kubernetes manifests
+- [ ] CI/CD staging environment
+- [ ] Automated daily backups to S3
+
+**Advanced Features**:
+- [ ] Multi-language support (i18n)
+- [ ] Dark mode persistence (DB)
+- [ ] Audit log export (admin)
+- [ ] API versioning (v1, v2)
+- [ ] Webhook system for integrations
+- [ ] Mobile app (React Native)
+
+---
+
+## 📋 Implementation Notes
+
+### Cookie Consent (GDPR)
+```
+Categories: necessary (always), analytics (optional), marketing (optional)
+Storage: localStorage for preference, cookie for server-side check
+UI: Bottom banner, preferences modal, update anytime in footer
+```
+
+### Delete Account Flow
+```
+1. User clicks "Delete Account" in profile
+2. Modal: "This will delete all your data permanently"
+3. User enters password to confirm
+4. Backend: Cascade delete (logs, comments, posts, avatar, user)
+5. Clear session, redirect to homepage with success message
+```
+
+### Data Export (GDPR Art.20)
+```
+Endpoint: GET /api/user/export-data
+Response: JSON file with all user data (profile, posts, comments, logs)
+Format: Machine-readable, include timestamps
+```
+
+---
+
+## 🎯 Quick Start Next Session
+
+**Start with Cookie Consent** (simplest critical item):
+1. Create `frontend/src/components/common/CookieConsent.js`
+2. Add to `App.js` (show if no preference saved)
+3. Categories: necessary, analytics, marketing
+4. Save to localStorage, respect choice
+
+**Then Delete Account**:
+1. Add endpoint `DELETE /api/user/delete-account`
+2. Create confirmation modal in UserProfile
+3. Cascade delete all user data
+4. Add test coverage
