@@ -41,12 +41,14 @@ def app():
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
         'WTF_CSRF_ENABLED': False,
         'SECRET_KEY': 'test-secret-key',
-            'RATELIMIT_ENABLED': False,  # Disable rate limiting for tests
+        'RATELIMIT_ENABLED': False,  # Disable rate limiting for tests
         'SESSION_TYPE': 'filesystem',
         'SESSION_PERMANENT': False,
         'SESSION_USE_SIGNER': True,
         'SESSION_COOKIE_HTTPONLY': True,
         'SESSION_COOKIE_SAMESITE': 'Lax',
+        'MAIL_DEFAULT_SENDER': 'noreply@test.com',
+        'MAIL_SUPPRESS_SEND': True,
     })
     
     # Initialize extensions
@@ -190,3 +192,16 @@ def freeze_time(mocker):
     frozen = FrozenTime()
     mocker.patch('datetime.datetime').utcnow = frozen
     return frozen
+
+
+# Alias fixtures for compatibility with existing tests
+@pytest.fixture
+def auth_user(authenticated_user):
+    """Alias for authenticated_user fixture."""
+    return authenticated_user
+
+
+@pytest.fixture
+def admin_user(authenticated_admin):
+    """Alias for authenticated_admin fixture."""
+    return authenticated_admin

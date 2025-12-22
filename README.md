@@ -82,8 +82,10 @@ sudo docker compose -f docker-compose.prod.yml exec backend /bin/bash
 sudo docker compose -f docker-compose.prod.yml exec db psql -U user -d users_db
 
 # Tests
+# Backend
 sudo docker compose -f docker-compose.prod.yml exec backend pip install -r requirements-dev.txt
 sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=.
+# Frontend
 cd frontend && npm install && npm test -- --coverage --watchAll=false
 ```
 
