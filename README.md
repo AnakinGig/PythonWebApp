@@ -186,9 +186,152 @@ curl http://localhost:5000/health
 
 ---
 
+## � Client Onboarding Guide
+
+### Pour Nouveaux Clients
+
+1. **Cloner et configurer**:
+   ```bash
+   git clone https://github.com/yourdomain/pythonwebapp.git
+   cd pythonwebapp && cp .env.example .env
+   ```
+
+2. **Éditer `.env`**: 
+   - Générer SECRET_KEY: `openssl rand -base64 32`
+   - Définir ADMIN_MAIL, ADMIN_PASSWORD
+   - Changer APP_NAME, COMPANY_NAME pour branding client
+   - Configurer URLs (REACT_APP_BACKEND_URL, FRONTEND_URL)
+
+3. **Lancer**:
+   ```bash
+   sudo docker compose -f docker-compose.prod.yml build
+   sudo docker compose -f docker-compose.prod.yml up -d
+   sudo docker compose -f docker-compose.prod.yml exec backend python init_migrations.py
+   ```
+
+4. **Accès initial**:
+   - Frontend: <http://localhost:3000>
+   - Admin: login avec ADMIN_MAIL / ADMIN_PASSWORD
+   - API Docs: <http://localhost:5000/api/docs>
+
+**Durée estimée**: 15 minutes | **Besoin d'aide?** Voir Troubleshooting Guide
+
+---
+
+## 🚀 Deployment Guide
+
+### Préparation Serveur (Ubuntu 20.04+)
+
+```bash
+# Installer Docker et docker-compose
+curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+sudo apt install docker-compose
+```
+
+### Étapes Déploiement
+
+1. **Cloner le projet**:
+   ```bash
+   cd /opt && git clone <repo-url> pythonwebapp
+   cd pythonwebapp
+   ```
+
+2. **Configuration secrets**:
+   ```bash
+   mkdir .env_prod_secrets && chmod 700 .env_prod_secrets
+   echo "$(openssl rand -base64 32)" > .env_prod_secrets/SECRET_KEY.txt
+   echo "admin@yourdomain.com" > .env_prod_secrets/ADMIN_MAIL.txt
+   echo "$(openssl rand -base64 20)" > .env_prod_secrets/ADMIN_PASSWORD.txt
+   ```
+
+3. **Fichier `.env` production**:
+   ```bash
+   cp .env.example .env
+   # Éditer: DB_USER, DB_PASSWORD, URLs, domaine, branding
+   ```
+
+4. **Lancer les services**:
+   ```bash
+   sudo docker compose -f docker-compose.prod.yml up -d --build
+   sudo docker compose -f docker-compose.prod.yml exec backend python init_migrations.py
+   ```
+
+5. **SSL avec Let's Encrypt**:
+   ```bash
+   sudo apt install certbot python3-certbot-nginx
+   sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+   ```
+
+6. **Firewall**:
+   ```bash
+   sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw allow 22/tcp
+   sudo ufw enable
+   ```
+
+7. **Monitoring et backups** (voir section Backups automatiques ci-dessus)
+
+**Durée**: 30 minutes | **Support**: Vérifier les logs avec `docker logs -f`
+
+---
+
+## 🎨 Customization Guide
+
+### Branding Client
+
+**Option 1: Script automatisé**:
+```bash
+./setup-client-branding.sh
+```
+
+**Option 2: Variables `.env`**:
+```env
+APP_NAME=NomDuClient
+COMPANY_NAME=Entreprise Client
+APP_LOGO_URL=https://yourcdn.com/logo.png
+PRIMARY_COLOR=#0066cc
+SECONDARY_COLOR=#ff6600
+```
+
+**Résultat**: App, header, emails, Swagger docs adaptés au client
+
+### Ajouter Nouvelles Fonctionnalités
+
+**Backend** (`backend/routes/`):
+- Créer route dans `auth.py`, `user.py`, ou `admin.py`
+- Utiliser: `from utils import success_response, error_response`
+- Patterns: Validation → Logique → API response
+
+**Frontend** (`frontend/src/`):
+- Pages: `pages/NomPage.js` (lazy load dans `App.js`)
+- Components: `components/common/` (réutilisables)
+- Hooks: `hooks/useApi()` pour appels API
+
+**Tests**: Ajouter dans `backend/tests/` et `frontend/src/__tests__/` avant livraison
+
+---
+
+## 🔧 Troubleshooting Guide
+
+| Problème | Solution |
+|----------|----------|
+| **Port 3000/5000 en utilisation** | `sudo lsof -i :3000` + `kill -9 <PID>` |
+| **DB connexion refusée** | Vérifier `DB_USER`, `DB_PASSWORD`, `DATABASE_URL` dans `.env` |
+| **"Module not found" (backend)** | `docker compose exec backend pip install -r requirements.txt` |
+| **"npm ERR" (frontend)** | `cd frontend && npm install && npm start` |
+| **Admin account locked** | `docker compose exec db psql -U user -d users_db` → `UPDATE users SET lock_until = null WHERE email = 'admin@...';` |
+| **Tests échouent localement** | Exécuter depuis `/docker-compose.prod.yml` (voir Commandes Utiles) |
+| **"CSRF token missing"** | Navigateur → Effacer cookies + reload, ou vérifier `FRONTEND_URL` |
+| **Migrations non appliquées** | `docker compose exec backend python init_migrations.py` |
+
+**Toujours vérifier logs**: `docker compose -f docker-compose.prod.yml logs -f backend`
+
+---
+
 ## 📚 Documentation
 
 - **API**: <http://localhost:5000/api/docs> (Swagger/OpenAPI)
+- **GitHub**: [AnakinGig/PythonWebApp](https://github.com/AnakinGig/PythonWebApp)
 
 ---
 
