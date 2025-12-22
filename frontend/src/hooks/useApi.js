@@ -35,9 +35,9 @@ export const useApi = () => {
     try {
       const response = await apiFunction();
       setLoading(false);
-      // Extract the data property from the API response
-      // API returns { success: true, data: {...} }
-      return { data: response.data.data, error: null };
+      // Return the full response data
+      // API returns { success: true, data: {...} } or { success: true, data: [...], pagination: {...} }
+      return { data: response.data, error: null };
     } catch (err) {
       const errorMessage = err.response?.data?.error || 'Une erreur est survenue.';
       setError(errorMessage);
