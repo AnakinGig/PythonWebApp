@@ -36,10 +36,11 @@ mail.init_app(app)
 
 # Rate Limiter
 limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["100 per minute"],
-    storage_uri="redis://redis:6379"
+  get_remote_address,
+  app=app,
+  default_limits=["100 per minute"],
+  storage_uri="redis://redis:6379",
+  enabled=app.config.get('RATELIMIT_ENABLED', True)
 )
 
 # Config logging
