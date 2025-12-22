@@ -113,8 +113,9 @@ def reset_password(token):
         description: Invalid or expired token
     """
     try:
-        data = request.get_json()
-        new_password = data.get('password', '').strip()
+        data = request.get_json() or {}
+        # Support both 'new_password' and 'password' keys
+        new_password = (data.get('new_password') or data.get('password') or '').strip()
         
         if not new_password:
             return error_response("Le mot de passe est requis.", status=400)
@@ -410,7 +411,7 @@ def update_profile():
             
             # Verify current password
             if not bcrypt.checkpw(current_password.encode('utf-8'), user.password.encode('utf-8')):
-                return error_response("Le mot de passe actuel est incorrect.", status=400)
+              return error_response("Le mot de passe actuel est incorrect.", status=401)
             
             # Check if new password is the same as current password
             if bcrypt.checkpw(new_password.encode('utf-8'), user.password.encode('utf-8')):
