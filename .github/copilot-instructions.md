@@ -75,48 +75,132 @@ sudo docker compose -f docker-compose.prod.yml exec backend <command>
 
 ---
 
-## 🔧 FEATURE IMPLEMENTATION WORKFLOW
+## 🔧 UNIFIED FEATURE WORKFLOW
 
-**COMPLETE FEATURE CHECKLIST** - Follow this workflow for EVERY new feature:
+**ONE FEATURE AT A TIME - Complete this flow before starting next feature:**
 
-1. **📍 ARCHITECTURE CHECK** - Before writing any code:
-   - Identify the correct location in the project structure
-   - Backend: Which module/route does this belong to? (`routes/`, `models/`, `utils/`, `middleware/`)
-   - Frontend: Which component category? (`pages/`, `components/common/`, `components/layout/`)
-   - Follow existing patterns and conventions
-   - Verify it doesn't duplicate existing functionality
+### Phase 1: Planning
+1. **Define Feature** in TODO list with clear acceptance criteria
+2. **Architecture Check**:
+   - Backend location: Which route/model/util module?
+   - Frontend location: Which page/component category?
+   - Identify patterns to follow (existing implementations)
+   - Check for duplicates
+3. **Update .github/copilot-instructions.md**:
+   - Add feature under "CURRENT FEATURE" section at top
+   - Include: Feature name, description, estimated scope, planned tests
+4. **Design Tests** (if needed - see "When to test" below):
+   - Backend: What test modules in `backend/tests/`?
+   - Frontend: What test files in `frontend/src/`?
+   - Skip testing for: UI-only changes, minor styling, docs-only
 
-2. **💻 IMPLEMENTATION** - Write the feature:
-   - Use package-level imports (backend: `from core`, `from models`, etc.)
-   - Follow standardized patterns (API responses, form validation, etc.)
-   - Include error handling and input validation
-   - Add activity logging for security-sensitive operations
-   - Use French for user-facing text, English for code comments
+### Phase 2: Implementation
+1. **Code the Feature**:
+   - Use package-level imports (`from core`, `from models`, `from utils`)
+   - Follow standardized patterns (API responses, validation, etc.)
+   - Add error handling and input validation
+   - Log security-sensitive operations
+   - French for UI text, English for code comments
+2. **Verify in Development**:
+   - Test manually in dev environment
+   - Check console for errors
+   - Verify no regressions in existing features
 
-3. **🧪 TESTING** - Write tests ONLY if needed:
-   - ✅ **Write tests for**: Security features, authentication, data validation, critical business logic, API endpoints
-   - ❌ **Skip tests for**: Simple UI changes, minor styling updates, documentation-only changes
-   - **ALWAYS restart Docker before testing**: `sudo docker compose -f docker-compose.prod.yml up -d --build`
-   - **Use exact test commands from README.md**:
-     - Backend: `sudo docker compose -f docker-compose.prod.yml exec backend pip install -r requirements-dev.txt` then `sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=.`
-     - Frontend: `cd frontend && npm install && npm test -- --coverage --watchAll=false`
-   - Backend: Add pytest tests in `backend/tests/` matching the module structure
-   - Frontend: Add React Testing Library tests in `frontend/src/` alongside components
+### Phase 3: Testing (if tests were planned)
+1. **Write Test Files**:
+   - Backend: `backend/tests/test_*.py` (pytest)
+   - Frontend: `frontend/src/**/*.test.js` (React Testing Library)
+   - Follow existing test patterns
+2. **Execute Full Test Suite**:
+   - Backend: `sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=.`
+   - Frontend: `cd frontend && npm test -- --coverage --watchAll=false`
+3. **Fix Failing Tests**:
+   - Adjust tests to match actual implementation (not vice versa)
+   - Use flexible selectors (getByRole, getByPlaceholderText)
+   - Mock external dependencies (API calls)
+4. **Verify 100% Pass Rate**:
+   - All tests must pass before proceeding
+   - Aim for coverage: Core logic >80%, Total >60%
 
-4. **📝 DOCUMENTATION** - Document ONLY if needed:
-   - ✅ **Document in README.md**: New endpoints, new commands, new environment variables, new features users need to know
-   - ✅ **Document in code**: Complex logic, security considerations, non-obvious implementations
-   - ❌ **Skip documentation for**: Internal refactoring, minor bug fixes, self-explanatory changes
-   - Keep README sections concise (max 10-15 lines)
+### Phase 4: Documentation (if user-facing)
+1. **Update README.md**:
+   - New endpoints: Add to "API Endpoints" section
+   - New commands: Add to "Common Commands" section
+   - New environment variables: Add to ".env" section
+   - New features: Add brief section with usage
+   - Keep sections concise (max 10-15 lines)
+2. **Update Code Comments**:
+   - Document complex logic
+   - Explain non-obvious implementations
+   - Security considerations
 
-5. **✅ VERIFICATION** - Ensure completeness:
-   - Feature works in development environment
-   - Tests pass (if tests were added)
-   - Documentation updated (if user-facing feature)
-   - No errors in console/logs
-   - Follows white-label principles (easy for clients to customize)
+### Phase 5: Commit & Mark Complete
+1. **Commit with Grouping** (only after 100% test pass):
+   ```bash
+   git add -A
+   git commit -m "scope(domain): brief description
+   
+   - Implementation detail 1
+   - Implementation detail 2
+   - Test coverage achieved"
+   ```
+   - Scope examples: `feat`, `tests`, `fix`, `docs`, `refactor`
+   - Domain: `auth`, `user`, `admin`, `profile`, `avatar`, etc.
+   - Example: `feat(auth): add login validation and error handling`
 
-**Why?**: Ensures consistent, high-quality implementations that are tested, documented, and properly integrated.
+2. **Mark Feature Done**:
+   - Update .github/copilot-instructions.md TODO list
+   - Change status from "in-progress" to "completed"
+   - Add completion date
+
+3. **Report Status**:
+   - Read TODO list
+   - Report: What's done, what's next, priority tier
+   - Only proceed to next feature after reporting
+
+**WHEN TO WRITE TESTS**:
+- ✅ YES: Security, auth, data validation, critical business logic, API endpoints
+- ❌ NO: UI-only changes, minor styling, docs, simple components without logic
+
+**TESTING COMMANDS** (from README.md):
+- Backend: `sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=.`
+- Frontend: `cd frontend && npm install && npm test -- --coverage --watchAll=false`
+- After code changes: Always run full test suite before commit
+
+---
+
+## 🎯 CURRENT FEATURE
+
+**Status**: In Progress
+**Feature**: Integration Tests - End-to-end user workflows
+**Date Started**: December 22, 2025
+**Estimated Scope**: 1-2 hours
+
+**Description**:
+Integration tests validating complete user journeys across both frontend and backend:
+
+**Backend Integration Tests** (`backend/tests/test_integration.py`):
+- User registration → email verification → login flow
+- Password reset request → token validation → password change
+- Admin user management (create, read, update, delete users)
+- Admin dashboard metrics and activity logs access
+- Security validations (rate limiting, CSRF, role-based access)
+
+**Frontend Integration Tests** (`frontend/src/integration/`):
+- Register → verify email → login → access profile
+- Login → logout → redirect to home
+- Admin user management workflow
+- Role-based page access restrictions
+
+**Test Framework**:
+- Backend: pytest with fixtures and mock database
+- Frontend: React Testing Library with mock API
+
+**Success Criteria**:
+- All integration tests passing (100%)
+- Coverage of critical user workflows
+- Security validations tested
+- No test pollution between test cases
 
 ---
 
