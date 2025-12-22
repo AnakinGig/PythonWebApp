@@ -126,4 +126,5 @@ const AppWrapper = () => (
   </BrowserRouter>
 );
 
+export { App };
 export default AppWrapper;
