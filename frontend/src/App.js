@@ -4,6 +4,7 @@ import httpClient from "./utils/httpClient";
 import Cookies from 'js-cookie';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner';
+import CookieConsent from './components/common/CookieConsent';
 import { ThemeProvider } from './context/ThemeContext';
 import Header from './components/layout/Header';
 
@@ -114,6 +115,7 @@ function App() {
             </Suspense>
           </div>
           <Footer />
+            <CookieConsent />
         </div>
       </ErrorBoundary>
     </ThemeProvider>
