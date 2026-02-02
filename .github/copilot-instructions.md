@@ -164,6 +164,11 @@ const { data: result, error: apiError } = await callApi(() =>
 // Form validation (standard pattern)
 const [form_submited, setFormSubmited] = useState(false);
 if (form_submited && email_error) showError(); // Only show if both true
+
+// CSS: Prefer Bootstrap utilities over custom CSS files
+// Use Bootstrap classes for: layout, spacing, colors, sizing, responsive design
+// Minimize CSS files - only use custom CSS for animations, transitions, and component-specific styling
+// Example: Use 'd-flex', 'justify-content-between', 'gap-3', 'p-3' instead of custom class styling
 ```
 
 ### API Endpoints Reference
