@@ -7,6 +7,7 @@
 # Advanced testing tools
 .tox/
 .nox/
+flask_session/
 
 # Python installer logs
 pip-log.txt

@@ -11,12 +11,12 @@ env:
 
 jobs:
   test:
-    name: Run Tests Before Deploy
+    name: Backend Tests Before Deploy
     uses: ./.github/workflows/test-backend.yml
     secrets: inherit
   
   test-frontend:
-    name: Run Frontend Tests Before Deploy
+    name: Frontend Tests Before Deploy
     uses: ./.github/workflows/test-frontend.yml
     secrets: inherit
 
