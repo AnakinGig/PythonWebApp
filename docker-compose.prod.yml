@@ -4,9 +4,25 @@ services:
       context: .
       dockerfile: backend/Dockerfile.prod
     environment:
-      FLASK_ENV: production
-      FRONTEND_URL: http://localhost
-      DATABASE_URL: postgresql://user:password@db:5432/users_db
+      FLASK_ENV: ${FLASK_ENV:-production}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-users_db}}
+      # Branding Configuration
+      APP_NAME: ${APP_NAME:-PythonWebApp}
+      APP_SHORT_NAME: ${APP_SHORT_NAME:-PWA}
+      COMPANY_NAME: ${COMPANY_NAME:-Your Company}
+      COMPANY_URL: ${COMPANY_URL:-https://example.com}
+      API_TITLE: ${API_TITLE:-PythonWebApp API}
+      API_DESCRIPTION: ${API_DESCRIPTION:-API Documentation for PythonWebApp}
+      CONTACT_EMAIL: ${CONTACT_EMAIL:-contact@example.com}
+      # Email Configuration
+      MAIL_SERVER: ${MAIL_SERVER}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USE_TLS: ${MAIL_USE_TLS}
+      MAIL_USE_SSL: ${MAIL_USE_SSL}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_DEFAULT_SENDER: ${MAIL_DEFAULT_SENDER}
     secrets:
       - SECRET_KEY
       - ADMIN_MAIL
@@ -22,6 +38,8 @@ services:
         condition: service_started
     volumes:
       - db_data:/app/instance
+      - ./backend/migrations:/app/migrations  # Persist migrations across rebuilds
+      - ./backend/uploads:/app/uploads  # Persist uploaded files (avatars, documents)
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
@@ -35,7 +53,15 @@ services:
       context: .
       dockerfile: frontend/Dockerfile.prod
       args:
-        - REACT_APP_BACKEND_URL=http://localhost:5000/api
+        - REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL:-/api}
+        - REACT_APP_NAME=${REACT_APP_NAME:-PythonWebApp}
+        - REACT_APP_SHORT_NAME=${REACT_APP_SHORT_NAME:-PWA}
+        - REACT_APP_COMPANY_NAME=${REACT_APP_COMPANY_NAME:-Your Company}
+        - REACT_APP_COMPANY_URL=${REACT_APP_COMPANY_URL:-https://example.com}
+        - REACT_APP_DESCRIPTION=${REACT_APP_DESCRIPTION:-Application moderne de gestion d'utilisateurs}
+        - REACT_APP_TAGLINE=${REACT_APP_TAGLINE:-Bienvenue sur PythonWebApp}
+        - REACT_APP_CONTACT_EMAIL=${REACT_APP_CONTACT_EMAIL:-contact@example.com}
+        - REACT_APP_COPYRIGHT_HOLDER=${REACT_APP_COPYRIGHT_HOLDER:-Your Company}
     ports:
       - "80:80"
     depends_on:
@@ -51,16 +77,16 @@ services:
   db:
     image: postgres:13-alpine
     environment:
-      POSTGRES_DB: users_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB:-users_db}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     expose:
       - "5432"
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d users_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-users_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -75,8 +101,8 @@ networks:
 
 secrets:
   SECRET_KEY:
-    file: ./.env_prod_secrets/SECRET_KEY
+    file: ./.env_prod_secrets/SECRET_KEY.txt
   ADMIN_MAIL:
-    file: ./.env_prod_secrets/ADMIN_MAIL
+    file: ./.env_prod_secrets/ADMIN_MAIL.txt
   ADMIN_PASSWORD:
-    file: ./.env_prod_secrets/ADMIN_PASSWORD
+    file: ./.env_prod_secrets/ADMIN_PASSWORD.txt

@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_cors import CORS
@@ -7,11 +7,12 @@ from flask_migrate import Migrate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flasgger import Swagger
-from core import ApplicationConfig, UserRole
+from core import ApplicationConfig, UserRole, BrandingConfig
 from models import db, ma, User
+from utils.email import mail
 from dotenv import load_dotenv
 import os, logging, time
-from routes import admin_bp, auth_bp
+from routes import admin_bp, auth_bp, user_bp
 from sqlalchemy import text
 from middleware import metrics_collector, monitor_request, record_request_metrics, get_uptime
 
@@ -24,18 +25,22 @@ FRONTEND_URL = os.getenv('FRONTEND_URL')
 # Config App
 app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'uploads')
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max file size
 CORS(app, origins=FRONTEND_URL, supports_credentials=True)
 bcrypt = Bcrypt()
 bcrypt.init_app(app)
 server_session = Session(app)
 csrf = CSRFProtect(app)
+mail.init_app(app)
 
 # Rate Limiter
 limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["100 per minute"],
-    storage_uri="redis://redis:6379"
+  get_remote_address,
+  app=app,
+  default_limits=["100 per minute"],
+  storage_uri="redis://redis:6379",
+  enabled=app.config.get('RATELIMIT_ENABLED', True)
 )
 
 # Config logging
@@ -72,12 +77,13 @@ swagger_config = {
 swagger_template = {
     "swagger": "2.0",
     "info": {
-        "title": "PythonWebApp API",
-        "description": "API Documentation for PythonWebApp - Flask & React Application",
-        "version": "1.0.0",
+        "title": BrandingConfig.API_TITLE,
+        "description": BrandingConfig.API_DESCRIPTION,
+        "version": BrandingConfig.API_VERSION,
         "contact": {
-            "name": "Python Web App",
-            "url": "https://github.com"
+            "name": BrandingConfig.CONTACT_NAME,
+            "url": BrandingConfig.CONTACT_URL,
+            "email": BrandingConfig.CONTACT_EMAIL
         }
     },
     "host": os.environ.get("API_HOST", "localhost:5000"),
@@ -104,6 +110,36 @@ swagger = Swagger(app, config=swagger_config, template=swagger_template)
 # Register Blueprints
 app.register_blueprint(admin_bp)
 app.register_blueprint(auth_bp)
+app.register_blueprint(user_bp)
+
+# Security Headers - Protect against XSS, clickjacking, MIME sniffing, etc.
+@app.after_request
+def add_security_headers(response):
+    """Add HTTP security headers to all responses"""
+    # Content Security Policy - Prevent XSS attacks
+    # Allow 'self', data: URIs, and popular CDNs for fonts and assets
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https:; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; connect-src 'self' localhost:5000; frame-ancestors 'self'"
+    
+    # Prevent MIME type sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    
+    # Prevent clickjacking attacks
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    
+    # Legacy XSS protection header for older browsers
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    
+    # Referrer Policy - Control what referrer info is sent
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    
+    # Permissions Policy - Disable browser features
+    response.headers['Permissions-Policy'] = 'geolocation=(), camera=(), microphone=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=()'
+    
+    # HSTS (HTTP Strict Transport Security) - Force HTTPS in production
+    if app.config.get('FORCE_HTTPS', False):
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+    
+    return response
 
 # Register monitoring middleware
 @app.before_request
@@ -275,17 +311,44 @@ if wait_for_db():
     with app.app_context():
         db.create_all()
         # Create admin user if not exists
-        table_empty = User.query.filter_by(email=ADMIN_MAIL).first() is None
+        try:
+            table_empty = User.query.filter_by(email=ADMIN_MAIL).first() is None
 
-        if table_empty:
-            hashed_admin_password = bcrypt.generate_password_hash(ADMIN_PASSWORD).decode('utf-8')
-            admin_user = User(first_name='Admin',last_name='Admin',email=ADMIN_MAIL,password=hashed_admin_password,role=UserRole.ADMIN)
-            db.session.add(admin_user)
-            db.session.commit()
-            logging.info("Admin user created successfully")
+            if table_empty:
+                hashed_admin_password = bcrypt.generate_password_hash(ADMIN_PASSWORD).decode('utf-8')
+                admin_user = User(first_name='Admin',last_name='Admin',email=ADMIN_MAIL,password=hashed_admin_password,role=UserRole.ADMIN)
+                db.session.add(admin_user)
+                db.session.commit()
+                logging.info("Admin user created successfully")
+        except Exception as e:
+            logging.warning(f"Could not check/create admin user (run migrations): {e}")
 else:
     logging.error("Failed to initialize database. Exiting...")
     exit(1)
+
+
+# Serve uploaded files (avatars, documents)
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    """
+    Serve uploaded files
+    ---
+    tags:
+      - Static Files
+    parameters:
+      - name: filename
+        in: path
+        type: string
+        required: true
+        description: Relative path to uploaded file
+    responses:
+      200:
+        description: File served successfully
+      404:
+        description: File not found
+    """
+    upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
+    return send_from_directory(upload_folder, filename)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

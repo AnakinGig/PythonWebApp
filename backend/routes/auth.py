@@ -1,9 +1,11 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, current_app
 from flask_bcrypt import Bcrypt
 from models import db, User, UserSchema
-from utils import validate_user_fields, sanitize_input, success_response, error_response
+from utils import validate_user_fields, sanitize_input, success_response, error_response, send_email_verification
 from core import UserRole, ErrorMessages, SuccessMessages, RateLimits
 from middleware import log_activity_with_details
+from datetime import datetime, timedelta
+import secrets
 import logging
 
 # Create a Blueprint for authentication-related routes
@@ -50,7 +52,7 @@ def get_current_user():
         return error_response(ErrorMessages.UNAUTHORIZED, status=401)
     
     user_schema = UserSchema()
-    return user_schema.jsonify(user)
+    return success_response(data=user_schema.dump(user))
 
 # Register route
 @auth_bp.route("/register", methods=["POST"])
@@ -92,14 +94,20 @@ def register():
       409:
         description: User already exists
     """
-    # Rate limiting handled by decorator in app.py
-    from app import limiter
-    limiter.limit(RateLimits.REGISTER)(lambda: None)()
-    
-    email = sanitize_input(request.json["email"])
-    first_name = sanitize_input(request.json["first_name"])
-    last_name = sanitize_input(request.json["last_name"])
-    password = request.json["password"]  # Don't sanitize passwords
+    # Apply rate limiting only if enabled
+    if current_app.config.get('RATELIMIT_ENABLED', True):
+      from app import limiter
+      limiter.limit(RateLimits.REGISTER)(lambda: None)()
+
+    data = request.get_json(silent=True) or {}
+    required_fields = ["email", "first_name", "last_name", "password"]
+    if not all(field in data and data[field] for field in required_fields):
+      return error_response(ErrorMessages.GENERIC_ERROR, status=400)
+
+    email = sanitize_input(data["email"])
+    first_name = sanitize_input(data["first_name"])
+    last_name = sanitize_input(data["last_name"])
+    password = data["password"]  # Don't sanitize passwords
     
     user_already_exists = User.query.filter_by(email=email).first() is not None
 
@@ -111,10 +119,27 @@ def register():
         return error_response(error, status=400)
     
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    new_user = User(email=email,first_name=first_name,last_name=last_name,password=hashed_password,role=UserRole.USER)
+    
+    # Generate email verification token
+    verification_token = secrets.token_urlsafe(32)
+    verification_expiry = datetime.utcnow() + timedelta(hours=24)
+    
+    new_user = User(
+        email=email,
+        first_name=first_name,
+        last_name=last_name,
+        password=hashed_password,
+        role=UserRole.USER,
+        email_verified=False,
+        verification_token=verification_token,
+        verification_token_expiry=verification_expiry
+    )
     db.session.add(new_user)
     db.session.commit()
     logging.info(f"Nouvel utilisateur enregistré: {new_user.email} (id: {new_user.id})")
+    
+    # Send verification email
+    send_email_verification(new_user, verification_token)
     
     session["user_id"] = new_user.id
     
@@ -122,7 +147,10 @@ def register():
     log_activity_with_details("Inscription", f"Nouvel utilisateur: {email}")
     
     user_schema = UserSchema()
-    return user_schema.jsonify(new_user)
+    return success_response(
+        data=user_schema.dump(new_user),
+        message="Inscription réussie ! Vérifiez votre email pour activer votre compte."
+    )
 
 # Login route
 @auth_bp.route("/login", methods=["POST"])
@@ -156,12 +184,17 @@ def login_user():
       401:
         description: Invalid credentials
     """
-    # Rate limiting handled by decorator in app.py
-    from app import limiter
-    limiter.limit(RateLimits.LOGIN)(lambda: None)()
+    # Apply rate limiting only if enabled
+    if current_app.config.get('RATELIMIT_ENABLED', True):
+      from app import limiter
+      limiter.limit(RateLimits.LOGIN)(lambda: None)()
+
+    data = request.get_json(silent=True) or {}
+    if 'email' not in data or 'password' not in data:
+      return error_response(ErrorMessages.GENERIC_ERROR, status=400)
     
-    email = sanitize_input(request.json["email"])
-    password = request.json["password"]  # Don't sanitize passwords
+    email = sanitize_input(data["email"])
+    password = data["password"]  # Don't sanitize passwords
     
     user = User.query.filter_by(email=email).first()
 
@@ -177,7 +210,7 @@ def login_user():
     log_activity_with_details("Connexion", f"Connexion réussie")
     
     user_schema = UserSchema()
-    return user_schema.jsonify(user)
+    return success_response(data=user_schema.dump(user))
 
 # Logout route
 @auth_bp.route("/logout", methods=['POST'])

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import httpClient from "../../utils/httpClient";
 import logo from "../../assets/basic-logo.png";
 import { useTheme } from "../../context/ThemeContext";
+import BrandingConfig from "../../config/branding";
 
 function Header({ user, setUser }) {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ function Header({ user, setUser }) {
   const { theme, toggleTheme } = useTheme();
 
   const logUserOut = async () => {
-    await httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/auth/logout`);
+    await httpClient.post('/auth/logout');
     localStorage.removeItem('isLoggedIn');
     setUser(null);
     navigate("/");
@@ -23,7 +24,7 @@ function Header({ user, setUser }) {
       <div className="container-fluid">
         <a className="navbar-brand d-flex align-items-center" href="/">
           <img src={logo} height="32" alt="Logo" className="me-2" />
-          <span className="fw-bold d-none d-md-inline">PythonWebApp</span>
+          <span className="fw-bold d-none d-md-inline">{BrandingConfig.appName}</span>
         </a>
 
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,23 +90,63 @@ function Header({ user, setUser }) {
               </>
             ) : (
               <>
-                <div className="d-none d-lg-flex align-items-center border-start ps-3 ms-2">
-                  <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
-                       style={{width: '32px', height: '32px', fontSize: '12px', fontWeight: 'bold'}}>
-                    {user.first_name.charAt(0)}{user.last_name.charAt(0)}
-                  </div>
-                  <div className="text-start">
-                    <div className="fw-semibold" style={{fontSize: '0.875rem', lineHeight: '1.2'}}>
-                      {user.first_name} {user.last_name}
+                <div className="dropdown d-none d-lg-flex">
+                  <button 
+                    className="btn btn-link text-decoration-none d-flex align-items-center gap-2 p-0"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    style={{color: 'inherit'}}
+                  >
+                    {user.avatar ? (
+                      <img 
+                        src={`${process.env.REACT_APP_BACKEND_URL.replace('/api', '')}/uploads/${user.avatar}`}
+                        alt="Avatar"
+                        className="rounded-circle"
+                        style={{width: '40px', height: '40px', objectFit: 'cover', flexShrink: 0}}
+                      />
+                    ) : (
+                      <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                           style={{width: '40px', height: '40px', fontSize: '14px', fontWeight: 'bold', flexShrink: 0}}>
+                        {user.first_name?.charAt(0) || ''}{user.last_name?.charAt(0) || ''}
+                      </div>
+                    )}
+                    <div className="text-start">
+                      <div className="fw-semibold" style={{fontSize: '0.875rem', lineHeight: '1.2'}}>
+                        {user.first_name} {user.last_name}
+                      </div>
+                      <div className="text-muted" style={{fontSize: '0.75rem', lineHeight: '1'}}>
+                        {user.role}
+                      </div>
                     </div>
-                    <div className="text-muted" style={{fontSize: '0.75rem', lineHeight: '1'}}>
-                      {user.role}
-                    </div>
-                  </div>
+                  </button>
+                  <ul className="dropdown-menu dropdown-menu-end">
+                    <li>
+                      <a className="dropdown-item" href="/profile">
+                        <i className="bi bi-person-circle me-2"></i>Mon Profil
+                      </a>
+                    </li>
+                    <li><hr className="dropdown-divider" /></li>
+                    <li>
+                      <button 
+                        type="button" 
+                        onClick={logUserOut} 
+                        className="dropdown-item text-danger"
+                      >
+                        <i className="bi bi-box-arrow-right me-2"></i>Se déconnecter
+                      </button>
+                    </li>
+                  </ul>
                 </div>
-                <button type="button" onClick={logUserOut} className="btn btn-danger btn-sm">
-                  Se déconnecter
-                </button>
+
+                {/* Mobile view */}
+                <div className="d-flex d-lg-none gap-2">
+                  <a href="/profile" className="btn btn-outline-secondary btn-sm">
+                    <i className="bi bi-person"></i>
+                  </a>
+                  <button type="button" onClick={logUserOut} className="btn btn-danger btn-sm">
+                    <i className="bi bi-box-arrow-right"></i>
+                  </button>
+                </div>
               </>
             )}
           </div>

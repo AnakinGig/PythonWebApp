@@ -4,12 +4,20 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     environment:
-      FLASK_ENV: development
+      FLASK_ENV: ${FLASK_ENV:-development}
       SECRET_KEY: ${SECRET_KEY}
       ADMIN_MAIL: ${ADMIN_MAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      DATABASE_URL: postgresql://user:password@db:5432/users_db
-      FRONTEND_URL: http://localhost:3000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-postgres_user}:${POSTGRES_PASSWORD:-change_this_password}@db:5432/${POSTGRES_DB:-users_db}}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      # Branding Configuration
+      APP_NAME: ${APP_NAME:-PythonWebApp}
+      APP_SHORT_NAME: ${APP_SHORT_NAME:-PWA}
+      COMPANY_NAME: ${COMPANY_NAME:-Your Company}
+      COMPANY_URL: ${COMPANY_URL:-https://example.com}
+      API_TITLE: ${API_TITLE:-PythonWebApp API}
+      API_DESCRIPTION: ${API_DESCRIPTION:-API Documentation for PythonWebApp}
+      CONTACT_EMAIL: ${CONTACT_EMAIL:-contact@example.com}
     ports:
       - "5000:5000"
     depends_on:
@@ -18,7 +26,11 @@ services:
       redis:
         condition: service_started
     volumes:
+      - ./backend:/app  # Mount entire backend for hot-reload
+      - /app/.venv  # Exclude virtual env from mount
       - db_data:/app/instance
+      - ./backend/migrations:/app/migrations  # Persist migrations across rebuilds
+      - ./backend/uploads:/app/uploads  # Persist uploaded files (avatars, documents)
     restart: unless-stopped
 
   frontend:
@@ -26,9 +38,20 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
     environment:
-      REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL}
+      REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL:-http://localhost:5000/api}
+      REACT_APP_NAME: ${REACT_APP_NAME:-PythonWebApp}
+      REACT_APP_SHORT_NAME: ${REACT_APP_SHORT_NAME:-PWA}
+      REACT_APP_COMPANY_NAME: ${REACT_APP_COMPANY_NAME:-Your Company}
+      REACT_APP_COMPANY_URL: ${REACT_APP_COMPANY_URL:-https://example.com}
+      REACT_APP_DESCRIPTION: ${REACT_APP_DESCRIPTION:-Application moderne de gestion d'utilisateurs}
+      REACT_APP_TAGLINE: ${REACT_APP_TAGLINE:-Bienvenue sur PythonWebApp}
+      REACT_APP_CONTACT_EMAIL: ${REACT_APP_CONTACT_EMAIL:-contact@example.com}
+      REACT_APP_COPYRIGHT_HOLDER: ${REACT_APP_COPYRIGHT_HOLDER:-Your Company}
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend:/app  # Mount entire frontend for hot-reload
+      - /app/node_modules  # Exclude node_modules from mount (use container's)
     depends_on:
       - backend
     restart: unless-stopped
@@ -42,15 +65,15 @@ services:
   db:
     image: postgres:13-alpine
     environment:
-      POSTGRES_DB: users_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${POSTGRES_DB:-users_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_this_password}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     expose:
       - "5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d users_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres_user} -d ${POSTGRES_DB:-users_db}"]
       interval: 5s
       timeout: 5s
       retries: 5

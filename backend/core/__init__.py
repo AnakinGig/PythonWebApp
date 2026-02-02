@@ -7,11 +7,13 @@ from .constants import (
     SuccessMessages,
     RateLimits
 )
+from .branding import BrandingConfig
 
 __all__ = [
     'ApplicationConfig',
     'UserRole',
     'ErrorMessages',
     'SuccessMessages',
-    'RateLimits'
+    'RateLimits',
+    'BrandingConfig'
 ]

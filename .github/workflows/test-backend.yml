@@ -1,0 +1,116 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_call:  # Allow triggering from other workflows
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Detect backend changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            BASE_REF=${{ github.base_ref }}
+            git diff --name-only origin/${BASE_REF}...HEAD > /tmp/changed_files.txt
+          else
+            git diff --name-only HEAD~1 HEAD > /tmp/changed_files.txt || echo "" > /tmp/changed_files.txt
+          fi
+          
+          if grep -q "^backend/" /tmp/changed_files.txt || grep -q "\.github/workflows/test-backend\.yml" /tmp/changed_files.txt || [ ! -s /tmp/changed_files.txt ]; then
+            echo "backend=true" >> $GITHUB_OUTPUT
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+          fi
+
+  test:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:13-alpine
+        env:
+          POSTGRES_USER: ${{ secrets.DB_USER || 'webapp_user' }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD || 'secure_password_123' }}
+          POSTGRES_DB: webapp_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      
+      - name: Create .env file
+        working-directory: ./backend
+        run: |
+          cat > .env << EOF
+          FLASK_ENV=testing
+          DATABASE_URL=postgresql://${{ secrets.DB_USER || 'webapp_user' }}:${{ secrets.DB_PASSWORD || 'secure_password_123' }}@localhost:5432/webapp_db
+          REDIS_URL=redis://localhost:6379/0
+          SECRET_KEY=${{ secrets.SECRET_KEY || 'test-secret-key-change-in-prod' }}
+          MAIL_SERVER=smtp.mailtrap.io
+          MAIL_PORT=465
+          MAIL_USERNAME=${{ secrets.MAIL_USERNAME || 'test' }}
+          MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD || 'test' }}
+          MAIL_DEFAULT_SENDER=noreply@pythonwebapp.com
+          EOF
+      
+      - name: Initialize database
+        working-directory: ./backend
+        run: |
+          python -c "
+          from app import app, db
+          with app.app_context():
+              db.create_all()
+          "
+      
+      - name: Run pytest with coverage
+        working-directory: ./backend
+        run: pytest -v --cov=. --cov-report=xml --cov-report=html
+      
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false

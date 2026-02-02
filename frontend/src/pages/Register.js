@@ -87,7 +87,7 @@ const Register = ({ setUser }) => {
 
     if (isFormValid) {
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/auth/register`, {
+        httpClient.post('/auth/register', {
           email: email,
           first_name: first_name,
           last_name: last_name,
@@ -97,8 +97,7 @@ const Register = ({ setUser }) => {
 
       if (result) {
         localStorage.setItem('isLoggedIn', 'true');
-        setUser(result);
-        navigate("/");
+        window.location.href = "/";
       } else {
         const errorMsg = apiError || "Une erreur est survenue.";
         setToast({ message: errorMsg, type: 'error' });
@@ -125,22 +124,38 @@ const Register = ({ setUser }) => {
                     <input 
                       type="text" 
                       value={last_name} 
-                      onChange={(e) => {setLastName(e.target.value);lastNameVerif(e.target.value);}}
-                      className={`form-control form-control-lg ${last_name_error ? "is-invalid" : form_submited ? "is-valid" : ""}`} 
+                      onChange={(e) => {
+                        setLastName(e.target.value);
+                        if (form_submited) lastNameVerif(e.target.value);
+                      }}
+                      className={`form-control form-control-lg ${
+                        form_submited && last_name_error ? "is-invalid" : ""
+                      }`} 
                       placeholder="Dupont"
+                      disabled={loading}
                     />
-                    <div className="invalid-feedback">{last_name_error}</div>
+                    {form_submited && last_name_error && (
+                      <div className="invalid-feedback">{last_name_error}</div>
+                    )}
                   </div>
                   <div className="col-md-6">
                     <label className="form-label fw-semibold">Prénom</label>
                     <input 
                       type="text" 
                       value={first_name} 
-                      onChange={(e) => {setFirstName(e.target.value);firstNameVerif(e.target.value);}}
-                      className={`form-control form-control-lg ${first_name_error ? "is-invalid" : form_submited ? "is-valid": ""}`} 
+                      onChange={(e) => {
+                        setFirstName(e.target.value);
+                        if (form_submited) firstNameVerif(e.target.value);
+                      }}
+                      className={`form-control form-control-lg ${
+                        form_submited && first_name_error ? "is-invalid" : ""
+                      }`} 
                       placeholder="Jean"
+                      disabled={loading}
                     />
-                    <div className="invalid-feedback">{first_name_error}</div>
+                    {form_submited && first_name_error && (
+                      <div className="invalid-feedback">{first_name_error}</div>
+                    )}
                   </div>
                 </div>
 
@@ -149,11 +164,19 @@ const Register = ({ setUser }) => {
                   <input 
                     type="email" 
                     value={email} 
-                    onChange={(e) => {setEmail(e.target.value);emailVerif(e.target.value);}}
-                    className={`form-control form-control-lg ${email_error ? "is-invalid" : form_submited ? "is-valid" : ""}`} 
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (form_submited) emailVerif(e.target.value);
+                    }}
+                    className={`form-control form-control-lg ${
+                      form_submited && email_error ? "is-invalid" : ""
+                    }`} 
                     placeholder="exemple@email.com"
+                    disabled={loading}
                   />
-                  <div className="invalid-feedback">{email_error}</div>
+                  {form_submited && email_error && (
+                    <div className="invalid-feedback">{email_error}</div>
+                  )}
                 </div>
 
                 <div className="mb-4">
@@ -162,32 +185,29 @@ const Register = ({ setUser }) => {
                     <input 
                       type={showPassword ? "text" : "password"}
                       value={password} 
-                      onChange={(e) => {setPassword(e.target.value);passwordVerif(e.target.value);}}
-                      className={`form-control form-control-lg ${password_error ? "is-invalid" : form_submited ? "is-valid" : "" }`} 
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (form_submited) passwordVerif(e.target.value);
+                      }}
+                      className={`form-control form-control-lg ${
+                        form_submited && password_error ? "is-invalid" : ""
+                      }`} 
                       placeholder="Minimum 8 caractères"
+                      disabled={loading}
                     />
                     <button
                       className="btn btn-outline-secondary"
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      style={{ borderLeft: 0 }}
+                      disabled={loading}
                     >
-                      {showPassword ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                          <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
-                          <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
-                          <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                          <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
-                          <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
-                        </svg>
-                      )}
+                      <i className={`bi bi-eye${showPassword ? '-slash' : ''}`}></i>
                     </button>
-                    <div className="invalid-feedback">{password_error}</div>
+                    {form_submited && password_error && (
+                      <div className="invalid-feedback">{password_error}</div>
+                    )}
                   </div>
-                  <small className="text-body-secondary">
+                  <small className="text-muted">
                     8+ caractères, majuscule, minuscule, chiffre et caractère spécial
                   </small>
                 </div>
@@ -198,7 +218,15 @@ const Register = ({ setUser }) => {
                     disabled={loading} 
                     className="btn btn-primary btn-lg"
                   >
-                    {loading ? <ButtonSpinner /> : "Créer un compte"}
+                    {loading ? (
+                      <>
+                        <ButtonSpinner /> Création...
+                      </>
+                    ) : (
+                      <>
+                        <i className="bi bi-person-plus me-2"></i>Créer un compte
+                      </>
+                    )}
                   </button>
                 </div>
 

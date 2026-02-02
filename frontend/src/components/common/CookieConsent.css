@@ -1,0 +1,50 @@
+/* Cookie Consent Animations - Bootstrap handles styling */
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.cookieSlideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.cookieFadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.cookieSlideDown {
+  animation: slideDown 0.3s ease-out;
+}
+
+/* Responsive mobile adjustments */
+@media (max-width: 576px) {
+  .btn-sm {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.6rem;
+  }
+}

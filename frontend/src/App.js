@@ -4,10 +4,11 @@ import httpClient from "./utils/httpClient";
 import Cookies from 'js-cookie';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner';
+import CookieConsent from './components/common/CookieConsent';
 import { ThemeProvider } from './context/ThemeContext';
+import Header from './components/layout/Header';
 
 // Component imports
-const Header = lazy(() => import('./components/layout/Header'));
 const Footer = lazy(() => import('./components/layout/Footer'));
 const PrivateRoute = lazy(() => import ('./components/common/PrivateRoute'));
 
@@ -20,6 +21,10 @@ const AdminDashboard = lazy(() => import ('./pages/AdminDashboard'));
 const UsersList = lazy(() => import ('./pages/UsersList'));
 const ManageUser = lazy(() => import ('./pages/ManageUser'));
 const ActivityLogs = lazy(() => import ('./pages/ActivityLogs'));
+const ForgotPassword = lazy(() => import ('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import ('./pages/ResetPassword'));
+const VerifyEmail = lazy(() => import ('./pages/VerifyEmail'));
+const UserProfile = lazy(() => import ('./pages/UserProfile'));
 
 function App() {
   const [user, setUser] = useState(null);
@@ -30,7 +35,7 @@ function App() {
       let isMounted = true;
       try {
         // Fetch CSRF token first
-        const csrfResponse = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/get_csrf_token`);
+        const csrfResponse = await httpClient.get('/get_csrf_token');
         const csrfToken = csrfResponse.data.csrf_token;
         Cookies.set('csrf_token', csrfToken);
 
@@ -38,8 +43,8 @@ function App() {
         const isLoggedIn = localStorage.getItem('isLoggedIn');
         if (isLoggedIn) {
           try {
-            const userResponse = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/auth/current-user`);
-            if (isMounted) setUser(userResponse.data);
+            const userResponse = await httpClient.get('/auth/current-user');
+            if (isMounted) setUser(userResponse.data.data);
           } catch (userError) {
             // Session expired or invalid, clear the flag
             localStorage.removeItem('isLoggedIn');
@@ -77,6 +82,14 @@ function App() {
                 <Route path="/" element={<Home user={user}/>}/>
                 <Route path="/login" element={<Login setUser={setUser}/>}/>
                 <Route path="/register" element={<Register setUser={setUser}/>}/>
+                <Route path="/forgot-password" element={<ForgotPassword/>}/>
+                <Route path="/reset-password/:token" element={<ResetPassword/>}/>
+                <Route path="/verify-email/:token" element={<VerifyEmail user={user}/>}/>
+                <Route path="/profile" element={
+                  <PrivateRoute user={user} requiredRole={null}>
+                    <UserProfile user={user} setUser={setUser}/>
+                  </PrivateRoute>
+                }/>
                 <Route path="/admin/dashboard" element={
                   <PrivateRoute user={user} requiredRole={'Administrateur'}>
                     <AdminDashboard setUser={setUser}/>
@@ -102,6 +115,7 @@ function App() {
             </Suspense>
           </div>
           <Footer />
+            <CookieConsent />
         </div>
       </ErrorBoundary>
     </ThemeProvider>
@@ -114,4 +128,5 @@ const AppWrapper = () => (
   </BrowserRouter>
 );
 
+export { App };
 export default AppWrapper;
