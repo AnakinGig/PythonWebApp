@@ -3,7 +3,7 @@
 This file defines **mandatory rules** for GitHub Copilot.
 All sections below must be respected and **filled by Copilot when used**.
 
-**Last Updated**: February 2, 2026 | **Status**: 🟢 Production Ready
+**Last Updated**: February 2, 2026 | **Status**: 🟢 Production Ready | **Requirement**: Always use WSL for commands
 
 ---
 
@@ -386,6 +386,21 @@ reset_token, reset_token_expiry, avatar
 ## 4. COMMANDS TO ALWAYS USE
 
 > Copilot must not use or suggest commands outside this list.
+
+### ⚠️ CRITICAL: Always Use WSL (Windows Subsystem for Linux)
+
+**All terminal commands MUST be executed in WSL, never in PowerShell on Windows.**
+
+Why:
+- Docker commands work natively in WSL (no administrator sudo required in certain contexts)
+- File paths are Unix-based, matching the production environment
+- Consistency with container environment (Linux-based)
+- Prevents path escaping issues and permission problems
+
+**How to use**:
+- Open WSL terminal in VS Code: `Ctrl+` ` and select "WSL"
+- Or run: `wsl` from PowerShell to enter WSL environment
+- All subsequent commands are Linux-based
 
 ### Docker Commands (Production Environment)
 
