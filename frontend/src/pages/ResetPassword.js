@@ -76,7 +76,7 @@ function ResetPassword() {
 
     if (isFormValid) {
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/user/reset-password/${token}`, {
+        httpClient.post(`/user/reset-password/${token}`, {
           password: password,
         })
       );

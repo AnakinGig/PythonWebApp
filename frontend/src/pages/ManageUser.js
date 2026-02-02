@@ -95,7 +95,7 @@ function ManageUser() {
       };
 
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.put(`${process.env.REACT_APP_BACKEND_URL}/admin/users/${user_id.id}`, payload, {
+        httpClient.put(`/admin/users/${user_id.id}`, payload, {
           headers: {"Content-Type": "application/json"},
         })
       );
@@ -127,7 +127,7 @@ function ManageUser() {
   const delete_account = async () => {
     setFormSubmited(true);
     const { data: result, error: apiError } = await callApi(() =>
-      httpClient.delete(`${process.env.REACT_APP_BACKEND_URL}/admin/users/${user_id.id}`)
+      httpClient.delete(`/admin/users/${user_id.id}`)
     );
 
     if (result) {
@@ -155,7 +155,7 @@ function ManageUser() {
   useEffect(() => {
     const fetchUser = async () => {
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/users/${user_id.id}`)
+        httpClient.get(`/admin/users/${user_id.id}`)
       );
 
       if (result) {

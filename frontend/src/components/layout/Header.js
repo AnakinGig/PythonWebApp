@@ -11,7 +11,7 @@ function Header({ user, setUser }) {
   const { theme, toggleTheme } = useTheme();
 
   const logUserOut = async () => {
-    await httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/auth/logout`);
+    await httpClient.post('/auth/logout');
     localStorage.removeItem('isLoggedIn');
     setUser(null);
     navigate("/");

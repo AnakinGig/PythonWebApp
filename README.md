@@ -56,15 +56,16 @@ DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
 ### 3. Lancer l'application
 
 ```bash
-sudo docker compose -f docker-compose.prod.yml up -d --build
-sudo docker compose -f docker-compose.prod.yml exec backend python init_migrations.py
+sudo docker compose up -d --build
+sudo docker compose exec backend flask db init
+sudo docker compose exec backend python init_migrations.py
 ```
 
 ### 4. Appliquer les migrations (après changement de modèles)
 
 ```bash
-sudo docker compose -f docker-compose.prod.yml exec backend flask db migrate -m "initial"
-sudo docker compose -f docker-compose.prod.yml exec backend flask db upgrade
+sudo docker compose exec backend flask db migrate -m "initial"
+sudo docker compose exec backend flask db upgrade
 ```
 
 ### 5. Accès à l'application

@@ -87,7 +87,7 @@ const Register = ({ setUser }) => {
 
     if (isFormValid) {
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/auth/register`, {
+        httpClient.post('/auth/register', {
           email: email,
           first_name: first_name,
           last_name: last_name,

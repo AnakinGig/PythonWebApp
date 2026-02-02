@@ -35,7 +35,7 @@ function App() {
       let isMounted = true;
       try {
         // Fetch CSRF token first
-        const csrfResponse = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/get_csrf_token`);
+        const csrfResponse = await httpClient.get('/get_csrf_token');
         const csrfToken = csrfResponse.data.csrf_token;
         Cookies.set('csrf_token', csrfToken);
 
@@ -43,7 +43,7 @@ function App() {
         const isLoggedIn = localStorage.getItem('isLoggedIn');
         if (isLoggedIn) {
           try {
-            const userResponse = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/auth/current-user`);
+            const userResponse = await httpClient.get('/auth/current-user');
             if (isMounted) setUser(userResponse.data.data);
           } catch (userError) {
             // Session expired or invalid, clear the flag

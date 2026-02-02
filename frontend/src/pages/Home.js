@@ -11,7 +11,7 @@ const Home = ({ user }) => {
 
   const handleResendVerification = async () => {
     const { data: result, error: apiError } = await callApi(() =>
-      httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/user/resend-verification`)
+      httpClient.post('/user/resend-verification')
     );
 
     if (result) {

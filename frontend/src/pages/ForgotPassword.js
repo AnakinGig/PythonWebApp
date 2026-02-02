@@ -38,7 +38,7 @@ function ForgotPassword() {
 
     if (isEmailValid) {
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/user/request-password-reset`, {
+        httpClient.post('/user/request-password-reset', {
           email: email,
         })
       );

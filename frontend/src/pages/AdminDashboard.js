@@ -15,9 +15,9 @@ function AdminDashboard() {
   const fetchData = async () => {
     try {
       const [metricsRes, healthRes, usersRes] = await Promise.all([
-        httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/metrics`),
-        httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/health`),
-        httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/users?page=1&per_page=1000`)
+        httpClient.get('/metrics'),
+        httpClient.get('/health'),
+        httpClient.get('/admin/users?page=1&per_page=1000')
       ]);
       
       setMetrics(metricsRes.data);

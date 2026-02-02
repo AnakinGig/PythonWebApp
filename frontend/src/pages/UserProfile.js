@@ -48,7 +48,7 @@ function UserProfile({ user, setUser }) {
 
   const fetchProfile = async () => {
     try {
-      const response = await httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/user/profile`);
+      const response = await httpClient.get('/user/profile');
       if (response.data.success) {
         const userData = response.data.data;
         setFirstName(userData.first_name || "");
@@ -195,7 +195,7 @@ function UserProfile({ user, setUser }) {
       }
 
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.put(`${process.env.REACT_APP_BACKEND_URL}/user/profile`, updateData)
+        httpClient.put('/user/profile', updateData)
       );
 
       if (result) {

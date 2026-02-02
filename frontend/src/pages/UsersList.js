@@ -95,7 +95,7 @@ function UsersList() {
   // ### Fetch all users from the backend ###
   const getAllUsersInfo = useCallback(async (page = 1) => {
     const { data: result, error: apiError } = await callApi(() =>
-      httpClient.get(`${process.env.REACT_APP_BACKEND_URL}/admin/users?page=${page}&per_page=20`)
+      httpClient.get(`/admin/users?page=${page}&per_page=20`)
     );
 
     if (result) {
@@ -124,7 +124,7 @@ function UsersList() {
 
     if (isFormValid) {
       const { data: result, error: apiError } = await callApi(() =>
-        httpClient.post(`${process.env.REACT_APP_BACKEND_URL}/admin/users`, {
+        httpClient.post('/admin/users', {
           first_name: new_first_name,
           last_name: new_last_name,
           email: new_email,
