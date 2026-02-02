@@ -41,8 +41,8 @@ Copilot must **never skip or reorder** this workflow.
    - Test security, auth, validation, business logic, API
    - Skip tests for UI-only, styling, docs
 6. **Make tests pass**
-   - Run backend tests: `sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=.`
-   - Run frontend tests: `cd frontend && npm test -- --coverage --watchAll=false`
+   - Run backend tests: `sudo docker exec <backend_container> pytest -v --cov=.`
+   - Run frontend tests: `sudo docker exec <frontend_container> npm test -- --coverage --watchAll=false`
    - Fix all failing tests before proceeding
 7. **STOP and wait for explicit user approval**
    - Do NOT commit
@@ -406,13 +406,11 @@ sudo docker compose -f docker-compose.prod.yml logs -f frontend
 # Backend
 sudo docker compose -f docker-compose.prod.yml exec backend <command>
 sudo docker compose -f docker-compose.prod.yml exec backend pip install -r requirements-dev.txt
-sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=.
 sudo docker compose -f docker-compose.prod.yml exec backend flask db migrate -m "migration message"
 sudo docker compose -f docker-compose.prod.yml exec backend flask db upgrade
 
 # Frontend
 sudo docker compose -f docker-compose.prod.yml exec frontend npm <command>
-sudo docker compose -f docker-compose.prod.yml exec frontend npm test -- --coverage --watchAll=false
 ```
 
 **Stop/Remove Containers**:
@@ -425,15 +423,15 @@ sudo docker compose -f docker-compose.prod.yml down -v  # Remove volumes
 
 **Backend Tests**:
 ```bash
-sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=.
-sudo docker compose -f docker-compose.prod.yml exec backend pytest -v --cov=. --cov-report=html
-sudo docker compose -f docker-compose.prod.yml exec backend pytest tests/test_auth_routes.py -v
+sudo docker exec <backend_container> pytest -v --cov=.
+sudo docker exec <backend_container> pytest -v --cov=. --cov-report=html
+sudo docker exec <backend_container> pytest tests/test_auth_routes.py -v
 ```
 
 **Frontend Tests**:
 ```bash
-cd frontend && npm test -- --coverage --watchAll=false
-cd frontend && npm test -- --coverage
+sudo docker exec <frontend_container> npm test -- --coverage --watchAll=false
+sudo docker exec <frontend_container> npm test -- --coverage
 ```
 
 ### Git Commands (Conventional Commits)

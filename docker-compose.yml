@@ -26,6 +26,8 @@ services:
       redis:
         condition: service_started
     volumes:
+      - ./backend:/app  # Mount entire backend for hot-reload
+      - /app/.venv  # Exclude virtual env from mount
       - db_data:/app/instance
       - ./backend/migrations:/app/migrations  # Persist migrations across rebuilds
       - ./backend/uploads:/app/uploads  # Persist uploaded files (avatars, documents)
@@ -47,6 +49,9 @@ services:
       REACT_APP_COPYRIGHT_HOLDER: ${REACT_APP_COPYRIGHT_HOLDER:-Your Company}
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend:/app  # Mount entire frontend for hot-reload
+      - /app/node_modules  # Exclude node_modules from mount (use container's)
     depends_on:
       - backend
     restart: unless-stopped
